@@ -25,7 +25,9 @@ export function Settings() {
     try {
       setIsLoading(true);
       const response = await settingsApi.getSettings();
-      setSettings(response.data);
+      if (response.success && response.data) {
+        setSettings(response.data);
+      }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
     } finally {
@@ -62,17 +64,21 @@ export function Settings() {
 
   const getCategoryIcon = (category: string) => {
     switch (category.toLowerCase()) {
-      case 'database':
-        return <Database className="w-5 h-5 text-blue-600" />;
-      case 'email':
-        return <Mail className="w-5 h-5 text-green-600" />;
-      case 'security':
-        return <Shield className="w-5 h-5 text-red-600" />;
       case 'general':
         return <Globe className="w-5 h-5 text-purple-600" />;
       case 'test':
         return <Clock className="w-5 h-5 text-yellow-600" />;
-      case 'user':
+      case 'security':
+        return <Shield className="w-5 h-5 text-red-600" />;
+      case 'email':
+        return <Mail className="w-5 h-5 text-green-600" />;
+      case 'certificate':
+        return <Award className="w-5 h-5 text-purple-600" />;
+      case 'database':
+        return <Database className="w-5 h-5 text-blue-600" />;
+      case 'ui':
+        return <Settings className="w-5 h-5 text-indigo-600" />;
+      case 'notification':
         return <Users className="w-5 h-5 text-indigo-600" />;
       default:
         return <SettingsIcon className="w-5 h-5 text-gray-600" />;
@@ -98,11 +104,21 @@ export function Settings() {
           </span>
         );
       case 'number':
-        return <span className="font-mono text-sm">{setting.value}</span>;
+        return <span className="font-mono text-sm font-medium text-blue-600">{setting.value}</span>;
+      case 'color':
+        return (
+          <div className="flex items-center space-x-2">
+            <div 
+              className="w-6 h-6 rounded border border-gray-300" 
+              style={{ backgroundColor: setting.value }}
+            ></div>
+            <span className="font-mono text-sm">{setting.value}</span>
+          </div>
+        );
       case 'json':
         return <span className="font-mono text-xs text-gray-600 truncate">{setting.value}</span>;
       default:
-        return <span className="text-sm">{setting.value}</span>;
+        return <span className="text-sm font-medium">{setting.value}</span>;
     }
   };
 
@@ -128,6 +144,41 @@ export function Settings() {
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             placeholder="Enter number value"
+          />
+        );
+      case 'color':
+        return (
+          <div className="space-y-2">
+            <Input
+              type="color"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              className="h-12"
+            />
+            <Input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              placeholder="Enter hex color code"
+            />
+          </div>
+        );
+      case 'email':
+        return (
+          <Input
+            type="email"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder="Enter email address"
+          />
+        );
+      case 'url':
+        return (
+          <Input
+            type="url"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder="Enter URL"
           />
         );
       case 'json':
@@ -197,16 +248,28 @@ export function Settings() {
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
                           <h3 className="font-medium text-gray-900">{setting.key}</h3>
-                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                            setting.type === 'boolean' ? 'bg-green-100 text-green-700' :
+                            setting.type === 'number' ? 'bg-blue-100 text-blue-700' :
+                            setting.type === 'color' ? 'bg-purple-100 text-purple-700' :
+                            setting.type === 'json' ? 'bg-orange-100 text-orange-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>
                             {setting.type}
                           </span>
+                          {!setting.isEditable && (
+                            <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-medium">
+                              Read Only
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 mt-1">{setting.description}</p>
                         <div className="mt-2">
                           {renderSettingValue(setting)}
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                          Last updated: {formatDateTime(setting.updatedAt)} by {setting.updatedBy}
+                          Last updated: {formatDateTime(setting.updatedAt)}
+                          {setting.updatedBy && ` by ${setting.updatedBy}`}
                         </p>
                       </div>
                       
