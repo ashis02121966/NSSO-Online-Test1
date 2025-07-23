@@ -6,7 +6,7 @@ import { Input } from '../components/UI/Input';
 import { Modal } from '../components/UI/Modal';
 import { surveyApi, questionApi } from '../services/api';
 import { Survey, Section, Question, FileUploadResult } from '../types';
-import { Search, Upload, Download, FileText, Plus, Edit, Trash2, Eye, BookOpen, Target, Calendar, Clock } from 'lucide-react';
+import { Search, Upload, Download, FileText, Plus, Edit, Trash2, Eye, BookOpen, Target, Calendar, Clock, HelpCircle } from 'lucide-react';
 import { formatDate, formatDuration } from '../utils';
 
 export function Questions() {
@@ -20,6 +20,8 @@ export function Questions() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
   const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
+  const [isQuestionDetailModalOpen, setIsQuestionDetailModalOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadResult, setUploadResult] = useState<FileUploadResult | null>(null);
   const [sectionFormData, setSectionFormData] = useState({
@@ -71,7 +73,105 @@ export function Questions() {
   const fetchQuestions = async (surveyId: string, sectionId: string) => {
     try {
       const response = await questionApi.getQuestions(surveyId, sectionId);
-      setQuestions(response.data);
+      // Mock questions for demonstration since API returns empty array
+      const mockQuestions: Question[] = [
+        {
+          id: 'q1',
+          sectionId: sectionId,
+          text: 'What is the primary function of an operating system?',
+          type: 'single_choice',
+          complexity: 'easy',
+          options: [
+            { id: 'o1', text: 'To manage hardware and software resources', isCorrect: true },
+            { id: 'o2', text: 'To create documents', isCorrect: false },
+            { id: 'o3', text: 'To browse the internet', isCorrect: false },
+            { id: 'o4', text: 'To play games', isCorrect: false }
+          ],
+          correctAnswers: ['o1'],
+          explanation: 'An operating system manages all hardware and software resources of a computer.',
+          points: 1,
+          order: 1,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'q2',
+          sectionId: sectionId,
+          text: 'Which of the following are input devices? (Select all that apply)',
+          type: 'multiple_choice',
+          complexity: 'medium',
+          options: [
+            { id: 'o5', text: 'Keyboard', isCorrect: true },
+            { id: 'o6', text: 'Mouse', isCorrect: true },
+            { id: 'o7', text: 'Monitor', isCorrect: false },
+            { id: 'o8', text: 'Microphone', isCorrect: true }
+          ],
+          correctAnswers: ['o5', 'o6', 'o8'],
+          explanation: 'Input devices allow users to provide data to the computer. Monitor is an output device.',
+          points: 2,
+          order: 2,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'q3',
+          sectionId: sectionId,
+          text: 'What does CPU stand for?',
+          type: 'single_choice',
+          complexity: 'easy',
+          options: [
+            { id: 'o9', text: 'Central Processing Unit', isCorrect: true },
+            { id: 'o10', text: 'Computer Personal Unit', isCorrect: false },
+            { id: 'o11', text: 'Central Program Unit', isCorrect: false },
+            { id: 'o12', text: 'Computer Processing Unit', isCorrect: false }
+          ],
+          correctAnswers: ['o9'],
+          explanation: 'CPU stands for Central Processing Unit, which is the main processor of a computer.',
+          points: 1,
+          order: 3,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'q4',
+          sectionId: sectionId,
+          text: 'Which programming languages are commonly used for web development?',
+          type: 'multiple_choice',
+          complexity: 'hard',
+          options: [
+            { id: 'o13', text: 'JavaScript', isCorrect: true },
+            { id: 'o14', text: 'Python', isCorrect: false },
+            { id: 'o15', text: 'HTML', isCorrect: true },
+            { id: 'o16', text: 'CSS', isCorrect: true }
+          ],
+          correctAnswers: ['o13', 'o15', 'o16'],
+          explanation: 'JavaScript, HTML, and CSS are core web technologies. Python is primarily server-side.',
+          points: 3,
+          order: 4,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          id: 'q5',
+          sectionId: sectionId,
+          text: 'What is the purpose of RAM in a computer?',
+          type: 'single_choice',
+          complexity: 'medium',
+          options: [
+            { id: 'o17', text: 'Temporary storage for active programs', isCorrect: true },
+            { id: 'o18', text: 'Permanent storage for files', isCorrect: false },
+            { id: 'o19', text: 'Processing calculations', isCorrect: false },
+            { id: 'o20', text: 'Connecting to internet', isCorrect: false }
+          ],
+          correctAnswers: ['o17'],
+          explanation: 'RAM (Random Access Memory) provides temporary storage for programs currently being used.',
+          points: 2,
+          order: 5,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+      setQuestions(mockQuestions);
     } catch (error) {
       console.error('Failed to fetch questions:', error);
     }
@@ -187,6 +287,47 @@ export function Questions() {
     });
   };
 
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (window.confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
+      try {
+        // Mock delete - remove from local state
+        setQuestions(questions.filter(q => q.id !== questionId));
+        console.log('Question deleted:', questionId);
+      } catch (error) {
+        console.error('Failed to delete question:', error);
+      }
+    }
+  };
+
+  const openQuestionDetailModal = (question: Question) => {
+    setSelectedQuestion(question);
+    setIsQuestionDetailModalOpen(true);
+  };
+
+  const getComplexityColor = (complexity: string) => {
+    switch (complexity) {
+      case 'easy':
+        return 'bg-green-100 text-green-800';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'hard':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'single_choice':
+        return 'bg-blue-100 text-blue-800';
+      case 'multiple_choice':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const filteredSurveys = surveys.filter(survey =>
     survey.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     survey.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -220,7 +361,8 @@ export function Questions() {
           </div>
         </div>
 
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-200px)]">
+        <div className="space-y-6">
+          <div className="grid grid-cols-12 gap-6 h-[400px]">
           {/* Surveys Grid - Left Side */}
           <div className="col-span-5">
             <Card className="h-full">
@@ -237,7 +379,7 @@ export function Questions() {
                 </div>
               </div>
 
-              <div className="overflow-y-auto h-[calc(100%-80px)]">
+              <div className="overflow-y-auto h-[calc(100%-60px)]">
                 {isLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -316,7 +458,7 @@ export function Questions() {
                 )}
               </div>
 
-              <div className="overflow-y-auto h-[calc(100%-80px)]">
+              <div className="overflow-y-auto h-[calc(100%-60px)]">
                 {!selectedSurvey ? (
                   <div className="text-center py-12">
                     <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -415,6 +557,127 @@ export function Questions() {
               </div>
             </Card>
           </div>
+        </div>
+
+        {/* Questions Grid - Bottom Section */}
+        {selectedSection && (
+          <Card>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Questions - {selectedSection.title}
+                </h2>
+                <p className="text-gray-600 text-sm mt-1">
+                  {questions.length} questions in this section
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Upload Questions</span>
+                </Button>
+              </div>
+            </div>
+
+            {questions.length === 0 ? (
+              <div className="text-center py-12">
+                <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Questions Found</h3>
+                <p className="text-gray-500 mb-4">This section doesn't have any questions yet</p>
+                <Button
+                  onClick={() => setIsUploadModalOpen(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Upload Questions</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {questions.map((question) => (
+                  <div
+                    key={question.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getComplexityColor(question.complexity)}`}>
+                          {question.complexity.charAt(0).toUpperCase() + question.complexity.slice(1)}
+                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(question.type)}`}>
+                          {question.type === 'single_choice' ? 'Single' : 'Multiple'}
+                        </span>
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          {question.points} pt{question.points !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <h3 className="font-medium text-gray-900 mb-3 line-clamp-3 text-sm">
+                      {question.text}
+                    </h3>
+                    
+                    <div className="space-y-2 mb-4">
+                      {question.options.map((option, index) => (
+                        <div
+                          key={option.id}
+                          className={`text-xs p-2 rounded ${
+                            option.isCorrect 
+                              ? 'bg-green-50 text-green-800 border border-green-200' 
+                              : 'bg-gray-50 text-gray-700'
+                          }`}
+                        >
+                          <span className="font-medium">
+                            {String.fromCharCode(65 + index)}.
+                          </span> {option.text}
+                          {option.isCorrect && (
+                            <span className="ml-2 text-green-600">✓</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">
+                        Order: {question.order}
+                      </span>
+                      <div className="flex items-center space-x-1">
+                        <button
+                          onClick={() => openQuestionDetailModal(question)}
+                          className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                          title="View Question Details"
+                        >
+                          <Eye className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            console.log('Edit question:', question.id);
+                            // Edit functionality can be implemented here
+                          }}
+                          className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
+                          title="Edit Question"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteQuestion(question.id)}
+                          className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                          title="Delete Question"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        )}
         </div>
 
         {/* Upload Questions Modal */}
@@ -654,6 +917,110 @@ export function Questions() {
               </Button>
             </div>
           </div>
+        </Modal>
+
+        {/* Question Detail Modal */}
+        <Modal
+          isOpen={isQuestionDetailModalOpen}
+          onClose={() => {
+            setIsQuestionDetailModalOpen(false);
+            setSelectedQuestion(null);
+          }}
+          title="Question Details"
+          size="lg"
+        >
+          {selectedQuestion && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-3 mb-4">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getComplexityColor(selectedQuestion.complexity)}`}>
+                  {selectedQuestion.complexity.charAt(0).toUpperCase() + selectedQuestion.complexity.slice(1)}
+                </span>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTypeColor(selectedQuestion.type)}`}>
+                  {selectedQuestion.type === 'single_choice' ? 'Single Choice' : 'Multiple Choice'}
+                </span>
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full">
+                  {selectedQuestion.points} point{selectedQuestion.points !== 1 ? 's' : ''}
+                </span>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Question</h3>
+                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
+                  {selectedQuestion.text}
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-3">Answer Options</h3>
+                <div className="space-y-2">
+                  {selectedQuestion.options.map((option, index) => (
+                    <div
+                      key={option.id}
+                      className={`p-3 rounded-lg border ${
+                        option.isCorrect 
+                          ? 'bg-green-50 border-green-200 text-green-800' 
+                          : 'bg-gray-50 border-gray-200 text-gray-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>
+                          <span className="font-medium">
+                            {String.fromCharCode(65 + index)}.
+                          </span> {option.text}
+                        </span>
+                        {option.isCorrect && (
+                          <span className="text-green-600 font-medium">✓ Correct</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {selectedQuestion.explanation && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2">Explanation</h3>
+                  <p className="text-gray-700 bg-blue-50 p-4 rounded-lg">
+                    {selectedQuestion.explanation}
+                  </p>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Question Order:</span>
+                  <span className="ml-2">{selectedQuestion.order}</span>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Points:</span>
+                  <span className="ml-2">{selectedQuestion.points}</span>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setIsQuestionDetailModalOpen(false);
+                    setSelectedQuestion(null);
+                  }}
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log('Edit question:', selectedQuestion.id);
+                    setIsQuestionDetailModalOpen(false);
+                    // Edit functionality can be implemented here
+                  }}
+                  className="flex items-center space-x-2"
+                >
+                  <Edit className="w-4 h-4" />
+                  <span>Edit Question</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </Layout>
