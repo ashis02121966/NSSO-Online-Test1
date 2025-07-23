@@ -336,17 +336,6 @@ export function Questions() {
       complexity: question.complexity,
       points: question.points,
       explanation: question.explanation || '',
-      options: question.options.map(opt => opt.text),
-      correctAnswers: question.options
-        .filter(opt => opt.isCorrect)
-        .map(opt => question.options.indexOf(opt))
-    });
-    setIsEditQuestionModalOpen(true);
-      text: question.text,
-      type: question.type,
-      complexity: question.complexity,
-      points: question.points,
-      explanation: question.explanation || '',
       options: question.options.map(opt => ({
         text: opt.text,
         isCorrect: opt.isCorrect
@@ -1101,7 +1090,7 @@ export function Questions() {
               )}
               
               <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="overflow-y-auto h-[calc(100%-80px)]">
+                <div>
                   <span className="font-medium text-gray-700">Question Order:</span>
                   <span className="ml-2">{selectedQuestion.order}</span>
                 </div>
