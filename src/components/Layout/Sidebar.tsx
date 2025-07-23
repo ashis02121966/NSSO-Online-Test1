@@ -22,6 +22,7 @@ const allMenuItems: MenuItem[] = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin'], level: 1 },
   { to: '/users', icon: Users, label: 'User Management', roles: ['Admin'], level: 1 },
   { to: '/roles', icon: Shield, label: 'Role Management', roles: ['Admin'], level: 1 },
+  { to: '/role-menu-management', icon: Menu, label: 'Menu Access Control', roles: ['Admin'], level: 1 },
   { to: '/surveys', icon: FileText, label: 'Survey Management', roles: ['Admin'], level: 1 },
   { to: '/questions', icon: Book, label: 'Question Bank', roles: ['Admin'], level: 1 },
   { to: '/settings', icon: Settings, label: 'System Settings', roles: ['Admin'], level: 1 },
@@ -61,6 +62,7 @@ const menuItems = {
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/users', icon: Users, label: 'User Management' },
     { to: '/roles', icon: Shield, label: 'Role Management' },
+    { to: '/role-menu-management', icon: Menu, label: 'Menu Access Control' },
     { to: '/surveys', icon: FileText, label: 'Survey Management' },
     { to: '/questions', icon: Book, label: 'Question Bank' },
     { to: '/results', icon: BarChart3, label: 'Results & Analytics' },
@@ -133,10 +135,8 @@ export function Sidebar() {
     ? accessibleItems.map(item => ({ to: item.to, icon: item.icon, label: item.label }))
     : legacyItems;
   
-  // Add RBAC management for admin users
-  const finalItems = user?.role.name === 'Admin' 
-    ? [...items, { to: '/role-menu-management', icon: Menu, label: 'Menu Access Control' }]
-    : items;
+  // Use items as final items since RBAC management is now included in the main list
+  const finalItems = items;
 
   const getRoleIcon = (roleName: string) => {
     switch (roleName.toLowerCase()) {
