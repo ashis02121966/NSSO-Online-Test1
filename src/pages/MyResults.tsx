@@ -17,9 +17,32 @@ export function MyResults() {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showCertificateAlert, setShowCertificateAlert] = useState(false);
 
   useEffect(() => {
     fetchResults();
+    
+    // Check for success message from navigation state
+    const state = (window.history.state?.usr || window.history.state) as any;
+    if (state?.message) {
+      setSuccessMessage(state.message);
+      setShowSuccessMessage(true);
+      
+      if (state.showCertificate) {
+        setShowCertificateAlert(true);
+      }
+      
+      // Clear the state to prevent showing the message again
+      window.history.replaceState({}, document.title);
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+        setShowCertificateAlert(false);
+      }, 5000);
+    }
   }, []);
 
   const fetchResults = async () => {
@@ -128,6 +151,36 @@ export function MyResults() {
             </div>
           </Card>
         </div>
+
+        {/* Success Message */}
+        {showSuccessMessage && (
+          <div className="mb-6">
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5" />
+              <span>{successMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Certificate Alert */}
+        {showCertificateAlert && (
+          <div className="mb-6">
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Trophy className="w-5 h-5" />
+                <span>Congratulations! You've earned a certificate for passing this test.</span>
+              </div>
+              <Button 
+                size="sm" 
+                onClick={() => window.location.href = '/my-certificates'}
+                className="flex items-center space-x-2"
+              >
+                <Award className="w-4 h-4" />
+                <span>View Certificate</span>
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Performance Chart */}
         {completedTests.length > 0 && (

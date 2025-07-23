@@ -286,7 +286,8 @@ export function TestInterface() {
         navigate('/my-results', { 
           state: { 
             message: 'Test submitted successfully!',
-            result: response.data 
+            result: response.data,
+            showCertificate: response.data?.isPassed && response.data?.certificateId
           }
         });
       }
@@ -305,7 +306,8 @@ export function TestInterface() {
       navigate('/my-results', { 
         state: { 
           message: 'Test auto-submitted due to time expiry.',
-          autoSubmitted: true
+          autoSubmitted: true,
+          showCertificate: false
         }
       });
     } catch (error) {

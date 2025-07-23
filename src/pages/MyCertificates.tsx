@@ -18,6 +18,18 @@ export function MyCertificates() {
 
   useEffect(() => {
     fetchCertificates();
+    
+    // Check if user just earned a new certificate
+    const state = (window.history.state?.usr || window.history.state) as any;
+    if (state?.newCertificate) {
+      // Refresh certificates to show the new one
+      setTimeout(() => {
+        fetchCertificates();
+      }, 1000);
+      
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
   }, []);
 
   const fetchCertificates = async () => {
@@ -38,11 +50,18 @@ export function MyCertificates() {
     try {
       const response = await certificateApi.downloadCertificate(certificateId);
       // Handle PDF download
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = response.data;
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `certificate_${certificateId}.pdf`;
+      
+      // Find certificate to get a better filename
+      const certificate = certificates.find(cert => cert.id === certificateId);
+      const filename = certificate 
+        ? `${certificate.certificateNumber}_${certificate.survey.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`
+        : `certificate_${certificateId}.pdf`;
+      
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -56,6 +75,7 @@ export function MyCertificates() {
       ));
     } catch (error) {
       console.error('Failed to download certificate:', error);
+      alert('Failed to download certificate. Please try again.');
     }
   };
 

@@ -642,24 +642,90 @@ export const testApi = {
 
   submitTest: async (sessionId: string): Promise<ApiResponse<TestResult>> => {
     await delay(1500);
-    return {
-      success: true,
-      data: {
-        id: Date.now().toString(),
+    
+    // Generate a unique result ID and certificate
+    const resultId = `result_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const certificateId = `cert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const certificateNumber = `CERT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    
+    // Calculate score (mock calculation)
+    const score = Math.floor(Math.random() * 40) + 60; // Random score between 60-100
+    const totalQuestions = 30;
+    const correctAnswers = Math.floor((score / 100) * totalQuestions);
+    const isPassed = score >= 70;
+    
+    const testResult: TestResult = {
+      id: resultId,
+      userId: '5',
+      user: mockUsers[4], // Enumerator user
+      surveyId: '1',
+      survey: mockSurveys[0],
+      sessionId,
+      score,
+      totalQuestions,
+      correctAnswers,
+      isPassed,
+      timeSpent: 1800,
+      attemptNumber: 1,
+      sectionScores: [
+        {
+          sectionId: 's1',
+          sectionTitle: 'Basic Computer Skills',
+          score: score + Math.floor(Math.random() * 10) - 5,
+          totalQuestions: 10,
+          correctAnswers: Math.floor(((score + Math.floor(Math.random() * 10) - 5) / 100) * 10)
+        },
+        {
+          sectionId: 's2',
+          sectionTitle: 'Internet and Digital Communication',
+          score: score + Math.floor(Math.random() * 10) - 5,
+          totalQuestions: 10,
+          correctAnswers: Math.floor(((score + Math.floor(Math.random() * 10) - 5) / 100) * 10)
+        },
+        {
+          sectionId: 's3',
+          sectionTitle: 'Digital Security and Privacy',
+          score: score + Math.floor(Math.random() * 10) - 5,
+          totalQuestions: 10,
+          correctAnswers: Math.floor(((score + Math.floor(Math.random() * 10) - 5) / 100) * 10)
+        }
+      ],
+      completedAt: new Date(),
+      certificateId: isPassed ? certificateId : undefined,
+      grade: isPassed ? (score >= 90 ? 'A' : score >= 80 ? 'B' : 'C') : 'F'
+    };
+    
+    // Store the result for later retrieval
+    if (!window.mockTestResults) {
+      window.mockTestResults = [];
+    }
+    window.mockTestResults.push(testResult);
+    
+    // Generate certificate if passed
+    if (isPassed) {
+      const certificate: Certificate = {
+        id: certificateId,
         userId: '5',
         user: mockUsers[4],
         surveyId: '1',
         survey: mockSurveys[0],
-        sessionId,
-        score: 85,
-        totalQuestions: 30,
-        correctAnswers: 26,
-        isPassed: true,
-        timeSpent: 1800,
-        attemptNumber: 1,
-        sectionScores: [],
-        completedAt: new Date()
-      },
+        resultId,
+        certificateNumber,
+        issuedAt: new Date(),
+        downloadCount: 0,
+        status: 'active'
+      };
+      
+      // Store the certificate for later retrieval
+      if (!window.mockCertificates) {
+        window.mockCertificates = [];
+      }
+      window.mockCertificates.push(certificate);
+    }
+    
+    return {
+      success: true,
+      data: testResult,
       message: 'Test submitted successfully'
     };
   },
@@ -783,6 +849,22 @@ export const supervisorDashboardApi = {
 export const enumeratorDashboardApi = {
   getDashboardData: async (): Promise<ApiResponse<EnumeratorDashboard>> => {
     await delay(800);
+    
+    // Get stored test results and certificates
+    const storedResults = (window as any).mockTestResults || [];
+    const storedCertificates = (window as any).mockCertificates || [];
+    
+    // Convert stored results to CompletedTest format
+    const completedTests = storedResults.map((result: any) => ({
+      resultId: result.id,
+      surveyTitle: result.survey.title,
+      score: result.score,
+      isPassed: result.isPassed,
+      completedAt: result.completedAt,
+      attemptNumber: result.attemptNumber,
+      certificateId: result.certificateId
+    }));
+    
     return {
       success: true,
       data: {
@@ -800,13 +882,13 @@ export const enumeratorDashboardApi = {
             isEligible: true
           }
         ],
-        completedTests: [],
+        completedTests,
         upcomingTests: [],
-        certificates: [],
-        overallProgress: 0,
-        averageScore: 0,
-        totalAttempts: 0,
-        passedTests: 0
+        certificates: storedCertificates,
+        overallProgress: completedTests.length > 0 ? (completedTests.filter((t: any) => t.isPassed).length / completedTests.length) * 100 : 0,
+        averageScore: completedTests.length > 0 ? completedTests.reduce((sum: number, t: any) => sum + t.score, 0) / completedTests.length : 0,
+        totalAttempts: completedTests.length,
+        passedTests: completedTests.filter((t: any) => t.isPassed).length
       },
       message: 'Enumerator Dashboard data fetched successfully'
     };
@@ -817,9 +899,13 @@ export const enumeratorDashboardApi = {
 export const resultApi = {
   getResults: async (filters: AnalyticsFilter): Promise<ApiResponse<TestResult[]>> => {
     await delay(1000);
+    
+    // Get stored test results
+    const storedResults = (window as any).mockTestResults || [];
+    
     return {
       success: true,
-      data: [],
+      data: storedResults,
       message: 'Results fetched successfully'
     };
   },
@@ -860,18 +946,86 @@ export const resultApi = {
 export const certificateApi = {
   getCertificates: async (): Promise<ApiResponse<Certificate[]>> => {
     await delay(800);
+    
+    // Get stored certificates
+    const storedCertificates = (window as any).mockCertificates || [];
+    
     return {
       success: true,
-      data: [],
+      data: storedCertificates,
       message: 'Certificates fetched successfully'
     };
   },
 
   downloadCertificate: async (certificateId: string): Promise<ApiResponse<Blob>> => {
     await delay(1500);
+    
+    // Update download count
+    const storedCertificates = (window as any).mockCertificates || [];
+    const certificateIndex = storedCertificates.findIndex((cert: any) => cert.id === certificateId);
+    if (certificateIndex !== -1) {
+      storedCertificates[certificateIndex].downloadCount += 1;
+      (window as any).mockCertificates = storedCertificates;
+    }
+    
+    // Generate a mock PDF blob
+    const pdfContent = `%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Length 44
+>>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(Certificate of Completion) Tj
+ET
+endstream
+endobj
+
+xref
+0 5
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000206 00000 n 
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+299
+%%EOF`;
+    
     return {
       success: true,
-      data: new Blob(['mock pdf data'], { type: 'application/pdf' }),
+      data: new Blob([pdfContent], { type: 'application/pdf' }),
       message: 'Certificate downloaded successfully'
     };
   },
