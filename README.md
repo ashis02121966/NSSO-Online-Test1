@@ -32,28 +32,27 @@ The application includes demo accounts for testing:
 
 ## Setup Instructions
 
-### Option 1: Demo Mode (Current)
-The application runs in demo mode with mock data. All features are functional but data doesn't persist.
-
-### Option 2: Production Setup with Supabase
+### Option 1: Production Setup with Supabase (Recommended)
 
 1. **Create Supabase Project**
-   ```bash
-   # Go to https://supabase.com
-   # Create a new project
-   # Note your project URL and anon key
-   ```
+   - Go to [https://supabase.com](https://supabase.com)
+   - Create a new project
+   - Note your project URL and anon key
 
 2. **Configure Environment Variables**
    ```bash
-   cp .env.example .env
-   # Edit .env with your Supabase credentials
+   # Create .env file with your Supabase credentials
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-3. **Run Database Migrations**
-   ```sql
-   -- Run the SQL files in supabase/migrations/ in your Supabase SQL editor
-   -- This will create all tables and insert initial data
+3. **Initialize Database**
+   ```bash
+   # Start the application
+   npm run dev
+   
+   # On the login page, click "Initialize Database"
+   # This will create all tables and sample data automatically
    ```
 
 4. **Install Dependencies**
@@ -65,6 +64,9 @@ The application runs in demo mode with mock data. All features are functional bu
    ```bash
    npm run dev
    ```
+
+### Option 2: Demo Mode (Fallback)
+If Supabase is not configured, the application automatically runs in demo mode with mock data. All features are functional but data doesn't persist between sessions.
 
 ## Database Schema
 

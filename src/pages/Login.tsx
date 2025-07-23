@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
+import { DataInitializer } from '../services/dataInitializer';
 import { FileText, AlertCircle, Users, Building, UserCheck, User } from 'lucide-react';
 
 export function Login() {
@@ -10,12 +11,36 @@ export function Login() {
   const [email, setEmail] = useState('admin@esigma.com');
   const [password, setPassword] = useState('password123');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState('');
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 
+  const handleInitializeDatabase = async () => {
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      setError('Supabase configuration is required for database initialization');
+      return;
+    }
+
+    setIsInitializing(true);
+    setError('');
+
+    try {
+      const result = await DataInitializer.initializeDatabase();
+      if (result.success) {
+        setError(''); // Clear any previous errors
+        alert('Database initialized successfully! You can now login with the demo credentials.');
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      setError('Failed to initialize database. Please check your Supabase configuration.');
+    } finally {
+      setIsInitializing(false);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -72,6 +97,24 @@ export function Login() {
             </div>
           )}
 
+          {/* Database Initialization Section */}
+          {import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">Database Setup</h4>
+              <p className="text-xs text-blue-800 mb-3">
+                If this is your first time, initialize the database with sample data including users, surveys, and settings.
+              </p>
+              <Button
+                onClick={handleInitializeDatabase}
+                disabled={isInitializing}
+                variant="secondary"
+                size="sm"
+                className="w-full"
+              >
+                {isInitializing ? 'Initializing Database...' : 'Initialize Database'}
+              </Button>
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email Address"
@@ -103,10 +146,17 @@ export function Login() {
 
           <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-900 mb-3">Demo Accounts - Click to Login:</h4>
-            <div className="mb-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
-              <strong>Demo Mode:</strong> This application is running in demo mode with mock data. 
-              To use with real database, configure Supabase environment variables.
-            </div>
+            {!import.meta.env.VITE_SUPABASE_URL ? (
+              <div className="mb-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
+                <strong>Demo Mode:</strong> This application is running in demo mode with mock data. 
+                To use with real database, configure Supabase environment variables.
+              </div>
+            ) : (
+              <div className="mb-3 p-2 bg-green-100 rounded text-xs text-green-800">
+                <strong>Production Mode:</strong> Connected to Supabase database. 
+                Initialize database first, then use these credentials.
+              </div>
+            )}
             <div className="space-y-2">
               {demoCredentials.map((cred) => (
                 <button

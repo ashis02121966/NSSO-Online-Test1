@@ -12,6 +12,7 @@ import {
   TestService, 
   SettingsService 
 } from './database';
+import { DataInitializer } from './dataInitializer';
 
 // Mock API responses for development
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -117,6 +118,9 @@ export const authApi = {
     }
     
     try {
+      // Initialize database if needed
+      await DataInitializer.initializeDatabase();
+      
       return await AuthService.login(email, password);
     } catch (error) {
       console.error('Supabase auth failed, falling back to mock:', error);

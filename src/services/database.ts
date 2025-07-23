@@ -107,7 +107,7 @@ export class UserService {
         .from('users')
         .select(`
           *,
-          role:roles(*)
+          role:roles!role_id(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -124,6 +124,8 @@ export class UserService {
           zone: user.zone,
           region: user.region,
           district: user.district,
+          employeeId: user.employee_id,
+          phoneNumber: user.phone_number,
           isActive: user.is_active,
           createdAt: new Date(user.created_at),
           updatedAt: new Date(user.updated_at),
@@ -271,8 +273,7 @@ export class SurveyService {
         .from('surveys')
         .select(`
           *,
-          creator:users!created_by(name),
-          sections:survey_sections(*)
+          creator:users!created_by(name)
         `)
         .order('created_at', { ascending: false });
 
@@ -290,7 +291,7 @@ export class SurveyService {
           passingScore: survey.passing_score,
           maxAttempts: survey.max_attempts,
           isActive: survey.is_active,
-          sections: survey.sections || [],
+          sections: [],
           createdAt: new Date(survey.created_at),
           updatedAt: new Date(survey.updated_at),
           createdBy: survey.created_by
