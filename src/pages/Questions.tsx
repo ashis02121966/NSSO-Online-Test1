@@ -7,6 +7,7 @@ import { Modal } from '../components/UI/Modal';
 import { questionApi, surveyApi } from '../services/api';
 import { FileUploadResult, Survey, Section, Question } from '../types';
 import { Upload, FileText, AlertTriangle, CheckCircle, Plus, Download, Edit, Trash2, Search, Filter, BookOpen, Target, Clock } from 'lucide-react';
+import { formatDate } from '../utils';
 
 export function Questions() {
   const [surveys, setSurveys] = useState<Survey[]>([]);
