@@ -272,15 +272,19 @@ export function Surveys() {
                         title={survey.isActive ? 'Deactivate Survey' : 'Activate Survey'}
                       >
                         {survey.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                      </button>
+                      <button 
                         onClick={(e) => e.stopPropagation()}
                         className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                         title="View Details"
-                      <button className="p-1 text-blue-600 hover:text-blue-700">
+                      >
                         <Eye className="w-4 h-4" />
+                      </button>
+                      <button 
                         onClick={(e) => handleDeleteSurvey(survey.id, e)}
                         className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete Survey"
-                      <button className="p-1 text-red-600 hover:text-red-700">
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
