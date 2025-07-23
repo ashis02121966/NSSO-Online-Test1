@@ -188,14 +188,18 @@ export function Questions() {
   };
 
   const handleFileUpload = async () => {
-    if (!uploadFile || !selectedSurvey) return;
+    if (!uploadFile) return;
 
     try {
-      const response = await questionApi.uploadQuestions(selectedSurvey.id, uploadFile);
+      // Upload questions with survey and section mapping from CSV
+      const response = await questionApi.uploadQuestions('bulk', uploadFile);
       setUploadResult(response.data);
       
-      if (response.success && selectedSection) {
-        fetchQuestions(selectedSurvey.id, selectedSection.id);
+      if (response.success) {
+        // Refresh current section if selected
+        if (selectedSurvey && selectedSection) {
+          fetchQuestions(selectedSurvey.id, selectedSection.id);
+        }
       }
     } catch (error) {
       console.error('Failed to upload questions:', error);
@@ -204,11 +208,17 @@ export function Questions() {
 
   const handleDownloadTemplate = async () => {
     try {
-      const blob = await questionApi.downloadTemplate();
+      // Create template with survey and section information
+      const csvContent = `Survey ID,Survey Title,Section ID,Section Title,Question Text,Question Type,Complexity,Option A,Option B,Option C,Option D,Correct Answer,Points,Explanation
+"1","Digital Literacy Assessment","1","Basic Computer Skills","What is the capital of France?",single_choice,easy,"Paris","London","Berlin","Madrid",A,1,"Paris is the capital and largest city of France"
+"1","Digital Literacy Assessment","1","Basic Computer Skills","Which of the following are programming languages?",multiple_choice,medium,"Python","JavaScript","HTML","CSS","A,B",2,"Python and JavaScript are programming languages, while HTML and CSS are markup and styling languages"
+"1","Digital Literacy Assessment","2","Internet and Digital Communication","What does CPU stand for?",single_choice,easy,"Central Processing Unit","Computer Personal Unit","Central Program Unit","Computer Processing Unit",A,1,"CPU stands for Central Processing Unit"`;
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'question_template.csv';
+      link.download = 'question_template_with_survey_sections.csv';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -352,7 +362,6 @@ export function Questions() {
             </Button>
             <Button
               onClick={() => setIsUploadModalOpen(true)}
-              disabled={!selectedSurvey}
               className="flex items-center space-x-2"
             >
               <Upload className="w-4 h-4" />
@@ -536,17 +545,6 @@ export function Questions() {
                               <span className="text-sm font-medium text-blue-700">
                                 {questions.length} questions loaded
                               </span>
-                              <div className="flex items-center space-x-2">
-                                <Button
-                                  variant="secondary"
-                                  size="sm"
-                                  onClick={() => setIsUploadModalOpen(true)}
-                                  className="flex items-center space-x-1"
-                                >
-                                  <Upload className="w-3 h-3" />
-                                  <span>Upload</span>
-                                </Button>
-                              </div>
                             </div>
                           </div>
                         )}
@@ -571,16 +569,6 @@ export function Questions() {
                   {questions.length} questions in this section
                 </p>
               </div>
-              <div className="flex items-center space-x-3">
-                <Button
-                  variant="secondary"
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center space-x-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>Upload Questions</span>
-                </Button>
-              </div>
             </div>
 
             {questions.length === 0 ? (
@@ -588,92 +576,103 @@ export function Questions() {
                 <HelpCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Questions Found</h3>
                 <p className="text-gray-500 mb-4">This section doesn't have any questions yet</p>
-                <Button
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center space-x-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>Upload Questions</span>
-                </Button>
+                <p className="text-gray-400 text-sm">Use the bulk upload feature to add questions</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {questions.map((question) => (
-                  <div
-                    key={question.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getComplexityColor(question.complexity)}`}>
-                          {question.complexity.charAt(0).toUpperCase() + question.complexity.slice(1)}
-                        </span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(question.type)}`}>
-                          {question.type === 'single_choice' ? 'Single' : 'Multiple'}
-                        </span>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          {question.points} pt{question.points !== 1 ? 's' : ''}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <h3 className="font-medium text-gray-900 mb-3 line-clamp-3 text-sm">
-                      {question.text}
-                    </h3>
-                    
-                    <div className="space-y-2 mb-4">
-                      {question.options.map((option, index) => (
-                        <div
-                          key={option.id}
-                          className={`text-xs p-2 rounded ${
-                            option.isCorrect 
-                              ? 'bg-green-50 text-green-800 border border-green-200' 
-                              : 'bg-gray-50 text-gray-700'
-                          }`}
-                        >
-                          <span className="font-medium">
-                            {String.fromCharCode(65 + index)}.
-                          </span> {option.text}
-                          {option.isCorrect && (
-                            <span className="ml-2 text-green-600">✓</span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                      <span className="text-xs text-gray-500">
-                        Order: {question.order}
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        <button
-                          onClick={() => openQuestionDetailModal(question)}
-                          className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
-                          title="View Question Details"
-                        >
-                          <Eye className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            console.log('Edit question:', question.id);
-                            // Edit functionality can be implemented here
-                          }}
-                          className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
-                          title="Edit Question"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteQuestion(question.id)}
-                          className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
-                          title="Delete Question"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Question</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Type</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Complexity</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Points</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Options</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Order</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {questions.map((question) => (
+                      <tr key={question.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4">
+                          <div className="max-w-md">
+                            <p className="font-medium text-gray-900 line-clamp-2">{question.text}</p>
+                            {question.explanation && (
+                              <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                                Explanation: {question.explanation}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(question.type)}`}>
+                            {question.type === 'single_choice' ? 'Single' : 'Multiple'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getComplexityColor(question.complexity)}`}>
+                            {question.complexity.charAt(0).toUpperCase() + question.complexity.slice(1)}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                            {question.points}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="space-y-1">
+                            {question.options.slice(0, 2).map((option, index) => (
+                              <div key={option.id} className="text-xs">
+                                <span className="font-medium">
+                                  {String.fromCharCode(65 + index)}.
+                                </span> {option.text.substring(0, 30)}
+                                {option.text.length > 30 && '...'}
+                                {option.isCorrect && (
+                                  <span className="ml-1 text-green-600">✓</span>
+                                )}
+                              </div>
+                            ))}
+                            {question.options.length > 2 && (
+                              <div className="text-xs text-gray-500">
+                                +{question.options.length - 2} more options
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-gray-900">{question.order}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => openQuestionDetailModal(question)}
+                              className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                              title="View Question Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                console.log('Edit question:', question.id);
+                                // Edit functionality can be implemented here
+                              }}
+                              className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
+                              title="Edit Question"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteQuestion(question.id)}
+                              className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                              title="Delete Question"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </Card>
@@ -708,10 +707,11 @@ export function Questions() {
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium text-blue-900 mb-2">CSV Format Requirements:</h4>
                   <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Question Text, Question Type, Complexity, Option A, Option B, Option C, Option D, Correct Answer, Points, Explanation</li>
+                    <li>• Survey ID, Survey Title, Section ID, Section Title, Question Text, Question Type, Complexity, Option A, Option B, Option C, Option D, Correct Answer, Points, Explanation</li>
                     <li>• Question Type: single_choice or multiple_choice</li>
                     <li>• Complexity: easy, medium, or hard</li>
                     <li>• Correct Answer: A, B, C, D (or A,B for multiple choice)</li>
+                    <li>• Survey ID and Section ID should match existing surveys and sections</li>
                   </ul>
                 </div>
                 
@@ -772,9 +772,10 @@ export function Questions() {
                   <div className="bg-red-50 p-4 rounded-lg">
                     <h4 className="font-medium text-red-900 mb-2">Errors:</h4>
                     <ul className="text-sm text-red-800 space-y-1">
-                      {uploadResult.errors.map((error, index) => (
-                        <li key={index}>• {error}</li>
-                      ))}
+                      <li>• Upload questions for multiple surveys and sections at once</li>
+                      <li>• CSV must include Survey ID, Survey Title, Section ID, and Section Title</li>
+                      <li>• Questions will be automatically mapped to corresponding surveys and sections</li>
+                      <li>• Download the template to see the required format</li>
                     </ul>
                   </div>
                 )}
