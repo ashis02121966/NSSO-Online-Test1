@@ -353,22 +353,6 @@ export function Questions() {
     setIsQuestionDetailModalOpen(true);
   };
 
-  const openEditQuestionModal = (question: Question) => {
-    setSelectedQuestion(question);
-    setQuestionFormData({
-      text: question.text,
-      type: question.type,
-      complexity: question.complexity,
-      points: question.points,
-      explanation: question.explanation || '',
-      options: question.options.map(opt => ({
-        text: opt.text,
-        isCorrect: opt.isCorrect
-      }))
-    });
-    setIsEditQuestionModalOpen(true);
-  };
-
   const handleEditQuestion = async () => {
     if (!selectedQuestion) return;
 
@@ -400,6 +384,11 @@ export function Questions() {
       setIsEditQuestionModalOpen(false);
       resetQuestionForm();
       console.log('Question updated:', updatedQuestion);
+    } catch (error) {
+      console.error('Failed to update question:', error);
+    }
+  };
+
   const resetQuestionForm = () => {
     setQuestionFormData({
       text: '',
