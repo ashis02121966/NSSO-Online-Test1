@@ -206,7 +206,111 @@ export function Surveys() {
               <p className="text-gray-500 mt-2">Loading surveys...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Survey</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Status</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Questions</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Duration</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Target Date</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Pass Score</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-900">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSurveys.map((survey) => (
+                    <tr key={survey.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div>
+                          <p className="font-medium text-gray-900">{survey.title}</p>
+                          <p className="text-sm text-gray-500 line-clamp-1">{survey.description}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          survey.isActive 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {survey.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-gray-900">{survey.totalQuestions}</td>
+                      <td className="py-3 px-4 text-gray-900">{formatDuration(survey.duration)}</td>
+                      <td className="py-3 px-4 text-gray-900">{formatDate(survey.targetDate)}</td>
+                      <td className="py-3 px-4 text-gray-900">{survey.passingScore}%</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={(e) => openEditModal(survey, e)}
+                            className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+                            title="Edit Survey"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDuplicateSurvey(survey, e)}
+                            className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
+                            title="Duplicate Survey"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handleToggleStatus(survey.id, e)}
+                            className={`p-1.5 hover:bg-gray-50 rounded-md transition-colors ${
+                              survey.isActive ? 'text-orange-600 hover:text-orange-700' : 'text-green-600 hover:text-green-700'
+                            }`}
+                            title={survey.isActive ? 'Deactivate Survey' : 'Activate Survey'}
+                          >
+                            {survey.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('View details for survey:', survey.id);
+                            }}
+                            className="p-1.5 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteSurvey(survey.id, e)}
+                            className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
+                            title="Delete Survey"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {filteredSurveys.length === 0 && !isLoading && (
+            <div className="text-center py-12">
+              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Surveys Found</h3>
+              <p className="text-gray-500 mb-4">
+                {searchTerm ? 'No surveys match your search criteria.' : 'Get started by creating your first survey.'}
+              </p>
+              {!searchTerm && (
+                <Button
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex items-center space-x-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Survey</span>
+                </Button>
+              )}
+            </div>
+          )}
+        </Card>
               {filteredSurveys.map((survey) => (
                 <Card key={survey.id} className="hover:shadow-lg transition-all duration-200 cursor-pointer">
                   <div className="flex items-center justify-between mb-3">
