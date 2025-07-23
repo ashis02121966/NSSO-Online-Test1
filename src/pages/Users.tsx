@@ -206,11 +206,11 @@ export function Users() {
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="">Select role</option>
-                <option value="1">Admin</option>
-                <option value="2">Supervisor</option>
-                <option value="3">RO User</option>
-                <option value="4">ZO User</option>
-                <option value="5">Enumerator</option>
+                <option value="550e8400-e29b-41d4-a716-446655440001">Admin</option>
+                <option value="550e8400-e29b-41d4-a716-446655440002">Supervisor</option>
+                <option value="550e8400-e29b-41d4-a716-446655440003">RO User</option>
+                <option value="550e8400-e29b-41d4-a716-446655440004">ZO User</option>
+                <option value="550e8400-e29b-41d4-a716-446655440005">Enumerator</option>
               </select>
             </div>
             <Input
