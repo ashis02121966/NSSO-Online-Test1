@@ -206,9 +206,9 @@ export function Surveys() {
               <p className="text-gray-500 mt-2">Loading surveys...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
               {filteredSurveys.map((survey) => (
-                <Card key={survey.id} className="hover:shadow-lg transition-all duration-200 cursor-pointer">
+                <Card key={survey.id} className="hover:shadow-lg transition-all duration-200">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-gray-900 truncate">
                       {survey.title}
@@ -247,7 +247,7 @@ export function Surveys() {
                   
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="text-xs text-gray-500">
-                      {survey.sections.length} sections
+                      {survey.sections?.length || 0} sections
                     </div>
                     <div className="flex items-center space-x-1">
                       <button 
