@@ -25,6 +25,17 @@ export function Questions() {
   const [complexityFilter, setComplexityFilter] = useState('all');
   const [sectionFilter, setSectionFilter] = useState('all');
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditSurveyModalOpen, setIsEditSurveyModalOpen] = useState(false);
+  const [editingSurvey, setEditingSurvey] = useState<Survey | null>(null);
+  const [surveyFormData, setSurveyFormData] = useState({
+    title: '',
+    description: '',
+    targetDate: '',
+    duration: 35,
+    totalQuestions: 30,
+    passingScore: 70,
+    maxAttempts: 3
+  });
 
   const [questionFormData, setQuestionFormData] = useState({
     text: '',
@@ -209,6 +220,59 @@ export function Questions() {
     }
   };
 
+  const handleEditSurvey = (survey: Survey) => {
+    setEditingSurvey(survey);
+    setSurveyFormData({
+      title: survey.title,
+      description: survey.description,
+      targetDate: survey.targetDate.toISOString().split('T')[0],
+      duration: survey.duration,
+      totalQuestions: survey.totalQuestions,
+      passingScore: survey.passingScore,
+      maxAttempts: survey.maxAttempts
+    });
+    setIsEditSurveyModalOpen(true);
+  };
+
+  const handleUpdateSurvey = async () => {
+    if (!editingSurvey) return;
+
+    setIsCreating(true);
+    try {
+      const response = await surveyApi.updateSurvey(editingSurvey.id, {
+        ...surveyFormData,
+        targetDate: new Date(surveyFormData.targetDate)
+      });
+      if (response.success && response.data) {
+        setSurveys(surveys.map(s => s.id === editingSurvey.id ? response.data! : s));
+        setIsEditSurveyModalOpen(false);
+        resetSurveyForm();
+      }
+    } catch (error) {
+      console.error('Failed to update survey:', error);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteSurvey = async (surveyId: string) => {
+    if (window.confirm('Are you sure you want to delete this survey? This will also delete all associated questions and results.')) {
+      try {
+        const response = await surveyApi.deleteSurvey(surveyId);
+        if (response.success) {
+          setSurveys(surveys.filter(s => s.id !== surveyId));
+          if (selectedSurvey === surveyId) {
+            setSelectedSurvey('');
+            setSelectedSection('');
+            setQuestions([]);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to delete survey:', error);
+      }
+    }
+  };
+
   const resetUpload = () => {
     setSelectedFile(null);
     setSelectedSurvey('');
@@ -238,6 +302,19 @@ export function Questions() {
       questionsCount: 10,
       order: sections.length + 1
     });
+  };
+
+  const resetSurveyForm = () => {
+    setSurveyFormData({
+      title: '',
+      description: '',
+      targetDate: '',
+      duration: 35,
+      totalQuestions: 30,
+      passingScore: 70,
+      maxAttempts: 3
+    });
+    setEditingSurvey(null);
   };
 
   const updateOption = (index: number, field: 'text' | 'isCorrect', value: string | boolean) => {
@@ -332,27 +409,64 @@ export function Questions() {
           {/* Survey and Section Selection */}
           <div className="lg:col-span-1">
             <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Survey & Sections</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Surveys</h3>
               
-              {/* Survey Selection */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Survey
-                </label>
-                <select
-                  value={selectedSurvey}
-                  onChange={(e) => {
-                    setSelectedSurvey(e.target.value);
-                    setSelectedSection('');
-                    setQuestions([]);
-                  }}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Choose a survey</option>
-                  {surveys.map(survey => (
-                    <option key={survey.id} value={survey.id}>{survey.title}</option>
-                  ))}
-                </select>
+              {/* Survey Grid */}
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {surveys.map(survey => (
+                  <div
+                    key={survey.id}
+                    className={`border rounded-lg p-3 cursor-pointer transition-colors ${
+                      selectedSurvey === survey.id
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => {
+                      setSelectedSurvey(survey.id);
+                      setSelectedSection('');
+                      setQuestions([]);
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-medium text-sm text-gray-900 line-clamp-2">{survey.title}</h4>
+                      <div className="flex items-center space-x-1 ml-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditSurvey(survey);
+                          }}
+                          className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded"
+                          title="Edit Survey"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSurvey(survey.id);
+                          }}
+                          className="p-1 text-red-600 hover:text-red-700 hover:bg-red-100 rounded"
+                          title="Delete Survey"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">{survey.description}</p>
+                    <div className="flex items-center justify-between text-xs text-gray-400">
+                      <span>{survey.totalQuestions} questions</span>
+                      <span>{formatDate(survey.targetDate)}</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        survey.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {survey.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                      <span className="text-xs text-gray-500">{survey.duration}min</span>
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Section Management */}
@@ -751,6 +865,92 @@ export function Questions() {
                 loading={isCreating}
               >
                 Create Question
+              </Button>
+            </div>
+          </div>
+        </Modal>
+
+        {/* Edit Survey Modal */}
+        <Modal
+          isOpen={isEditSurveyModalOpen}
+          onClose={() => {
+            setIsEditSurveyModalOpen(false);
+            resetSurveyForm();
+          }}
+          title="Edit Survey"
+          size="lg"
+        >
+          <div className="space-y-4">
+            <Input
+              label="Survey Title"
+              value={surveyFormData.title}
+              onChange={(e) => setSurveyFormData({ ...surveyFormData, title: e.target.value })}
+              placeholder="Enter survey title"
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                value={surveyFormData.description}
+                onChange={(e) => setSurveyFormData({ ...surveyFormData, description: e.target.value })}
+                placeholder="Enter survey description"
+                rows={3}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Target Date"
+                type="date"
+                value={surveyFormData.targetDate}
+                onChange={(e) => setSurveyFormData({ ...surveyFormData, targetDate: e.target.value })}
+              />
+              <Input
+                label="Duration (minutes)"
+                type="number"
+                value={surveyFormData.duration}
+                onChange={(e) => setSurveyFormData({ ...surveyFormData, duration: parseInt(e.target.value) })}
+                min="1"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <Input
+                label="Total Questions"
+                type="number"
+                value={surveyFormData.totalQuestions}
+                onChange={(e) => setSurveyFormData({ ...surveyFormData, totalQuestions: parseInt(e.target.value) })}
+                min="1"
+              />
+              <Input
+                label="Passing Score (%)"
+                type="number"
+                value={surveyFormData.passingScore}
+                onChange={(e) => setSurveyFormData({ ...surveyFormData, passingScore: parseInt(e.target.value) })}
+                min="1"
+                max="100"
+              />
+              <Input
+                label="Max Attempts"
+                type="number"
+                value={surveyFormData.maxAttempts}
+                onChange={(e) => setSurveyFormData({ ...surveyFormData, maxAttempts: parseInt(e.target.value) })}
+                min="1"
+              />
+            </div>
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsEditSurveyModalOpen(false);
+                  resetSurveyForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateSurvey}
+                loading={isCreating}
+              >
+                Update Survey
               </Button>
             </div>
           </div>

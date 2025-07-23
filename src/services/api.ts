@@ -328,6 +328,32 @@ export const surveyApi = {
     };
   },
 
+  updateSurvey: async (surveyId: string, surveyData: any): Promise<ApiResponse<Survey>> => {
+    await delay(1000);
+    const updatedSurvey: Survey = {
+      id: surveyId,
+      ...surveyData,
+      sections: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: true,
+      createdBy: '1'
+    };
+    return {
+      success: true,
+      data: updatedSurvey,
+      message: 'Survey updated successfully'
+    };
+  },
+
+  deleteSurvey: async (surveyId: string): Promise<ApiResponse<void>> => {
+    await delay(800);
+    return {
+      success: true,
+      message: 'Survey deleted successfully'
+    };
+  },
+
   getSurveySections: async (surveyId: string): Promise<ApiResponse<Section[]>> => {
     await delay(600);
     return {
