@@ -1046,13 +1046,547 @@ export const settingsApi = {
     return {
       success: true,
       data: [
+        // Security Settings
         {
           id: '1',
+          category: 'security',
+          key: 'max_login_attempts',
+          value: '5',
+          description: 'Maximum number of failed login attempts before account lockout',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '2',
+          category: 'security',
+          key: 'account_lockout_duration',
+          value: '30',
+          description: 'Account lockout duration in minutes after max failed attempts',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '3',
+          category: 'security',
+          key: 'session_timeout',
+          value: '120',
+          description: 'User session timeout in minutes',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '4',
+          category: 'security',
+          key: 'password_min_length',
+          value: '8',
+          description: 'Minimum password length requirement',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '5',
+          category: 'security',
+          key: 'require_password_complexity',
+          value: 'true',
+          description: 'Require uppercase, lowercase, numbers, and special characters in passwords',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '6',
+          category: 'security',
+          key: 'force_password_change',
+          value: '90',
+          description: 'Force password change every X days (0 to disable)',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // Test Settings
+        {
+          id: '7',
+          category: 'test',
+          key: 'auto_save_interval',
+          value: '30',
+          description: 'Auto-save test progress interval in seconds',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '8',
+          category: 'test',
+          key: 'enable_auto_save',
+          value: 'true',
+          description: 'Enable automatic saving of test progress',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '9',
+          category: 'test',
+          key: 'auto_submit_on_timeout',
+          value: 'true',
+          description: 'Automatically submit test when time expires',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '10',
+          category: 'test',
+          key: 'show_time_warning',
+          value: 'true',
+          description: 'Show warning when 5 minutes remaining',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '11',
+          category: 'test',
+          key: 'allow_question_navigation',
+          value: 'true',
+          description: 'Allow users to navigate between questions during test',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '12',
+          category: 'test',
+          key: 'show_question_numbers',
+          value: 'true',
+          description: 'Show question numbers to users during test',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '13',
+          category: 'test',
+          key: 'enable_question_flagging',
+          value: 'true',
+          description: 'Allow users to flag questions for review',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '14',
+          category: 'test',
+          key: 'network_pause_enabled',
+          value: 'true',
+          description: 'Automatically pause test when network is unavailable',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // General Settings
+        {
+          id: '15',
           category: 'general',
           key: 'site_name',
           value: 'eSigma Survey Platform',
-          description: 'Name of the application',
+          description: 'Name of the application displayed in headers and titles',
           type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '16',
+          category: 'general',
+          key: 'site_description',
+          value: 'Online MCQ Test Management System',
+          description: 'Description of the application',
+          type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '17',
+          category: 'general',
+          key: 'support_email',
+          value: 'support@esigma.com',
+          description: 'Support email address for user assistance',
+          type: 'email',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '18',
+          category: 'general',
+          key: 'maintenance_mode',
+          value: 'false',
+          description: 'Enable maintenance mode to restrict access',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '19',
+          category: 'general',
+          key: 'default_timezone',
+          value: 'Asia/Kolkata',
+          description: 'Default timezone for the application',
+          type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '20',
+          category: 'general',
+          key: 'date_format',
+          value: 'DD/MM/YYYY',
+          description: 'Default date format for display',
+          type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // Email Settings
+        {
+          id: '21',
+          category: 'email',
+          key: 'smtp_host',
+          value: 'smtp.gmail.com',
+          description: 'SMTP server hostname for sending emails',
+          type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '22',
+          category: 'email',
+          key: 'smtp_port',
+          value: '587',
+          description: 'SMTP server port number',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '23',
+          category: 'email',
+          key: 'smtp_username',
+          value: 'noreply@esigma.com',
+          description: 'SMTP username for authentication',
+          type: 'email',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '24',
+          category: 'email',
+          key: 'from_email',
+          value: 'noreply@esigma.com',
+          description: 'Default from email address',
+          type: 'email',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '25',
+          category: 'email',
+          key: 'from_name',
+          value: 'eSigma Survey Platform',
+          description: 'Default from name for emails',
+          type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '26',
+          category: 'email',
+          key: 'enable_email_notifications',
+          value: 'true',
+          description: 'Enable email notifications for users',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // Certificate Settings
+        {
+          id: '27',
+          category: 'certificate',
+          key: 'auto_generate_certificates',
+          value: 'true',
+          description: 'Automatically generate certificates for passed tests',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '28',
+          category: 'certificate',
+          key: 'certificate_validity_days',
+          value: '365',
+          description: 'Certificate validity period in days (0 for no expiry)',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '29',
+          category: 'certificate',
+          key: 'certificate_template_color',
+          value: '#2563eb',
+          description: 'Primary color for certificate template',
+          type: 'color',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '30',
+          category: 'certificate',
+          key: 'certificate_logo_url',
+          value: '/logo.png',
+          description: 'URL to logo image for certificates',
+          type: 'url',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '31',
+          category: 'certificate',
+          key: 'certificate_signature_name',
+          value: 'Director, eSigma',
+          description: 'Name to appear as signatory on certificates',
+          type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // Notification Settings
+        {
+          id: '32',
+          category: 'notification',
+          key: 'enable_push_notifications',
+          value: 'true',
+          description: 'Enable browser push notifications',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '33',
+          category: 'notification',
+          key: 'notify_test_reminders',
+          value: 'true',
+          description: 'Send reminders for upcoming test deadlines',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '34',
+          category: 'notification',
+          key: 'reminder_days_before',
+          value: '3',
+          description: 'Send test reminders X days before deadline',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '35',
+          category: 'notification',
+          key: 'notify_certificate_earned',
+          value: 'true',
+          description: 'Send notification when certificate is earned',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // Database Settings
+        {
+          id: '36',
+          category: 'database',
+          key: 'backup_frequency',
+          value: 'daily',
+          description: 'Database backup frequency (daily, weekly, monthly)',
+          type: 'string',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '37',
+          category: 'database',
+          key: 'cleanup_old_sessions',
+          value: 'true',
+          description: 'Automatically cleanup old test sessions',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '38',
+          category: 'database',
+          key: 'session_cleanup_days',
+          value: '30',
+          description: 'Delete test sessions older than X days',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '39',
+          category: 'database',
+          key: 'log_retention_days',
+          value: '90',
+          description: 'Keep activity logs for X days',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // UI Settings
+        {
+          id: '40',
+          category: 'ui',
+          key: 'theme_primary_color',
+          value: '#2563eb',
+          description: 'Primary theme color for the application',
+          type: 'color',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '41',
+          category: 'ui',
+          key: 'theme_secondary_color',
+          value: '#64748b',
+          description: 'Secondary theme color for the application',
+          type: 'color',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '42',
+          category: 'ui',
+          key: 'enable_dark_mode',
+          value: 'false',
+          description: 'Enable dark mode theme option',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '43',
+          category: 'ui',
+          key: 'items_per_page',
+          value: '20',
+          description: 'Default number of items to show per page in lists',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '44',
+          category: 'ui',
+          key: 'show_progress_indicators',
+          value: 'true',
+          description: 'Show progress indicators and loading states',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        
+        // Performance Settings
+        {
+          id: '45',
+          category: 'performance',
+          key: 'enable_caching',
+          value: 'true',
+          description: 'Enable application-level caching',
+          type: 'boolean',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '46',
+          category: 'performance',
+          key: 'cache_duration_minutes',
+          value: '60',
+          description: 'Cache duration in minutes for API responses',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '47',
+          category: 'performance',
+          key: 'max_concurrent_tests',
+          value: '100',
+          description: 'Maximum number of concurrent test sessions',
+          type: 'number',
+          isEditable: true,
+          updatedAt: new Date(),
+          updatedBy: 'admin'
+        },
+        {
+          id: '48',
+          category: 'performance',
+          key: 'enable_compression',
+          value: 'true',
+          description: 'Enable response compression for better performance',
+          type: 'boolean',
           isEditable: true,
           updatedAt: new Date(),
           updatedBy: 'admin'

@@ -6,7 +6,7 @@ import { Input } from '../components/UI/Input';
 import { Modal } from '../components/UI/Modal';
 import { settingsApi } from '../services/api';
 import { SystemSettings } from '../types';
-import { Settings as SettingsIcon, Save, RefreshCw, Edit, Database, Mail, Shield, Globe, Clock, Users } from 'lucide-react';
+import { Settings as SettingsIcon, Save, RefreshCw, Edit, Database, Mail, Shield, Globe, Clock, Users, Award } from 'lucide-react';
 import { formatDateTime } from '../utils';
 
 export function Settings() {
@@ -80,6 +80,8 @@ export function Settings() {
         return <Settings className="w-5 h-5 text-indigo-600" />;
       case 'notification':
         return <Users className="w-5 h-5 text-indigo-600" />;
+      case 'performance':
+        return <SettingsIcon className="w-5 h-5 text-orange-600" />;
       default:
         return <SettingsIcon className="w-5 h-5 text-gray-600" />;
     }
@@ -181,6 +183,19 @@ export function Settings() {
             placeholder="Enter URL"
           />
         );
+      case 'select':
+        const selectOptions = selectedSetting.options || [];
+        return (
+          <select
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            {selectOptions.map((option: string) => (
+              <option key={option} value={option}>{option}</option>
+            ))}
+          </select>
+        );
       case 'json':
         return (
           <textarea
@@ -252,6 +267,8 @@ export function Settings() {
                             setting.type === 'boolean' ? 'bg-green-100 text-green-700' :
                             setting.type === 'number' ? 'bg-blue-100 text-blue-700' :
                             setting.type === 'color' ? 'bg-purple-100 text-purple-700' :
+                            setting.type === 'email' ? 'bg-teal-100 text-teal-700' :
+                            setting.type === 'url' ? 'bg-indigo-100 text-indigo-700' :
                             setting.type === 'json' ? 'bg-orange-100 text-orange-700' :
                             'bg-gray-100 text-gray-600'
                           }`}>

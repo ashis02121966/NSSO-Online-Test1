@@ -354,8 +354,9 @@ export interface SystemSettings {
   key: string;
   value: string;
   description: string;
-  type: 'string' | 'number' | 'boolean' | 'json';
+  type: 'string' | 'number' | 'boolean' | 'json' | 'email' | 'url' | 'color' | 'select';
   isEditable: boolean;
+  options?: string[]; // For select type settings
   updatedAt: Date;
   updatedBy: string;
 }
