@@ -754,7 +754,8 @@ export function Questions() {
                             </button>
                             <button
                               onClick={() => {
-                                openEditQuestionModal(question);
+                                console.log('Edit question:', question.id);
+                                // Edit functionality can be implemented here
                               }}
                               className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
                               title="Edit Question"
@@ -1123,6 +1124,140 @@ export function Questions() {
               </div>
             </div>
           )}
+        </Modal>
+
+        {/* Edit Question Modal */}
+        <Modal
+          isOpen={isEditQuestionModalOpen}
+          onClose={() => {
+            setIsEditQuestionModalOpen(false);
+            resetQuestionForm();
+          }}
+          title="Edit Question"
+          size="xl"
+        >
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Question Text</label>
+              <textarea
+                value={questionFormData.text}
+                onChange={(e) => setQuestionFormData({ ...questionFormData, text: e.target.value })}
+                placeholder="Enter question text"
+                rows={3}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Question Type</label>
+                <select
+                  value={questionFormData.type}
+                  onChange={(e) => setQuestionFormData({ ...questionFormData, type: e.target.value as 'single_choice' | 'multiple_choice' })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="single_choice">Single Choice</option>
+                  <option value="multiple_choice">Multiple Choice</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Complexity</label>
+                <select
+                  value={questionFormData.complexity}
+                  onChange={(e) => setQuestionFormData({ ...questionFormData, complexity: e.target.value as 'easy' | 'medium' | 'hard' })}
+                  className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="easy">Easy</option>
+                  <option value="medium">Medium</option>
+                  <option value="hard">Hard</option>
+                </select>
+              </div>
+              <Input
+                label="Points"
+                type="number"
+                value={questionFormData.points}
+                onChange={(e) => setQuestionFormData({ ...questionFormData, points: parseInt(e.target.value) || 1 })}
+                min="1"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">Answer Options</label>
+              <div className="space-y-3">
+                {questionFormData.options.map((option, index) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    <span className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-sm font-medium">
+                      {String.fromCharCode(65 + index)}
+                    </span>
+                    <Input
+                      value={option.text}
+                      onChange={(e) => updateQuestionOption(index, 'text', e.target.value)}
+                      placeholder={`Option ${String.fromCharCode(65 + index)}`}
+                      className="flex-1"
+                    />
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type={questionFormData.type === 'single_choice' ? 'radio' : 'checkbox'}
+                        name="correct-answer"
+                        checked={option.isCorrect}
+                        onChange={(e) => {
+                          if (questionFormData.type === 'single_choice') {
+                            // For single choice, only one option can be correct
+                            setQuestionFormData(prev => ({
+                              ...prev,
+                              options: prev.options.map((opt, i) => ({
+                                ...opt,
+                                isCorrect: i === index
+                              }))
+                            }));
+                          } else {
+                            // For multiple choice, toggle this option
+                            updateQuestionOption(index, 'isCorrect', e.target.checked);
+                          }
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm text-gray-600">Correct</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                {questionFormData.type === 'single_choice' 
+                  ? 'Select one correct answer' 
+                  : 'Select one or more correct answers'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Explanation (Optional)</label>
+              <textarea
+                value={questionFormData.explanation}
+                onChange={(e) => setQuestionFormData({ ...questionFormData, explanation: e.target.value })}
+                placeholder="Enter explanation for the correct answer"
+                rows={3}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsEditQuestionModalOpen(false);
+                  resetQuestionForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleEditQuestion}
+                disabled={!questionFormData.text.trim() || questionFormData.options.every(opt => !opt.text.trim())}
+              >
+                Update Question
+              </Button>
+            </div>
+          </div>
         </Modal>
       </div>
     </Layout>
