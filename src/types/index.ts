@@ -22,12 +22,12 @@ export interface Role {
   id: string;
   name: string;
   description: string;
-  permissions: Permission[];
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
   userCount?: number;
   level: number; // 1=Admin, 2=ZO, 3=RO, 4=Supervisor, 5=Enumerator
+  menuAccess?: string[]; // Array of menu paths this role can access
 }
 
 export interface Permission {

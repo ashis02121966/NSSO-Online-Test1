@@ -19,8 +19,7 @@ export function Roles() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
-    selectedPermissions: [] as string[]
+    description: ''
   });
 
   useEffect(() => {
@@ -51,10 +50,7 @@ export function Roles() {
 
   const handleCreateRole = async () => {
     try {
-      const response = await roleApi.createRole({
-        ...formData,
-        permissions: permissions.filter(p => formData.selectedPermissions.includes(p.id))
-      });
+      const response = await roleApi.createRole(formData);
       if (response.success && response.data) {
         setRoles([...roles, response.data]);
         setIsCreateModalOpen(false);
@@ -69,10 +65,7 @@ export function Roles() {
     if (!selectedRole) return;
     
     try {
-      const response = await roleApi.updateRole(selectedRole.id, {
-        ...formData,
-        permissions: permissions.filter(p => formData.selectedPermissions.includes(p.id))
-      });
+      const response = await roleApi.updateRole(selectedRole.id, formData);
       if (response.success && response.data) {
         setRoles(roles.map(role => role.id === selectedRole.id ? response.data! : role));
         setIsEditModalOpen(false);
@@ -100,8 +93,7 @@ export function Roles() {
     setSelectedRole(role);
     setFormData({
       name: role.name,
-      description: role.description,
-      selectedPermissions: role.permissions.map(p => p.id)
+      description: role.description
     });
     setIsEditModalOpen(true);
   };
@@ -109,19 +101,9 @@ export function Roles() {
   const resetForm = () => {
     setFormData({
       name: '',
-      description: '',
-      selectedPermissions: []
+      description: ''
     });
     setSelectedRole(null);
-  };
-
-  const togglePermission = (permissionId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedPermissions: prev.selectedPermissions.includes(permissionId)
-        ? prev.selectedPermissions.filter(id => id !== permissionId)
-        : [...prev.selectedPermissions, permissionId]
-    }));
   };
 
   const filteredRoles = roles.filter(role =>
@@ -192,6 +174,9 @@ export function Roles() {
                         </span>
                       </div>
                     </div>
+                    <div className="text-sm text-gray-500">
+                      Role Level: {role.level} | Users: {role.userCount || 0}
+                    </div>
                   </div>
                   
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
@@ -205,7 +190,7 @@ export function Roles() {
                     </div>
                     <div className="flex items-center text-sm text-gray-500">
                       <Settings className="w-4 h-4 mr-2" />
-                      <span>{role.permissions.length} permissions</span>
+                      <span>Level {role.level}</span>
                     </div>
                   </div>
                   
@@ -214,21 +199,9 @@ export function Roles() {
                   </div>
                   
                   <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-1">
-                      {role.permissions.slice(0, 3).map((permission) => (
-                        <span
-                          key={permission.id}
-                          className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full"
-                        >
-                          {permission.name}
-                        </span>
-                      ))}
-                      {role.permissions.length > 3 && (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          +{role.permissions.length - 3} more
-                        </span>
-                      )}
-                    </div>
+                    <span className="text-sm text-gray-500">
+                      Created: {formatDateTime(role.createdAt).split(',')[0]}
+                    </span>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => openEditModal(role)}
@@ -280,36 +253,6 @@ export function Roles() {
               </div>
             </div>
 
-            <div>
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Permissions</h4>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {Object.entries(groupedPermissions).map(([module, modulePermissions]) => (
-                  <div key={module} className="border border-gray-200 rounded-lg p-4">
-                    <h5 className="font-medium text-gray-900 mb-3 capitalize">{module}</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {modulePermissions.map((permission) => (
-                        <label
-                          key={permission.id}
-                          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.selectedPermissions.includes(permission.id)}
-                            onChange={() => togglePermission(permission.id)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">{permission.name}</div>
-                            <div className="text-xs text-gray-500">{permission.description}</div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <div className="flex justify-end space-x-3 pt-4 border-t">
               <Button
                 variant="secondary"
@@ -354,36 +297,6 @@ export function Roles() {
                   rows={3}
                   className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Permissions</h4>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
-                {Object.entries(groupedPermissions).map(([module, modulePermissions]) => (
-                  <div key={module} className="border border-gray-200 rounded-lg p-4">
-                    <h5 className="font-medium text-gray-900 mb-3 capitalize">{module}</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                      {modulePermissions.map((permission) => (
-                        <label
-                          key={permission.id}
-                          className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.selectedPermissions.includes(permission.id)}
-                            onChange={() => togglePermission(permission.id)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">{permission.name}</div>
-                            <div className="text-xs text-gray-500">{permission.description}</div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
 

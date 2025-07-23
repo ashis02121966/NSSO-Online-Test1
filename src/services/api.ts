@@ -16,6 +16,7 @@ const mockUsers: User[] = [
     name: 'System Administrator',
     roleId: '1',
     role: { id: '1', name: 'Admin', description: 'System Administrator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 1 },
+    role: { id: '1', name: 'Admin', description: 'System Administrator', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 1 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -27,6 +28,7 @@ const mockUsers: User[] = [
     name: 'Zonal Officer',
     roleId: '2',
     role: { id: '2', name: 'ZO User', description: 'Zonal Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 2 },
+    role: { id: '2', name: 'ZO User', description: 'Zonal Office User', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 2 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -39,6 +41,7 @@ const mockUsers: User[] = [
     name: 'Regional Officer',
     roleId: '3',
     role: { id: '3', name: 'RO User', description: 'Regional Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 3 },
+    role: { id: '3', name: 'RO User', description: 'Regional Office User', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 3 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -52,6 +55,7 @@ const mockUsers: User[] = [
     name: 'Field Supervisor',
     roleId: '4',
     role: { id: '4', name: 'Supervisor', description: 'Field Supervisor', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 4 },
+    role: { id: '4', name: 'Supervisor', description: 'Field Supervisor', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 4 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -66,6 +70,7 @@ const mockUsers: User[] = [
     name: 'Field Enumerator',
     roleId: '5',
     role: { id: '5', name: 'Enumerator', description: 'Field Enumerator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 5 },
+    role: { id: '5', name: 'Enumerator', description: 'Field Enumerator', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 5 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -170,11 +175,61 @@ export const roleApi = {
     return {
       success: true,
       data: [
-        { id: '1', name: 'Admin', description: 'System Administrator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 1 },
-        { id: '2', name: 'ZO User', description: 'Zonal Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 2 },
-        { id: '3', name: 'RO User', description: 'Regional Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 3 },
-        { id: '4', name: 'Supervisor', description: 'Field Supervisor', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 4 },
-        { id: '5', name: 'Enumerator', description: 'Field Enumerator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 5 }
+        { 
+          id: '1', 
+          name: 'Admin', 
+          description: 'System Administrator with full access to all features', 
+          createdAt: new Date(), 
+          updatedAt: new Date(), 
+          isActive: true, 
+          level: 1,
+          userCount: 5,
+          menuAccess: ['/dashboard', '/users', '/roles', '/surveys', '/questions', '/results', '/certificates', '/settings']
+        },
+        { 
+          id: '2', 
+          name: 'ZO User', 
+          description: 'Zonal Office User with zone-level management access', 
+          createdAt: new Date(), 
+          updatedAt: new Date(), 
+          isActive: true, 
+          level: 2,
+          userCount: 12,
+          menuAccess: ['/zo-dashboard', '/zone-performance', '/regional-overview', '/results', '/certificates']
+        },
+        { 
+          id: '3', 
+          name: 'RO User', 
+          description: 'Regional Office User with regional management access', 
+          createdAt: new Date(), 
+          updatedAt: new Date(), 
+          isActive: true, 
+          level: 3,
+          userCount: 25,
+          menuAccess: ['/ro-dashboard', '/district-performance', '/supervisor-teams', '/results', '/certificates']
+        },
+        { 
+          id: '4', 
+          name: 'Supervisor', 
+          description: 'Field Supervisor with team management capabilities', 
+          createdAt: new Date(), 
+          updatedAt: new Date(), 
+          isActive: true, 
+          level: 4,
+          userCount: 85,
+          menuAccess: ['/supervisor-dashboard', '/team-results', '/my-enumerators', '/results', '/certificates']
+        },
+        { 
+          id: '5', 
+          name: 'Enumerator', 
+          description: 'Field Enumerator with test-taking access', 
+          createdAt: new Date(), 
+          updatedAt: new Date(), 
+          isActive: true, 
+          level: 5,
+          userCount: 1250,
+          menuAccess: ['/enumerator-dashboard', '/available-tests', '/my-results', '/my-certificates', '/test-schedule']
+        }
       ],
       message: 'Roles fetched successfully'
     };
@@ -231,6 +286,14 @@ export const roleApi = {
     return {
       success: true,
       message: 'Role deleted successfully'
+    };
+  },
+
+  updateRoleMenuAccess: async (roleId: string, menuAccess: string[]): Promise<ApiResponse<void>> => {
+    await delay(800);
+    return {
+      success: true,
+      message: 'Menu access updated successfully'
     };
   }
 };

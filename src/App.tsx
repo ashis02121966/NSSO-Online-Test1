@@ -23,6 +23,9 @@ import { MyResults } from './pages/MyResults';
 import { MyCertificates } from './pages/MyCertificates';
 import { TestSchedule } from './pages/TestSchedule';
 import { TestInterface } from './pages/TestInterface';
+import { RoleMenuManagement } from './pages/RoleMenuManagement';
+import { Unauthorized } from './pages/Unauthorized';
+import { RoleBasedRoute } from './components/RBAC/RoleBasedRoute';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -72,117 +75,125 @@ function AppRoutes() {
       
       {/* Admin Routes */}
       <Route path="/dashboard" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin']}>
           <Dashboard />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/users" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin']}>
           <Users />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/roles" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin']}>
           <Roles />
-        </ProtectedRoute>
+        </RoleBasedRoute>
+      } />
+      <Route path="/role-menu-management" element={
+        <RoleBasedRoute requiredRoles={['Admin']}>
+          <RoleMenuManagement />
+        </RoleBasedRoute>
       } />
       <Route path="/surveys" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin']}>
           <Surveys />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/questions" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin']}>
           <Questions />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/settings" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin']}>
           <Settings />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
 
       {/* ZO Routes */}
       <Route path="/zo-dashboard" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['ZO User']}>
           <ZODashboard />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
 
       {/* RO Routes */}
       <Route path="/ro-dashboard" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['RO User']}>
           <RODashboard />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
 
       {/* Supervisor Routes */}
       <Route path="/supervisor-dashboard" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Supervisor']}>
           <SupervisorDashboard />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/team-results" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Supervisor']}>
           <TeamResults />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/my-enumerators" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Supervisor']}>
           <MyEnumerators />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
 
       {/* Enumerator Routes */}
       <Route path="/enumerator-dashboard" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Enumerator']}>
           <EnumeratorDashboard />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/available-tests" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Enumerator']}>
           <AvailableTests />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/my-results" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Enumerator']}>
           <MyResults />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/my-certificates" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Enumerator']}>
           <MyCertificates />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/test-schedule" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Enumerator']}>
           <TestSchedule />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
 
       {/* Test Interface */}
       <Route path="/test/:sessionId" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Enumerator']}>
           <TestInterface />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
 
       {/* Shared Routes */}
       <Route path="/results" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin', 'ZO User', 'RO User', 'Supervisor']}>
           <Results />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/enumerator-status" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin', 'ZO User', 'RO User', 'Supervisor']}>
           <EnumeratorStatusPage />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
       <Route path="/certificates" element={
-        <ProtectedRoute>
+        <RoleBasedRoute requiredRoles={['Admin', 'ZO User', 'RO User', 'Supervisor', 'Enumerator']}>
           <Certificates />
-        </ProtectedRoute>
+        </RoleBasedRoute>
       } />
+
+      {/* Unauthorized page */}
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
       <Route path="/" element={<Navigate to={getDashboardRoute()} replace />} />
     </Routes>
