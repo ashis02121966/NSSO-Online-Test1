@@ -20,24 +20,22 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Mock data
 const mockUsers: User[] = [
   {
-    id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440010',
     email: 'admin@esigma.com',
     name: 'System Administrator',
-    roleId: '1',
-    role: { id: '1', name: 'Admin', description: 'System Administrator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 1 },
-    role: { id: '1', name: 'Admin', description: 'System Administrator', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 1 },
+    roleId: '550e8400-e29b-41d4-a716-446655440010',
+    role: { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Admin', description: 'System Administrator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 1 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
     jurisdiction: 'National'
   },
   {
-    id: '2',
+    id: '550e8400-e29b-41d4-a716-446655440011',
     email: 'zo@esigma.com',
     name: 'Zonal Officer',
-    roleId: '2',
-    role: { id: '2', name: 'ZO User', description: 'Zonal Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 2 },
-    role: { id: '2', name: 'ZO User', description: 'Zonal Office User', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 2 },
+    roleId: '550e8400-e29b-41d4-a716-446655440011',
+    role: { id: '550e8400-e29b-41d4-a716-446655440011', name: 'ZO User', description: 'Zonal Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 2 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -45,12 +43,11 @@ const mockUsers: User[] = [
     jurisdiction: 'North Zone'
   },
   {
-    id: '3',
+    id: '550e8400-e29b-41d4-a716-446655440012',
     email: 'ro@esigma.com',
     name: 'Regional Officer',
-    roleId: '3',
-    role: { id: '3', name: 'RO User', description: 'Regional Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 3 },
-    role: { id: '3', name: 'RO User', description: 'Regional Office User', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 3 },
+    roleId: '550e8400-e29b-41d4-a716-446655440012',
+    role: { id: '550e8400-e29b-41d4-a716-446655440012', name: 'RO User', description: 'Regional Office User', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 3 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -59,12 +56,11 @@ const mockUsers: User[] = [
     jurisdiction: 'Delhi Region'
   },
   {
-    id: '4',
+    id: '550e8400-e29b-41d4-a716-446655440013',
     email: 'supervisor@esigma.com',
     name: 'Field Supervisor',
-    roleId: '4',
-    role: { id: '4', name: 'Supervisor', description: 'Field Supervisor', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 4 },
-    role: { id: '4', name: 'Supervisor', description: 'Field Supervisor', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 4 },
+    roleId: '550e8400-e29b-41d4-a716-446655440013',
+    role: { id: '550e8400-e29b-41d4-a716-446655440013', name: 'Supervisor', description: 'Field Supervisor', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 4 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -74,12 +70,11 @@ const mockUsers: User[] = [
     jurisdiction: 'Central Delhi District'
   },
   {
-    id: '5',
+    id: '550e8400-e29b-41d4-a716-446655440014',
     email: 'enumerator@esigma.com',
     name: 'Field Enumerator',
-    roleId: '5',
-    role: { id: '5', name: 'Enumerator', description: 'Field Enumerator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 5 },
-    role: { id: '5', name: 'Enumerator', description: 'Field Enumerator', createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 5 },
+    roleId: '550e8400-e29b-41d4-a716-446655440014',
+    role: { id: '550e8400-e29b-41d4-a716-446655440014', name: 'Enumerator', description: 'Field Enumerator', permissions: [], createdAt: new Date(), updatedAt: new Date(), isActive: true, level: 5 },
     createdAt: new Date(),
     updatedAt: new Date(),
     isActive: true,
@@ -92,7 +87,7 @@ const mockUsers: User[] = [
 
 const mockSurveys: Survey[] = [
   {
-    id: '1',
+    id: '550e8400-e29b-41d4-a716-446655440020',
     title: 'Digital Literacy Assessment',
     description: 'Comprehensive assessment of digital skills and computer literacy',
     targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -104,7 +99,7 @@ const mockSurveys: Survey[] = [
     sections: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-    createdBy: '1'
+    createdBy: '550e8400-e29b-41d4-a716-446655440010'
   }
 ];
 
@@ -229,11 +224,11 @@ export const roleApi = {
       if (!import.meta.env.VITE_SUPABASE_URL) {
         await delay(400);
         const mockRoles: Role[] = [
-          { id: '1', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/dashboard', '/users', '/roles', '/surveys', '/questions', '/settings'] },
-          { id: '2', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/zo-dashboard'] },
-          { id: '3', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/ro-dashboard'] },
-          { id: '4', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/supervisor-dashboard', '/team-results', '/my-enumerators'] },
-          { id: '5', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/enumerator-dashboard', '/available-tests', '/my-results', '/my-certificates'] }
+          { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/dashboard', '/users', '/roles', '/surveys', '/questions', '/settings'] },
+          { id: '550e8400-e29b-41d4-a716-446655440011', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/zo-dashboard'] },
+          { id: '550e8400-e29b-41d4-a716-446655440012', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/ro-dashboard'] },
+          { id: '550e8400-e29b-41d4-a716-446655440013', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/supervisor-dashboard', '/team-results', '/my-enumerators'] },
+          { id: '550e8400-e29b-41d4-a716-446655440014', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/enumerator-dashboard', '/available-tests', '/my-results', '/my-certificates'] }
         ];
         return { success: true, data: mockRoles, message: 'Roles fetched successfully (demo mode)' };
       }
@@ -250,10 +245,10 @@ export const roleApi = {
     return {
       success: true,
       data: [
-        { id: '1', name: 'Create Users', resource: 'users', action: 'create', description: 'Create new users', module: 'user_management' },
-        { id: '2', name: 'View Users', resource: 'users', action: 'read', description: 'View user information', module: 'user_management' },
-        { id: '3', name: 'Edit Users', resource: 'users', action: 'update', description: 'Edit existing users', module: 'user_management' },
-        { id: '4', name: 'Delete Users', resource: 'users', action: 'delete', description: 'Delete users', module: 'user_management' }
+        { id: '550e8400-e29b-41d4-a716-446655440070', name: 'Create Users', resource: 'users', action: 'create', description: 'Create new users', module: 'user_management' },
+        { id: '550e8400-e29b-41d4-a716-446655440071', name: 'View Users', resource: 'users', action: 'read', description: 'View user information', module: 'user_management' },
+        { id: '550e8400-e29b-41d4-a716-446655440072', name: 'Edit Users', resource: 'users', action: 'update', description: 'Edit existing users', module: 'user_management' },
+        { id: '550e8400-e29b-41d4-a716-446655440073', name: 'Delete Users', resource: 'users', action: 'delete', description: 'Delete users', module: 'user_management' }
       ],
       message: 'Permissions fetched successfully'
     };
@@ -520,18 +515,18 @@ export const testApi = {
     // Return mock questions for the test
     const mockQuestions: Question[] = [
       {
-        id: 'q1',
-        sectionId: 's1',
+        id: '550e8400-e29b-41d4-a716-446655440040',
+        sectionId: '550e8400-e29b-41d4-a716-446655440030',
         text: 'What is the primary function of an operating system?',
         type: 'single_choice',
         complexity: 'easy',
         options: [
-          { id: 'o1', text: 'To manage hardware and software resources', isCorrect: true },
-          { id: 'o2', text: 'To create documents', isCorrect: false },
-          { id: 'o3', text: 'To browse the internet', isCorrect: false },
-          { id: 'o4', text: 'To play games', isCorrect: false }
+          { id: '550e8400-e29b-41d4-a716-446655440050', text: 'To manage hardware and software resources', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440051', text: 'To create documents', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440052', text: 'To browse the internet', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440053', text: 'To play games', isCorrect: false }
         ],
-        correctAnswers: ['o1'],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440050'],
         explanation: 'An operating system manages all hardware and software resources of a computer.',
         points: 1,
         order: 1,
@@ -539,18 +534,18 @@ export const testApi = {
         updatedAt: new Date()
       },
       {
-        id: 'q2',
-        sectionId: 's1',
+        id: '550e8400-e29b-41d4-a716-446655440041',
+        sectionId: '550e8400-e29b-41d4-a716-446655440030',
         text: 'Which of the following are input devices? (Select all that apply)',
         type: 'multiple_choice',
         complexity: 'medium',
         options: [
-          { id: 'o5', text: 'Keyboard', isCorrect: true },
-          { id: 'o6', text: 'Mouse', isCorrect: true },
-          { id: 'o7', text: 'Monitor', isCorrect: false },
-          { id: 'o8', text: 'Microphone', isCorrect: true }
+          { id: '550e8400-e29b-41d4-a716-446655440054', text: 'Keyboard', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440055', text: 'Mouse', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440056', text: 'Monitor', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440057', text: 'Microphone', isCorrect: true }
         ],
-        correctAnswers: ['o5', 'o6', 'o8'],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440054', '550e8400-e29b-41d4-a716-446655440055', '550e8400-e29b-41d4-a716-446655440057'],
         explanation: 'Input devices allow users to provide data to the computer. Monitor is an output device.',
         points: 2,
         order: 2,
@@ -558,18 +553,18 @@ export const testApi = {
         updatedAt: new Date()
       },
       {
-        id: 'q3',
-        sectionId: 's2',
+        id: '550e8400-e29b-41d4-a716-446655440042',
+        sectionId: '550e8400-e29b-41d4-a716-446655440031',
         text: 'What does CPU stand for?',
         type: 'single_choice',
         complexity: 'easy',
         options: [
-          { id: 'o9', text: 'Central Processing Unit', isCorrect: true },
-          { id: 'o10', text: 'Computer Personal Unit', isCorrect: false },
-          { id: 'o11', text: 'Central Program Unit', isCorrect: false },
-          { id: 'o12', text: 'Computer Processing Unit', isCorrect: false }
+          { id: '550e8400-e29b-41d4-a716-446655440058', text: 'Central Processing Unit', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440059', text: 'Computer Personal Unit', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440060', text: 'Central Program Unit', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440061', text: 'Computer Processing Unit', isCorrect: false }
         ],
-        correctAnswers: ['o9'],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440058'],
         explanation: 'CPU stands for Central Processing Unit, which is the main processor of a computer.',
         points: 1,
         order: 3,
@@ -577,18 +572,18 @@ export const testApi = {
         updatedAt: new Date()
       },
       {
-        id: 'q4',
-        sectionId: 's2',
+        id: '550e8400-e29b-41d4-a716-446655440043',
+        sectionId: '550e8400-e29b-41d4-a716-446655440031',
         text: 'Which programming languages are commonly used for web development?',
         type: 'multiple_choice',
         complexity: 'hard',
         options: [
-          { id: 'o13', text: 'JavaScript', isCorrect: true },
-          { id: 'o14', text: 'Python', isCorrect: false },
-          { id: 'o15', text: 'HTML', isCorrect: true },
-          { id: 'o16', text: 'CSS', isCorrect: true }
+          { id: '550e8400-e29b-41d4-a716-446655440062', text: 'JavaScript', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440063', text: 'Python', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440064', text: 'HTML', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440065', text: 'CSS', isCorrect: true }
         ],
-        correctAnswers: ['o13', 'o15', 'o16'],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440062', '550e8400-e29b-41d4-a716-446655440064', '550e8400-e29b-41d4-a716-446655440065'],
         explanation: 'JavaScript, HTML, and CSS are core web technologies. Python is primarily server-side.',
         points: 3,
         order: 4,
@@ -596,18 +591,18 @@ export const testApi = {
         updatedAt: new Date()
       },
       {
-        id: 'q5',
-        sectionId: 's3',
+        id: '550e8400-e29b-41d4-a716-446655440044',
+        sectionId: '550e8400-e29b-41d4-a716-446655440032',
         text: 'What is the purpose of RAM in a computer?',
         type: 'single_choice',
         complexity: 'medium',
         options: [
-          { id: 'o17', text: 'Temporary storage for active programs', isCorrect: true },
-          { id: 'o18', text: 'Permanent storage for files', isCorrect: false },
-          { id: 'o19', text: 'Processing calculations', isCorrect: false },
-          { id: 'o20', text: 'Connecting to internet', isCorrect: false }
+          { id: '550e8400-e29b-41d4-a716-446655440066', text: 'Temporary storage for active programs', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440067', text: 'Permanent storage for files', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440068', text: 'Processing calculations', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440069', text: 'Connecting to internet', isCorrect: false }
         ],
-        correctAnswers: ['o17'],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440066'],
         explanation: 'RAM (Random Access Memory) provides temporary storage for programs currently being used.',
         points: 2,
         order: 5,
@@ -791,7 +786,7 @@ export const enumeratorDashboardApi = {
       data: {
         availableTests: [
           {
-            surveyId: '1',
+            surveyId: '550e8400-e29b-41d4-a716-446655440020',
             title: 'Digital Literacy Assessment',
             description: 'Comprehensive assessment of digital skills and computer literacy',
             targetDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

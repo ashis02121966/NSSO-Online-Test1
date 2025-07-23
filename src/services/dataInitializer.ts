@@ -6,8 +6,15 @@ export class DataInitializer {
     try {
       console.log('Starting database initialization...');
       
+      // Use service role for initialization to bypass RLS
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabaseAdmin = createClient(
+        import.meta.env.VITE_SUPABASE_URL!,
+        import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY!
+      );
+      
       // Check if data already exists
-      const { data: existingRoles } = await supabase
+      const { data: existingRoles } = await supabaseAdmin
         .from('roles')
         .select('id')
         .limit(1);
@@ -18,12 +25,12 @@ export class DataInitializer {
       }
 
       // Initialize in order: roles -> users -> surveys -> sections -> questions -> settings
-      await this.createRoles();
-      await this.createUsers();
-      await this.createSurveys();
-      await this.createSurveySections();
-      await this.createQuestions();
-      await this.createSystemSettings();
+      await this.createRoles(supabaseAdmin);
+      await this.createUsers(supabaseAdmin);
+      await this.createSurveys(supabaseAdmin);
+      await this.createSurveySections(supabaseAdmin);
+      await this.createQuestions(supabaseAdmin);
+      await this.createSystemSettings(supabaseAdmin);
       
       console.log('Database initialization completed successfully');
       return { success: true, message: 'Database initialized successfully' };
@@ -33,7 +40,7 @@ export class DataInitializer {
     }
   }
 
-  static async createRoles() {
+  static async createRoles(supabaseClient: any) {
     console.log('Creating roles...');
     
     const roles = [
@@ -93,7 +100,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('roles')
       .insert(roles);
 
@@ -101,7 +108,7 @@ export class DataInitializer {
     console.log('Roles created successfully');
   }
 
-  static async createUsers() {
+  static async createUsers(supabaseClient: any) {
     console.log('Creating users...');
     
     const passwordHash = await bcrypt.hash('password123', 10);
@@ -181,7 +188,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('users')
       .insert(users);
 
@@ -189,7 +196,7 @@ export class DataInitializer {
     console.log('Users created successfully');
   }
 
-  static async createSurveys() {
+  static async createSurveys(supabaseClient: any) {
     console.log('Creating surveys...');
     
     const surveys = [
@@ -237,7 +244,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('surveys')
       .insert(surveys);
 
@@ -245,7 +252,7 @@ export class DataInitializer {
     console.log('Surveys created successfully');
   }
 
-  static async createSurveySections() {
+  static async createSurveySections(supabaseClient: any) {
     console.log('Creating survey sections...');
     
     const sections = [
@@ -293,7 +300,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('survey_sections')
       .insert(sections);
 
@@ -301,7 +308,7 @@ export class DataInitializer {
     console.log('Survey sections created successfully');
   }
 
-  static async createQuestions() {
+  static async createQuestions(supabaseClient: any) {
     console.log('Creating sample questions...');
     
     const questions = [
@@ -347,7 +354,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error: questionsError } = await supabase
+    const { error: questionsError } = await supabaseClient
       .from('questions')
       .insert(questions);
 
@@ -380,7 +387,7 @@ export class DataInitializer {
       { id: '550e8400-e29b-41d4-a716-446655440065', question_id: '550e8400-e29b-41d4-a716-446655440043', text: 'Use unique passwords for each account', is_correct: true, option_order: 4 }
     ];
 
-    const { error: optionsError } = await supabase
+    const { error: optionsError } = await supabaseClient
       .from('question_options')
       .insert(options);
 
@@ -388,7 +395,7 @@ export class DataInitializer {
     console.log('Questions and options created successfully');
   }
 
-  static async createSystemSettings() {
+  static async createSystemSettings(supabaseClient: any) {
     console.log('Creating system settings...');
     
     const settings = [
@@ -418,7 +425,7 @@ export class DataInitializer {
       { category: 'general', setting_key: 'date_format', setting_value: 'DD/MM/YYYY', description: 'Date display format', setting_type: 'select', is_editable: true, options: ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] }
     ];
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('system_settings')
       .insert(settings);
 
