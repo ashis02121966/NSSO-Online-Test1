@@ -455,7 +455,12 @@ export function Questions() {
                   <Button
                     onClick={() => {
                       resetSectionForm();
-                      setSectionFormData(prev => ({ ...prev, order: sections.length + 1 }));
+                      setSectionFormData({
+                        title: '',
+                        description: '',
+                        questionsCount: 10,
+                        order: sections.length + 1
+                      });
                       setIsAddSectionModalOpen(true);
                     }}
                     size="sm"
@@ -482,7 +487,12 @@ export function Questions() {
                     <Button
                       onClick={() => {
                         resetSectionForm();
-                        setSectionFormData(prev => ({ ...prev, order: 1 }));
+                        setSectionFormData({
+                          title: '',
+                          description: '',
+                          questionsCount: 10,
+                          order: 1
+                        });
                         setIsAddSectionModalOpen(true);
                       }}
                       className="flex items-center space-x-2"
