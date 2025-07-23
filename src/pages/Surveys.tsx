@@ -6,7 +6,7 @@ import { Input } from '../components/UI/Input';
 import { Modal } from '../components/UI/Modal';
 import { surveyApi } from '../services/api';
 import { Survey } from '../types';
-import { Plus, Search, Edit, Trash2, Calendar, Clock, Users, Target, Eye, Copy, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, Clock, Users, Target, Eye, Copy, ToggleLeft, ToggleRight, FileText } from 'lucide-react';
 import { formatDate, formatDuration } from '../utils';
 
 export function Surveys() {
@@ -206,9 +206,9 @@ export function Surveys() {
               <p className="text-gray-500 mt-2">Loading surveys...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredSurveys.map((survey) => (
-                <Card key={survey.id} className="hover:shadow-lg transition-all duration-200">
+                <Card key={survey.id} className="hover:shadow-lg transition-all duration-200 cursor-pointer">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-gray-900 truncate">
                       {survey.title}
@@ -247,26 +247,26 @@ export function Surveys() {
                   
                   <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                     <div className="text-xs text-gray-500">
-                      {survey.sections?.length || 0} sections
+                      {survey.sections?.length || 0} sections • Created {formatDate(survey.createdAt)}
                     </div>
                     <div className="flex items-center space-x-1">
                       <button 
                         onClick={(e) => openEditModal(survey, e)}
-                        className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
                         title="Edit Survey"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={(e) => handleDuplicateSurvey(survey, e)}
-                        className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
                         title="Duplicate Survey"
                       >
                         <Copy className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={(e) => handleToggleStatus(survey.id, e)}
-                        className={`p-2 hover:bg-gray-50 rounded-lg transition-colors ${
+                        className={`p-1.5 hover:bg-gray-50 rounded-md transition-colors ${
                           survey.isActive ? 'text-orange-600 hover:text-orange-700' : 'text-green-600 hover:text-green-700'
                         }`}
                         title={survey.isActive ? 'Deactivate Survey' : 'Activate Survey'}
@@ -274,15 +274,19 @@ export function Surveys() {
                         {survey.isActive ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                       </button>
                       <button 
-                        onClick={(e) => e.stopPropagation()}
-                        className="p-2 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Add view details functionality here
+                          console.log('View details for survey:', survey.id);
+                        }}
+                        className="p-1.5 text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={(e) => handleDeleteSurvey(survey.id, e)}
-                        className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors"
                         title="Delete Survey"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -291,6 +295,25 @@ export function Surveys() {
                   </div>
                 </Card>
               ))}
+              
+              {filteredSurveys.length === 0 && !isLoading && (
+                <div className="col-span-full text-center py-12">
+                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Surveys Found</h3>
+                  <p className="text-gray-500 mb-4">
+                    {searchTerm ? 'No surveys match your search criteria.' : 'Get started by creating your first survey.'}
+                  </p>
+                  {!searchTerm && (
+                    <Button
+                      onClick={() => setIsCreateModalOpen(true)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Create Survey</span>
+                    </Button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </Card>
