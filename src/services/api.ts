@@ -4,6 +4,14 @@ import {
   EnumeratorDashboard, SystemSettings, AnalyticsData, AnalyticsFilter,
   ApiResponse, FileUploadResult, Activity, EnumeratorStatus
 } from '../types';
+import { 
+  AuthService, 
+  UserService, 
+  RoleService, 
+  SurveyService, 
+  TestService, 
+  SettingsService 
+} from './database';
 
 // Mock API responses for development
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -102,137 +110,33 @@ const mockSurveys: Survey[] = [
 // Auth API
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
-    await delay(1000);
-    
-    const user = mockUsers.find(u => u.email === email);
-    if (user && password === 'password123') {
-      return {
-        success: true,
-        data: {
-          user,
-          token: 'mock-jwt-token'
-        },
-        message: 'Login successful'
-      };
-    }
-    
-    return {
-      success: false,
-      message: 'Invalid credentials'
-    };
+    return await AuthService.login(email, password);
   },
 
   logout: async (): Promise<ApiResponse<void>> => {
-    await delay(500);
-    return {
-      success: true,
-      message: 'Logged out successfully'
-    };
+    return await AuthService.logout();
   }
 };
 
 // User API
 export const userApi = {
   getUsers: async (): Promise<ApiResponse<User[]>> => {
-    await delay(800);
-    return {
-      success: true,
-      data: mockUsers,
-      message: 'Users fetched successfully'
-    };
+    return await UserService.getUsers();
   },
 
   createUser: async (userData: any): Promise<ApiResponse<User>> => {
-    await delay(1000);
-    const newUser: User = {
-      id: Date.now().toString(),
-      ...userData,
-      role: mockUsers.find(u => u.roleId === userData.roleId)?.role || mockUsers[0].role,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isActive: true
-    };
-    return {
-      success: true,
-      data: newUser,
-      message: 'User created successfully'
-    };
+    return await UserService.createUser(userData);
   },
 
   deleteUser: async (id: string): Promise<ApiResponse<void>> => {
-    await delay(500);
-    return {
-      success: true,
-      message: 'User deleted successfully'
-    };
+    return await UserService.deleteUser(id);
   }
 };
 
 // Role API
 export const roleApi = {
   getRoles: async (): Promise<ApiResponse<Role[]>> => {
-    await delay(600);
-    return {
-      success: true,
-      data: [
-        { 
-          id: '1', 
-          name: 'Admin', 
-          description: 'System Administrator with full access to all features', 
-          createdAt: new Date(), 
-          updatedAt: new Date(), 
-          isActive: true, 
-          level: 1,
-          userCount: 5,
-          menuAccess: ['/dashboard', '/users', '/roles', '/surveys', '/questions', '/results', '/certificates', '/settings']
-        },
-        { 
-          id: '2', 
-          name: 'ZO User', 
-          description: 'Zonal Office User with zone-level management access', 
-          createdAt: new Date(), 
-          updatedAt: new Date(), 
-          isActive: true, 
-          level: 2,
-          userCount: 12,
-          menuAccess: ['/zo-dashboard', '/zone-performance', '/regional-overview', '/results', '/certificates']
-        },
-        { 
-          id: '3', 
-          name: 'RO User', 
-          description: 'Regional Office User with regional management access', 
-          createdAt: new Date(), 
-          updatedAt: new Date(), 
-          isActive: true, 
-          level: 3,
-          userCount: 25,
-          menuAccess: ['/ro-dashboard', '/district-performance', '/supervisor-teams', '/results', '/certificates']
-        },
-        { 
-          id: '4', 
-          name: 'Supervisor', 
-          description: 'Field Supervisor with team management capabilities', 
-          createdAt: new Date(), 
-          updatedAt: new Date(), 
-          isActive: true, 
-          level: 4,
-          userCount: 85,
-          menuAccess: ['/supervisor-dashboard', '/team-results', '/my-enumerators', '/results', '/certificates']
-        },
-        { 
-          id: '5', 
-          name: 'Enumerator', 
-          description: 'Field Enumerator with test-taking access', 
-          createdAt: new Date(), 
-          updatedAt: new Date(), 
-          isActive: true, 
-          level: 5,
-          userCount: 1250,
-          menuAccess: ['/enumerator-dashboard', '/available-tests', '/my-results', '/my-certificates', '/test-schedule']
-        }
-      ],
-      message: 'Roles fetched successfully'
-    };
+    return await RoleService.getRoles();
   },
 
   getPermissions: async (): Promise<ApiResponse<Permission[]>> => {
@@ -290,42 +194,18 @@ export const roleApi = {
   },
 
   updateRoleMenuAccess: async (roleId: string, menuAccess: string[]): Promise<ApiResponse<void>> => {
-    await delay(800);
-    return {
-      success: true,
-      message: 'Menu access updated successfully'
-    };
+    return await RoleService.updateRoleMenuAccess(roleId, menuAccess);
   }
 };
 
 // Survey API
 export const surveyApi = {
   getSurveys: async (): Promise<ApiResponse<Survey[]>> => {
-    await delay(800);
-    return {
-      success: true,
-      data: mockSurveys,
-      message: 'Surveys fetched successfully'
-    };
+    return await SurveyService.getSurveys();
   },
 
   createSurvey: async (surveyData: any): Promise<ApiResponse<Survey>> => {
-    await delay(1200);
-    const newSurvey: Survey = {
-      id: Date.now().toString(),
-      ...surveyData,
-      sections: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isActive: true,
-      createdBy: '1'
-    };
-    mockSurveys.push(newSurvey);
-    return {
-      success: true,
-      data: newSurvey,
-      message: 'Survey created successfully'
-    };
+    return await SurveyService.createSurvey(surveyData);
   },
 
   updateSurvey: async (surveyId: string, surveyData: any): Promise<ApiResponse<Survey>> => {
@@ -484,27 +364,11 @@ export const questionApi = {
 // Test API
 export const testApi = {
   createTestSession: async (surveyId: string): Promise<ApiResponse<TestSession>> => {
-    await delay(800);
+    // Get current user ID from localStorage (in real app, from auth context)
+    const userData = localStorage.getItem('userData');
+    const userId = userData ? JSON.parse(userData).id : '550e8400-e29b-41d4-a716-446655440014';
     
-    // Create a new test session
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const newSession: TestSession = {
-      id: sessionId,
-      userId: '5', // Current user ID (should come from auth context)
-      surveyId: surveyId,
-      startTime: new Date(),
-      timeRemaining: 35 * 60, // 35 minutes in seconds
-      currentQuestionIndex: 0,
-      answers: [],
-      status: 'in_progress',
-      attemptNumber: 1
-    };
-    
-    return {
-      success: true,
-      data: newSession,
-      message: 'Test session created successfully'
-    };
+    return await TestService.createTestSession(surveyId, userId);
   },
 
   getQuestionsForSession: async (sessionId: string): Promise<ApiResponse<Question[]>> => {
@@ -641,93 +505,7 @@ export const testApi = {
   },
 
   submitTest: async (sessionId: string): Promise<ApiResponse<TestResult>> => {
-    await delay(1500);
-    
-    // Generate a unique result ID and certificate
-    const resultId = `result_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const certificateId = `cert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const certificateNumber = `CERT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    
-    // Calculate score (mock calculation)
-    const score = Math.floor(Math.random() * 40) + 60; // Random score between 60-100
-    const totalQuestions = 30;
-    const correctAnswers = Math.floor((score / 100) * totalQuestions);
-    const isPassed = score >= 70;
-    
-    const testResult: TestResult = {
-      id: resultId,
-      userId: '5',
-      user: mockUsers[4], // Enumerator user
-      surveyId: '1',
-      survey: mockSurveys[0],
-      sessionId,
-      score,
-      totalQuestions,
-      correctAnswers,
-      isPassed,
-      timeSpent: 1800,
-      attemptNumber: 1,
-      sectionScores: [
-        {
-          sectionId: 's1',
-          sectionTitle: 'Basic Computer Skills',
-          score: score + Math.floor(Math.random() * 10) - 5,
-          totalQuestions: 10,
-          correctAnswers: Math.floor(((score + Math.floor(Math.random() * 10) - 5) / 100) * 10)
-        },
-        {
-          sectionId: 's2',
-          sectionTitle: 'Internet and Digital Communication',
-          score: score + Math.floor(Math.random() * 10) - 5,
-          totalQuestions: 10,
-          correctAnswers: Math.floor(((score + Math.floor(Math.random() * 10) - 5) / 100) * 10)
-        },
-        {
-          sectionId: 's3',
-          sectionTitle: 'Digital Security and Privacy',
-          score: score + Math.floor(Math.random() * 10) - 5,
-          totalQuestions: 10,
-          correctAnswers: Math.floor(((score + Math.floor(Math.random() * 10) - 5) / 100) * 10)
-        }
-      ],
-      completedAt: new Date(),
-      certificateId: isPassed ? certificateId : undefined,
-      grade: isPassed ? (score >= 90 ? 'A' : score >= 80 ? 'B' : 'C') : 'F'
-    };
-    
-    // Store the result for later retrieval
-    if (!window.mockTestResults) {
-      window.mockTestResults = [];
-    }
-    window.mockTestResults.push(testResult);
-    
-    // Generate certificate if passed
-    if (isPassed) {
-      const certificate: Certificate = {
-        id: certificateId,
-        userId: '5',
-        user: mockUsers[4],
-        surveyId: '1',
-        survey: mockSurveys[0],
-        resultId,
-        certificateNumber,
-        issuedAt: new Date(),
-        downloadCount: 0,
-        status: 'active'
-      };
-      
-      // Store the certificate for later retrieval
-      if (!window.mockCertificates) {
-        window.mockCertificates = [];
-      }
-      window.mockCertificates.push(certificate);
-    }
-    
-    return {
-      success: true,
-      data: testResult,
-      message: 'Test submitted successfully'
-    };
+    return await TestService.submitTest(sessionId);
   },
 
   syncOfflineData: async (): Promise<ApiResponse<void>> => {
@@ -1042,246 +820,15 @@ startxref
 // Settings API
 export const settingsApi = {
   getSettings: async (): Promise<ApiResponse<SystemSettings[]>> => {
-    await delay(600);
-    return {
-      success: true,
-      data: [
-        // Security Settings
-        {
-          id: '1',
-          category: 'security',
-          key: 'max_login_attempts',
-          value: '5',
-          description: 'Maximum number of failed login attempts before account lockout',
-          type: 'number',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '2',
-          category: 'security',
-          key: 'account_lockout_duration',
-          value: '30',
-          description: 'Account lockout duration in minutes after max failed attempts',
-          type: 'number',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '3',
-          category: 'security',
-          key: 'session_timeout',
-          value: '120',
-          description: 'User session timeout in minutes',
-          type: 'number',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '4',
-          category: 'security',
-          key: 'password_min_length',
-          value: '8',
-          description: 'Minimum password length requirement',
-          type: 'number',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '5',
-          category: 'security',
-          key: 'require_password_complexity',
-          value: 'true',
-          description: 'Require uppercase, lowercase, numbers, and special characters in passwords',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '6',
-          category: 'security',
-          key: 'force_password_change',
-          value: '90',
-          description: 'Force password change every X days (0 to disable)',
-          type: 'number',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        
-        // Test Settings
-        {
-          id: '7',
-          category: 'test',
-          key: 'auto_save_interval',
-          value: '30',
-          description: 'Auto-save test progress interval in seconds',
-          type: 'number',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '8',
-          category: 'test',
-          key: 'enable_auto_save',
-          value: 'true',
-          description: 'Enable automatic saving of test progress',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '9',
-          category: 'test',
-          key: 'auto_submit_on_timeout',
-          value: 'true',
-          description: 'Automatically submit test when time expires',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '10',
-          category: 'test',
-          key: 'show_time_warning',
-          value: 'true',
-          description: 'Show warning when 5 minutes remaining',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '11',
-          category: 'test',
-          key: 'allow_question_navigation',
-          value: 'true',
-          description: 'Allow users to navigate between questions during test',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '12',
-          category: 'test',
-          key: 'show_question_numbers',
-          value: 'true',
-          description: 'Show question numbers to users during test',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '13',
-          category: 'test',
-          key: 'enable_question_flagging',
-          value: 'true',
-          description: 'Allow users to flag questions for review',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '14',
-          category: 'test',
-          key: 'network_pause_enabled',
-          value: 'true',
-          description: 'Automatically pause test when network is unavailable',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        
-        // General Settings
-        {
-          id: '15',
-          category: 'general',
-          key: 'site_name',
-          value: 'eSigma Survey Platform',
-          description: 'Name of the application displayed in headers and titles',
-          type: 'string',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '16',
-          category: 'general',
-          key: 'site_description',
-          value: 'Online MCQ Test Management System',
-          description: 'Description of the application',
-          type: 'string',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '17',
-          category: 'general',
-          key: 'support_email',
-          value: 'support@esigma.com',
-          description: 'Support email address for user assistance',
-          type: 'email',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '18',
-          category: 'general',
-          key: 'maintenance_mode',
-          value: 'false',
-          description: 'Enable maintenance mode to restrict access',
-          type: 'boolean',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '19',
-          category: 'general',
-          key: 'default_timezone',
-          value: 'Asia/Kolkata',
-          description: 'Default timezone for the application',
-          type: 'string',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        },
-        {
-          id: '20',
-          category: 'general',
-          key: 'date_format',
-          value: 'DD/MM/YYYY',
-          description: 'Default date format for display',
-          type: 'string',
-          isEditable: true,
-          updatedAt: new Date(),
-          updatedBy: 'admin'
-        }
-      ],
-      message: 'Settings fetched successfully'
-    };
+    return await SettingsService.getSettings();
   },
 
   updateSetting: async (id: string, value: string): Promise<ApiResponse<void>> => {
-    await delay(800);
-    return {
-      success: true,
-      message: 'Setting updated successfully'
-    };
+    // Get current user ID from localStorage
+    const userData = localStorage.getItem('userData');
+    const userId = userData ? JSON.parse(userData).id : undefined;
+    
+    return await SettingsService.updateSetting(id, value, userId);
   }
 };
 
