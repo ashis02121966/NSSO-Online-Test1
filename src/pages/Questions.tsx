@@ -21,6 +21,7 @@ export function Questions() {
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
   const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
   const [isQuestionDetailModalOpen, setIsQuestionDetailModalOpen] = useState(false);
+  const [isEditQuestionModalOpen, setIsEditQuestionModalOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadResult, setUploadResult] = useState<FileUploadResult | null>(null);
@@ -29,6 +30,19 @@ export function Questions() {
     description: '',
     questionsCount: 10,
     order: 1
+  });
+  const [questionFormData, setQuestionFormData] = useState({
+    text: '',
+    type: 'single_choice' as 'single_choice' | 'multiple_choice',
+    complexity: 'medium' as 'easy' | 'medium' | 'hard',
+    points: 1,
+    explanation: '',
+    options: [
+      { text: '', isCorrect: false },
+      { text: '', isCorrect: false },
+      { text: '', isCorrect: false },
+      { text: '', isCorrect: false }
+    ]
   });
 
   useEffect(() => {
@@ -312,6 +326,84 @@ export function Questions() {
   const openQuestionDetailModal = (question: Question) => {
     setSelectedQuestion(question);
     setIsQuestionDetailModalOpen(true);
+  };
+
+  const openEditQuestionModal = (question: Question) => {
+    setSelectedQuestion(question);
+    setQuestionFormData({
+      text: question.text,
+      type: question.type,
+      complexity: question.complexity,
+      points: question.points,
+      explanation: question.explanation || '',
+      options: question.options.map(opt => ({
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      }))
+    });
+    setIsEditQuestionModalOpen(true);
+  };
+
+  const handleEditQuestion = async () => {
+    if (!selectedQuestion) return;
+
+    try {
+      // Mock update - in real implementation, this would call the API
+      const updatedQuestion: Question = {
+        ...selectedQuestion,
+        text: questionFormData.text,
+        type: questionFormData.type,
+        complexity: questionFormData.complexity,
+        points: questionFormData.points,
+        explanation: questionFormData.explanation,
+        options: questionFormData.options.map((opt, index) => ({
+          id: selectedQuestion.options[index]?.id || `o${index + 1}`,
+          text: opt.text,
+          isCorrect: opt.isCorrect
+        })),
+        correctAnswers: questionFormData.options
+          .map((opt, index) => opt.isCorrect ? selectedQuestion.options[index]?.id || `o${index + 1}` : null)
+          .filter(Boolean) as string[],
+        updatedAt: new Date()
+      };
+
+      // Update local state
+      setQuestions(questions.map(q => 
+        q.id === selectedQuestion.id ? updatedQuestion : q
+      ));
+
+      setIsEditQuestionModalOpen(false);
+      resetQuestionForm();
+      console.log('Question updated:', updatedQuestion);
+    } catch (error) {
+      console.error('Failed to update question:', error);
+    }
+  };
+
+  const resetQuestionForm = () => {
+    setQuestionFormData({
+      text: '',
+      type: 'single_choice',
+      complexity: 'medium',
+      points: 1,
+      explanation: '',
+      options: [
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false },
+        { text: '', isCorrect: false }
+      ]
+    });
+    setSelectedQuestion(null);
+  };
+
+  const updateQuestionOption = (index: number, field: 'text' | 'isCorrect', value: string | boolean) => {
+    setQuestionFormData(prev => ({
+      ...prev,
+      options: prev.options.map((opt, i) => 
+        i === index ? { ...opt, [field]: value } : opt
+      )
+    }));
   };
 
   const getComplexityColor = (complexity: string) => {
@@ -662,8 +754,7 @@ export function Questions() {
                             </button>
                             <button
                               onClick={() => {
-                                console.log('Edit question:', question.id);
-                                // Edit functionality can be implemented here
+                                openEditQuestionModal(question);
                               }}
                               className="p-1.5 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-md transition-colors"
                               title="Edit Question"
