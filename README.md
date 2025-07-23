@@ -1,3 +1,169 @@
-# tuteck2
+# eSigma Survey Platform
 
-[Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/ashis02121966/tuteck2)
+A comprehensive online MCQ test management system built with React, TypeScript, and Supabase.
+
+## Features
+
+- **Role-Based Access Control (RBAC)** - 5 hierarchical user roles with specific permissions
+- **Survey Management** - Create and manage surveys with multiple sections
+- **Question Bank** - Comprehensive question management with different types and complexity levels
+- **Test Interface** - Real-time test taking with auto-save and network resilience
+- **Results & Analytics** - Detailed performance tracking and reporting
+- **Certificate Generation** - Automatic certificate creation for passed tests
+- **System Settings** - Configurable security, test, and general settings
+
+## User Roles
+
+1. **Admin** (Level 1) - Full system access
+2. **ZO User** (Level 2) - Zonal office management
+3. **RO User** (Level 3) - Regional office management
+4. **Supervisor** (Level 4) - Team management
+5. **Enumerator** (Level 5) - Test taking
+
+## Demo Credentials
+
+The application includes demo accounts for testing:
+
+- **Admin**: admin@esigma.com / password123
+- **ZO User**: zo@esigma.com / password123
+- **RO User**: ro@esigma.com / password123
+- **Supervisor**: supervisor@esigma.com / password123
+- **Enumerator**: enumerator@esigma.com / password123
+
+## Setup Instructions
+
+### Option 1: Demo Mode (Current)
+The application runs in demo mode with mock data. All features are functional but data doesn't persist.
+
+### Option 2: Production Setup with Supabase
+
+1. **Create Supabase Project**
+   ```bash
+   # Go to https://supabase.com
+   # Create a new project
+   # Note your project URL and anon key
+   ```
+
+2. **Configure Environment Variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your Supabase credentials
+   ```
+
+3. **Run Database Migrations**
+   ```sql
+   -- Run the SQL files in supabase/migrations/ in your Supabase SQL editor
+   -- This will create all tables and insert initial data
+   ```
+
+4. **Install Dependencies**
+   ```bash
+   npm install
+   ```
+
+5. **Start Development Server**
+   ```bash
+   npm run dev
+   ```
+
+## Database Schema
+
+### Core Tables
+- `roles` - User roles and permissions
+- `users` - User accounts with authentication
+- `surveys` - Survey definitions
+- `survey_sections` - Survey sections
+- `questions` - Question bank
+- `question_options` - Answer options
+- `test_sessions` - Active test sessions
+- `test_answers` - User responses
+- `test_results` - Final results
+- `section_scores` - Section-wise performance
+- `certificates` - Generated certificates
+- `system_settings` - Configuration
+- `activity_logs` - Audit trail
+
+### Security Features
+- Row Level Security (RLS) on all tables
+- Role-based access policies
+- Password hashing with bcrypt
+- Account lockout after failed attempts
+- Session timeout management
+
+## Key Features
+
+### Authentication & Security
+- Secure login with password hashing
+- Account lockout after failed attempts
+- Session timeout management
+- Role-based access control
+- Menu access control per role
+
+### Test Management
+- Real-time test interface
+- Auto-save functionality
+- Network resilience (auto-pause/resume)
+- Question navigation and flagging
+- Time warnings and auto-submit
+- Offline capability with sync
+
+### Analytics & Reporting
+- Performance dashboards by role
+- Zone/Region/District analytics
+- Individual and team performance
+- Certificate tracking
+- Activity logging
+
+### System Administration
+- User management
+- Role and permission management
+- Survey and question management
+- System settings configuration
+- Certificate management
+
+## Technology Stack
+
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth with custom logic
+- **Charts**: Recharts
+- **Icons**: Lucide React
+- **Routing**: React Router DOM
+- **Build Tool**: Vite
+
+## Deployment
+
+The application is deployed on Netlify and can be accessed at:
+https://dynamic-florentine-948ce9.netlify.app
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For support, email support@esigma.com or create an issue in the repository.

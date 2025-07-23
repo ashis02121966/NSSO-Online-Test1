@@ -14,7 +14,14 @@ export function Header() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">eSigma Survey Platform</h1>
-          <p className="text-sm text-gray-600">Online MCQ Test Management System</p>
+          <div className="flex items-center space-x-2">
+            <p className="text-sm text-gray-600">Online MCQ Test Management System</p>
+            {!import.meta.env.VITE_SUPABASE_URL && (
+              <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
+                Demo Mode
+              </span>
+            )}
+          </div>
         </div>
         
         <div className="flex items-center space-x-4">

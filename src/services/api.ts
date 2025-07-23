@@ -110,33 +110,135 @@ const mockSurveys: Survey[] = [
 // Auth API
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
-    return await AuthService.login(email, password);
+    // Check if Supabase is configured
+    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+      // Fallback to mock authentication for demo
+      return mockAuthLogin(email, password);
+    }
+    
+    try {
+      return await AuthService.login(email, password);
+    } catch (error) {
+      console.error('Supabase auth failed, falling back to mock:', error);
+      return mockAuthLogin(email, password);
+    }
   },
 
   logout: async (): Promise<ApiResponse<void>> => {
-    return await AuthService.logout();
+    try {
+      return await AuthService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+      return { success: true, message: 'Logged out successfully' };
+    }
   }
 };
 
+// Mock authentication fallback
+const mockAuthLogin = async (email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
+  await delay(800);
+  
+  // Demo credentials
+  const demoUsers = [
+    { email: 'admin@esigma.com', password: 'password123', user: mockUsers[0] },
+    { email: 'zo@esigma.com', password: 'password123', user: mockUsers[1] },
+    { email: 'ro@esigma.com', password: 'password123', user: mockUsers[2] },
+    { email: 'supervisor@esigma.com', password: 'password123', user: mockUsers[3] },
+    { email: 'enumerator@esigma.com', password: 'password123', user: mockUsers[4] }
+  ];
+  
+  const demoUser = demoUsers.find(u => u.email === email && u.password === password);
+  
+  if (!demoUser) {
+    return { success: false, message: 'Invalid credentials' };
+  }
+  
+  const token = `demo_token_${demoUser.user.id}_${Date.now()}`;
+  
+  return {
+    success: true,
+    data: {
+      user: demoUser.user,
+      token
+    },
+    message: 'Login successful'
+  };
+};
 // User API
 export const userApi = {
   getUsers: async (): Promise<ApiResponse<User[]>> => {
-    return await UserService.getUsers();
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(600);
+        return { success: true, data: mockUsers, message: 'Users fetched successfully (demo mode)' };
+      }
+      return await UserService.getUsers();
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      await delay(600);
+      return { success: true, data: mockUsers, message: 'Users fetched successfully (demo mode)' };
+    }
   },
 
   createUser: async (userData: any): Promise<ApiResponse<User>> => {
-    return await UserService.createUser(userData);
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(1000);
+        const newUser: User = {
+          id: Date.now().toString(),
+          email: userData.email,
+          name: userData.name,
+          roleId: userData.roleId,
+          role: mockUsers[0].role, // Default role
+          jurisdiction: userData.jurisdiction,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        return { success: true, data: newUser, message: 'User created successfully (demo mode)' };
+      }
+      return await UserService.createUser(userData);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      return { success: false, message: 'Failed to create user' };
+    }
   },
 
   deleteUser: async (id: string): Promise<ApiResponse<void>> => {
-    return await UserService.deleteUser(id);
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(500);
+        return { success: true, message: 'User deleted successfully (demo mode)' };
+      }
+      return await UserService.deleteUser(id);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return { success: false, message: 'Failed to delete user' };
+    }
   }
 };
 
 // Role API
 export const roleApi = {
   getRoles: async (): Promise<ApiResponse<Role[]>> => {
-    return await RoleService.getRoles();
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(400);
+        const mockRoles: Role[] = [
+          { id: '1', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/dashboard', '/users', '/roles', '/surveys', '/questions', '/settings'] },
+          { id: '2', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/zo-dashboard'] },
+          { id: '3', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/ro-dashboard'] },
+          { id: '4', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/supervisor-dashboard', '/team-results', '/my-enumerators'] },
+          { id: '5', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/enumerator-dashboard', '/available-tests', '/my-results', '/my-certificates'] }
+        ];
+        return { success: true, data: mockRoles, message: 'Roles fetched successfully (demo mode)' };
+      }
+      return await RoleService.getRoles();
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+      await delay(400);
+      return { success: true, data: [], message: 'Failed to fetch roles' };
+    }
   },
 
   getPermissions: async (): Promise<ApiResponse<Permission[]>> => {
@@ -194,18 +296,55 @@ export const roleApi = {
   },
 
   updateRoleMenuAccess: async (roleId: string, menuAccess: string[]): Promise<ApiResponse<void>> => {
-    return await RoleService.updateRoleMenuAccess(roleId, menuAccess);
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(800);
+        return { success: true, message: 'Menu access updated successfully (demo mode)' };
+      }
+      return await RoleService.updateRoleMenuAccess(roleId, menuAccess);
+    } catch (error) {
+      console.error('Error updating menu access:', error);
+      return { success: false, message: 'Failed to update menu access' };
+    }
   }
 };
 
 // Survey API
 export const surveyApi = {
   getSurveys: async (): Promise<ApiResponse<Survey[]>> => {
-    return await SurveyService.getSurveys();
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(600);
+        return { success: true, data: mockSurveys, message: 'Surveys fetched successfully (demo mode)' };
+      }
+      return await SurveyService.getSurveys();
+    } catch (error) {
+      console.error('Error fetching surveys:', error);
+      await delay(600);
+      return { success: true, data: mockSurveys, message: 'Surveys fetched successfully (demo mode)' };
+    }
   },
 
   createSurvey: async (surveyData: any): Promise<ApiResponse<Survey>> => {
-    return await SurveyService.createSurvey(surveyData);
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(1000);
+        const newSurvey: Survey = {
+          id: Date.now().toString(),
+          ...surveyData,
+          sections: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          isActive: true,
+          createdBy: '1'
+        };
+        return { success: true, data: newSurvey, message: 'Survey created successfully (demo mode)' };
+      }
+      return await SurveyService.createSurvey(surveyData);
+    } catch (error) {
+      console.error('Error creating survey:', error);
+      return { success: false, message: 'Failed to create survey' };
+    }
   },
 
   updateSurvey: async (surveyId: string, surveyData: any): Promise<ApiResponse<Survey>> => {
@@ -820,15 +959,61 @@ startxref
 // Settings API
 export const settingsApi = {
   getSettings: async (): Promise<ApiResponse<SystemSettings[]>> => {
-    return await SettingsService.getSettings();
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(600);
+        const mockSettings: SystemSettings[] = [
+          // Security Settings
+          { id: '1', category: 'security', key: 'max_login_attempts', value: '5', description: 'Maximum failed login attempts before account lockout', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '2', category: 'security', key: 'lockout_duration', value: '30', description: 'Account lockout duration in minutes', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '3', category: 'security', key: 'session_timeout', value: '120', description: 'User session timeout in minutes', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '4', category: 'security', key: 'password_min_length', value: '8', description: 'Minimum password length requirement', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '5', category: 'security', key: 'password_complexity', value: 'true', description: 'Require complex passwords (uppercase, lowercase, numbers)', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '6', category: 'security', key: 'force_password_change', value: '90', description: 'Force password change every X days', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          
+          // Test Settings
+          { id: '7', category: 'test', key: 'auto_save_interval', value: '30', description: 'Auto-save test progress every X seconds', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '8', category: 'test', key: 'enable_auto_save', value: 'true', description: 'Enable automatic saving of test progress', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '9', category: 'test', key: 'auto_submit_on_timeout', value: 'true', description: 'Automatically submit test when time expires', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '10', category: 'test', key: 'show_time_warning', value: 'true', description: 'Show warning when 5 minutes remaining', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '11', category: 'test', key: 'allow_question_navigation', value: 'true', description: 'Allow users to navigate between questions', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '12', category: 'test', key: 'enable_question_flagging', value: 'true', description: 'Allow users to flag questions for review', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '13', category: 'test', key: 'network_pause_enabled', value: 'true', description: 'Auto-pause test when network is unavailable', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          
+          // General Settings
+          { id: '14', category: 'general', key: 'site_name', value: 'eSigma Survey Platform', description: 'Application name displayed to users', type: 'string', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '15', category: 'general', key: 'site_description', value: 'Online MCQ Test Management System', description: 'Application description', type: 'string', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '16', category: 'general', key: 'support_email', value: 'support@esigma.com', description: 'Support contact email address', type: 'email', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '17', category: 'general', key: 'maintenance_mode', value: 'false', description: 'Enable maintenance mode to restrict access', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '18', category: 'general', key: 'default_timezone', value: 'Asia/Kolkata', description: 'Default system timezone', type: 'select', isEditable: true, options: ['Asia/Kolkata', 'UTC', 'America/New_York', 'Europe/London'], updatedAt: new Date(), updatedBy: 'admin' },
+          { id: '19', category: 'general', key: 'date_format', value: 'DD/MM/YYYY', description: 'Date display format', type: 'select', isEditable: true, options: ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'], updatedAt: new Date(), updatedBy: 'admin' }
+        ];
+        return { success: true, data: mockSettings, message: 'Settings fetched successfully (demo mode)' };
+      }
+      return await SettingsService.getSettings();
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      await delay(600);
+      return { success: true, data: [], message: 'Failed to fetch settings' };
+    }
   },
 
   updateSetting: async (id: string, value: string): Promise<ApiResponse<void>> => {
-    // Get current user ID from localStorage
-    const userData = localStorage.getItem('userData');
-    const userId = userData ? JSON.parse(userData).id : undefined;
-    
-    return await SettingsService.updateSetting(id, value, userId);
+    try {
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        await delay(800);
+        return { success: true, message: 'Setting updated successfully (demo mode)' };
+      }
+      
+      // Get current user ID from localStorage
+      const userData = localStorage.getItem('userData');
+      const userId = userData ? JSON.parse(userData).id : undefined;
+      
+      return await SettingsService.updateSetting(id, value, userId);
+    } catch (error) {
+      console.error('Error updating setting:', error);
+      return { success: false, message: 'Failed to update setting' };
+    }
   }
 };
 

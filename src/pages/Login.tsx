@@ -103,6 +103,10 @@ export function Login() {
 
           <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-900 mb-3">Demo Accounts - Click to Login:</h4>
+            <div className="mb-3 p-2 bg-blue-100 rounded text-xs text-blue-800">
+              <strong>Demo Mode:</strong> This application is running in demo mode with mock data. 
+              To use with real database, configure Supabase environment variables.
+            </div>
             <div className="space-y-2">
               {demoCredentials.map((cred) => (
                 <button
