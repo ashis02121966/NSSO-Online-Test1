@@ -70,18 +70,6 @@ export function Settings() {
         return <Clock className="w-5 h-5 text-yellow-600" />;
       case 'security':
         return <Shield className="w-5 h-5 text-red-600" />;
-      case 'email':
-        return <Mail className="w-5 h-5 text-green-600" />;
-      case 'certificate':
-        return <Award className="w-5 h-5 text-purple-600" />;
-      case 'database':
-        return <Database className="w-5 h-5 text-blue-600" />;
-      case 'ui':
-        return <Settings className="w-5 h-5 text-indigo-600" />;
-      case 'notification':
-        return <Users className="w-5 h-5 text-indigo-600" />;
-      case 'performance':
-        return <SettingsIcon className="w-5 h-5 text-orange-600" />;
       default:
         return <SettingsIcon className="w-5 h-5 text-gray-600" />;
     }
