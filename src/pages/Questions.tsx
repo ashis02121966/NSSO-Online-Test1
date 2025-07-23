@@ -412,62 +412,78 @@ export function Questions() {
             <Card>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Surveys</h3>
               
-              {/* Survey Grid */}
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {surveys.map(survey => (
-                  <div
-                    key={survey.id}
-                    className={`border rounded-lg p-3 cursor-pointer transition-colors ${
-                      selectedSurvey === survey.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:bg-gray-50'
-                    }`}
-                    onClick={() => {
-                      setSelectedSurvey(survey.id);
-                      setSelectedSection('');
-                      setQuestions([]);
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-sm text-gray-900 line-clamp-2">{survey.title}</h4>
-                      <div className="flex items-center space-x-1 ml-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditSurvey(survey);
-                          }}
-                          className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded"
-                          title="Edit Survey"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteSurvey(survey.id);
-                          }}
-                          className="p-1 text-red-600 hover:text-red-700 hover:bg-red-100 rounded"
-                          title="Delete Survey"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">{survey.description}</p>
-                    <div className="flex items-center justify-between text-xs text-gray-400">
-                      <span>{survey.totalQuestions} questions</span>
-                      <span>{formatDate(survey.targetDate)}</span>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        survey.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {survey.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                      <span className="text-xs text-gray-500">{survey.duration}min</span>
-                    </div>
-                  </div>
-                ))}
+              {/* Survey Table */}
+              <div className="max-h-96 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">Survey</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">Status</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">Questions</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">Duration</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">Target Date</th>
+                      <th className="text-left py-2 px-3 font-medium text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {surveys.map(survey => (
+                      <tr
+                        key={survey.id}
+                        className={`border-b border-gray-100 cursor-pointer transition-colors ${
+                          selectedSurvey === survey.id
+                            ? 'bg-blue-50'
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => {
+                          setSelectedSurvey(survey.id);
+                          setSelectedSection('');
+                          setQuestions([]);
+                        }}
+                      >
+                        <td className="py-3 px-3">
+                          <div>
+                            <div className="font-medium text-gray-900 text-sm">{survey.title}</div>
+                            <div className="text-xs text-gray-500 line-clamp-1">{survey.description}</div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            survey.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {survey.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-gray-600">{survey.totalQuestions}</td>
+                        <td className="py-3 px-3 text-gray-600">{survey.duration}min</td>
+                        <td className="py-3 px-3 text-gray-600">{formatDate(survey.targetDate)}</td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditSurvey(survey);
+                              }}
+                              className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded"
+                              title="Edit Survey"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSurvey(survey.id);
+                              }}
+                              className="p-1 text-red-600 hover:text-red-700 hover:bg-red-100 rounded"
+                              title="Delete Survey"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
               {/* Section Management */}
