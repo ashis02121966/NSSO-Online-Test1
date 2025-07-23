@@ -45,6 +45,31 @@ export function Questions() {
     ]
   });
 
+  const openEditQuestionModal = (question: Question) => {
+    console.log('Opening edit modal for question:', question);
+    setSelectedQuestion(question);
+    
+    // Pre-fill form data with existing question data
+    setQuestionFormData({
+      text: question.text,
+      type: question.type,
+      complexity: question.complexity,
+      points: question.points,
+      explanation: question.explanation || '',
+      options: [
+        question.options[0]?.text || '',
+        question.options[1]?.text || '',
+        question.options[2]?.text || '',
+        question.options[3]?.text || ''
+      ],
+      correctAnswers: question.options
+        .map((option, index) => option.isCorrect ? index : -1)
+        .filter(index => index !== -1)
+    });
+    
+    setIsEditQuestionModalOpen(true);
+  };
+
   useEffect(() => {
     fetchSurveys();
   }, []);
@@ -375,11 +400,6 @@ export function Questions() {
       setIsEditQuestionModalOpen(false);
       resetQuestionForm();
       console.log('Question updated:', updatedQuestion);
-    } catch (error) {
-      console.error('Failed to update question:', error);
-    }
-  };
-
   const resetQuestionForm = () => {
     setQuestionFormData({
       text: '',
