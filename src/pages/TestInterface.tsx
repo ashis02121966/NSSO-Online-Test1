@@ -23,12 +23,12 @@ export function TestInterface() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showTimeWarning, setShowTimeWarning] = useState(false);
   const [showResumeModal, setShowResumeModal] = useState(false);
-  const [showPauseModal, setShowPauseModal] = useState(false);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saving' | 'saved' | 'error' | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [pausedTimeRemaining, setPausedTimeRemaining] = useState<number | null>(null);
 
   // Auto-save interval
   const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
@@ -43,9 +43,22 @@ export function TestInterface() {
 
     const handleOffline = () => {
       setIsOnline(false);
-      // Auto-pause the test when connection is lost
-      if (session && !isPaused) {
-        setShowPauseModal(true);
+      // Auto-pause the test when connection is lost and save current time
+      if (session && !isPaused && timeRemaining > 0) {
+        setIsPaused(true);
+        setPausedTimeRemaining(timeRemaining);
+        console.log('Test auto-paused due to network loss. Time remaining:', timeRemaining);
+      }
+    };
+
+    const handleOnlineResume = () => {
+      setIsOnline(true);
+      // Auto-resume the test when connection is restored
+      if (session && isPaused && pausedTimeRemaining !== null) {
+        setIsPaused(false);
+        setTimeRemaining(pausedTimeRemaining);
+        setPausedTimeRemaining(null);
+        console.log('Test auto-resumed. Continuing from time:', pausedTimeRemaining);
       }
     };
 
@@ -56,7 +69,7 @@ export function TestInterface() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [session, isPaused]);
+  }, [session, isPaused, timeRemaining, pausedTimeRemaining]);
 
   // Auto-save functionality
   const autoSave = useCallback(async () => {
@@ -123,7 +136,7 @@ export function TestInterface() {
   }, [sessionId]);
 
   useEffect(() => {
-    if (timeRemaining > 0 && !isPaused) {
+    if (timeRemaining > 0 && !isPaused && isOnline) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => {
           const newTime = prev - 1;
@@ -143,7 +156,7 @@ export function TestInterface() {
 
       return () => clearInterval(timer);
     }
-  }, [timeRemaining, showTimeWarning, isPaused]);
+  }, [timeRemaining, showTimeWarning, isPaused, isOnline]);
 
   const loadQuestionsForSession = async () => {
     try {
@@ -314,24 +327,6 @@ export function TestInterface() {
     setIsPaused(false);
   };
 
-  const handlePauseTest = async () => {
-    if (!session) return;
-    
-    try {
-      setIsPaused(true);
-      await testApi.pauseSession(session.id);
-      setShowPauseModal(false);
-    } catch (error) {
-      console.error('Failed to pause test:', error);
-      setIsPaused(false);
-    }
-  };
-
-  const handleResumeTest = () => {
-    setIsPaused(false);
-    setShowPauseModal(false);
-  };
-
   const getQuestionStatus = (index: number) => {
     const question = questions[index];
     if (!question) return 'unanswered';
@@ -395,15 +390,6 @@ export function TestInterface() {
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowPauseModal(true)}
-              className="flex items-center space-x-2"
-            >
-              <Pause className="w-4 h-4" />
-              <span>Pause Test</span>
-            </Button>
             <div>
               <h1 className="text-xl font-semibold text-gray-900">Digital Literacy Assessment</h1>
               <p className="text-sm text-gray-600">Attempt {session.attemptNumber}</p>
@@ -456,6 +442,9 @@ export function TestInterface() {
             <div className="text-center">
               <div className={`text-2xl font-bold ${timeRemaining <= 300 ? 'text-red-600' : 'text-gray-900'}`}>
                 {formatTime(timeRemaining)}
+                {isPaused && (
+                  <span className="text-sm text-orange-600 block">PAUSED</span>
+                )}
               </div>
               <p className="text-xs text-gray-500">Time Remaining</p>
             </div>
@@ -550,15 +539,11 @@ export function TestInterface() {
           {isPaused && (
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm font-medium text-yellow-800 text-center">
-                Test is currently paused
+                Test is paused due to network connectivity
               </p>
-              <Button
-                size="sm"
-                className="w-full mt-2"
-                onClick={handleResumeTest}
-              >
-                Resume Test
-              </Button>
+              <p className="text-xs text-yellow-700 text-center mt-1">
+                Test will resume automatically when connection is restored
+              </p>
             </div>
           )}
         </div>
@@ -569,11 +554,15 @@ export function TestInterface() {
             {isPaused ? (
               <div className="text-center py-12">
                 <Pause className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Test Paused</h2>
-                <p className="text-gray-600 mb-6">Your test is currently paused. The timer has been stopped.</p>
-                <Button onClick={handleResumeTest}>
-                  Resume Test
-                </Button>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Test Automatically Paused</h2>
+                <p className="text-gray-600 mb-6">
+                  Your test has been paused due to network connectivity issues. 
+                  The timer has been stopped and will resume automatically when your connection is restored.
+                </p>
+                <div className="flex items-center justify-center space-x-2 text-orange-600">
+                  <WifiOff className="w-5 h-5" />
+                  <span className="text-sm font-medium">Waiting for network connection...</span>
+                </div>
               </div>
             ) : (
               <>
@@ -698,7 +687,7 @@ export function TestInterface() {
           <WifiOff className="w-5 h-5" />
           <div>
             <p className="font-bold">You are offline</p>
-            <p className="text-sm">Your progress is being saved locally and will sync when you're back online.</p>
+            <p className="text-sm">Test is paused. Progress saved locally and will sync when you're back online.</p>
           </div>
         </div>
       )}
@@ -726,36 +715,6 @@ export function TestInterface() {
               onClick={handleResumeSession}
             >
               Resume Session
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Pause Test Modal */}
-      <Modal
-        isOpen={showPauseModal}
-        onClose={() => setShowPauseModal(false)}
-        title="Pause Test"
-      >
-        <div className="text-center">
-          <Pause className="w-12 h-12 text-yellow-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Pause Test?</h3>
-          <p className="text-gray-600 mb-4">
-            {isOnline 
-              ? "Are you sure you want to pause the test? The timer will stop, and your progress will be saved."
-              : "You are currently offline. The test will be paused and your progress saved locally."}
-          </p>
-          <div className="flex justify-center space-x-4">
-            <Button
-              variant="secondary"
-              onClick={() => setShowPauseModal(false)}
-            >
-              Continue Test
-            </Button>
-            <Button
-              onClick={handlePauseTest}
-            >
-              Pause Test
             </Button>
           </div>
         </div>
