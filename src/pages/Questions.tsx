@@ -371,7 +371,7 @@ export function Questions() {
         </div>
 
         <div className="space-y-6">
-          <div className="grid grid-cols-12 gap-6 h-[400px]">
+          <div className="grid grid-cols-12 gap-6 h-[500px]">
           {/* Surveys Grid - Left Side */}
           <div className="col-span-5">
             <Card className="h-full">
@@ -388,7 +388,7 @@ export function Questions() {
                 </div>
               </div>
 
-              <div className="overflow-y-auto h-[calc(100%-60px)]">
+              <div className="overflow-y-auto h-[calc(100%-80px)]">
                 {isLoading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -567,9 +567,9 @@ export function Questions() {
           </div>
         </div>
 
-        {/* Questions Grid - Bottom Section */}
+        {/* Questions Table - Bottom Section */}
         {selectedSection && (
-          <Card>
+          <Card className="mt-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">
@@ -589,10 +589,10 @@ export function Questions() {
                 <p className="text-gray-400 text-sm">Use the bulk upload feature to add questions</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-gray-200">
+                    <tr className="border-b border-gray-200 bg-gray-50 sticky top-0">
                       <th className="text-left py-3 px-4 font-semibold text-gray-900">Question</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900">Type</th>
                       <th className="text-left py-3 px-4 font-semibold text-gray-900">Complexity</th>
@@ -998,7 +998,7 @@ export function Questions() {
               )}
               
               <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
+            <div className="overflow-y-auto h-[calc(100%-80px)]">
                   <span className="font-medium text-gray-700">Question Order:</span>
                   <span className="ml-2">{selectedQuestion.order}</span>
                 </div>
