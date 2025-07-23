@@ -16,6 +16,8 @@ export function Questions() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isCreateQuestionModalOpen, setIsCreateQuestionModalOpen] = useState(false);
   const [isCreateSectionModalOpen, setIsCreateSectionModalOpen] = useState(false);
+  const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
+  const [editingSection, setEditingSection] = useState<Section | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedSurvey, setSelectedSurvey] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
@@ -206,6 +208,12 @@ export function Questions() {
   const handleCreateSection = async () => {
     if (!selectedSurvey) return;
 
+    // Validate form
+    if (!sectionFormData.title.trim()) {
+      alert('Please enter section title');
+      return;
+    }
+
     setIsCreating(true);
     try {
       const response = await surveyApi.createSection(selectedSurvey, sectionFormData);
@@ -216,6 +224,7 @@ export function Questions() {
       }
     } catch (error) {
       console.error('Failed to create section:', error);
+      alert('Failed to create section. Please try again.');
     } finally {
       setIsCreating(false);
     }
@@ -256,6 +265,59 @@ export function Questions() {
     }
   };
 
+  const handleEditSection = (section: Section) => {
+    setEditingSection(section);
+    setSectionFormData({
+      title: section.title,
+      description: section.description,
+      questionsCount: section.questionsCount,
+      order: section.order
+    });
+    setIsEditSectionModalOpen(true);
+  };
+
+  const handleUpdateSection = async () => {
+    if (!editingSection) return;
+
+    // Validate form
+    if (!sectionFormData.title.trim()) {
+      alert('Please enter section title');
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const response = await surveyApi.updateSection(editingSection.id, sectionFormData);
+      if (response.success && response.data) {
+        setSections(sections.map(s => s.id === editingSection.id ? response.data! : s));
+        setIsEditSectionModalOpen(false);
+        resetSectionForm();
+      }
+    } catch (error) {
+      console.error('Failed to update section:', error);
+      alert('Failed to update section. Please try again.');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteSection = async (sectionId: string) => {
+    if (window.confirm('Are you sure you want to delete this section? This will also delete all questions in this section.')) {
+      try {
+        const response = await surveyApi.deleteSection(sectionId);
+        if (response.success) {
+          setSections(sections.filter(s => s.id !== sectionId));
+          if (selectedSection === sectionId) {
+            setSelectedSection('');
+            setQuestions([]);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to delete section:', error);
+        alert('Failed to delete section. Please try again.');
+      }
+    }
+  };
   const handleDeleteSurvey = async (surveyId: string) => {
     if (window.confirm('Are you sure you want to delete this survey? This will also delete all associated questions and results.')) {
       try {
@@ -504,18 +566,38 @@ export function Questions() {
                   </div>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {sections.map(section => (
-                      <button
+                      <div
                         key={section.id}
-                        onClick={() => setSelectedSection(section.id)}
-                        className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                        className={`p-3 rounded-lg border transition-colors ${
                           selectedSection === section.id
                             ? 'border-blue-500 bg-blue-50 text-blue-900'
-                            : 'border-gray-200 hover:bg-gray-50'
+                            : 'border-gray-200'
                         }`}
                       >
-                        <div className="font-medium text-sm">{section.title}</div>
-                        <div className="text-xs text-gray-500">{section.questionsCount} questions</div>
-                      </button>
+                        <div 
+                          className="cursor-pointer hover:bg-gray-50 rounded p-1 -m-1"
+                          onClick={() => setSelectedSection(section.id)}
+                        >
+                          <div className="font-medium text-sm">{section.title}</div>
+                          <div className="text-xs text-gray-500">{section.questionsCount} questions</div>
+                        </div>
+                        <div className="flex items-center justify-end space-x-1 mt-2">
+                          <button
+                            onClick={() => handleEditSection(section)}
+                            className="p-1 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded"
+                            title="Edit Section"
+                          >
+                            <Edit className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSection(section.id)}
+                            className="p-1 text-red-600 hover:text-red-700 hover:bg-red-100 rounded"
+                            title="Delete Section"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -695,6 +777,7 @@ export function Questions() {
               value={sectionFormData.title}
               onChange={(e) => setSectionFormData({ ...sectionFormData, title: e.target.value })}
               placeholder="Enter section title"
+              required
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -735,6 +818,7 @@ export function Questions() {
               <Button
                 onClick={handleCreateSection}
                 loading={isCreating}
+                disabled={!sectionFormData.title.trim()}
               >
                 Create Section
               </Button>
@@ -742,6 +826,69 @@ export function Questions() {
           </div>
         </Modal>
 
+        {/* Edit Section Modal */}
+        <Modal
+          isOpen={isEditSectionModalOpen}
+          onClose={() => {
+            setIsEditSectionModalOpen(false);
+            resetSectionForm();
+          }}
+          title="Edit Section"
+        >
+          <div className="space-y-4">
+            <Input
+              label="Section Title"
+              value={sectionFormData.title}
+              onChange={(e) => setSectionFormData({ ...sectionFormData, title: e.target.value })}
+              placeholder="Enter section title"
+              required
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                value={sectionFormData.description}
+                onChange={(e) => setSectionFormData({ ...sectionFormData, description: e.target.value })}
+                placeholder="Enter section description"
+                rows={3}
+                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="Target Questions Count"
+                type="number"
+                value={sectionFormData.questionsCount}
+                onChange={(e) => setSectionFormData({ ...sectionFormData, questionsCount: parseInt(e.target.value) })}
+                min="1"
+              />
+              <Input
+                label="Section Order"
+                type="number"
+                value={sectionFormData.order}
+                onChange={(e) => setSectionFormData({ ...sectionFormData, order: parseInt(e.target.value) })}
+                min="1"
+              />
+            </div>
+            <div className="flex justify-end space-x-3 pt-4">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsEditSectionModalOpen(false);
+                  resetSectionForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateSection}
+                loading={isCreating}
+                disabled={!sectionFormData.title.trim()}
+              >
+                Update Section
+              </Button>
+            </div>
+          </div>
+        </Modal>
         {/* Create Question Modal */}
         <Modal
           isOpen={isCreateQuestionModalOpen}

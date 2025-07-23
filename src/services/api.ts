@@ -404,6 +404,29 @@ export const surveyApi = {
       data: newSection,
       message: 'Section created successfully'
     };
+  },
+
+  updateSection: async (sectionId: string, sectionData: any): Promise<ApiResponse<Section>> => {
+    await delay(800);
+    const updatedSection: Section = {
+      id: sectionId,
+      surveyId: sectionData.surveyId || '1',
+      ...sectionData,
+      questions: []
+    };
+    return {
+      success: true,
+      data: updatedSection,
+      message: 'Section updated successfully'
+    };
+  },
+
+  deleteSection: async (sectionId: string): Promise<ApiResponse<void>> => {
+    await delay(500);
+    return {
+      success: true,
+      message: 'Section deleted successfully'
+    };
   }
 };
 
