@@ -532,9 +532,11 @@ export const questionApi = {
 
   downloadTemplate: async (): Promise<Blob> => {
     await delay(500);
-    const csvContent = `Question Text,Question Type,Complexity,Option A,Option B,Option C,Option D,Correct Answer,Points,Explanation
-"What is the capital of France?",single_choice,easy,"Paris","London","Berlin","Madrid",A,1,"Paris is the capital and largest city of France"
-"Which of the following are programming languages?",multiple_choice,medium,"Python","JavaScript","HTML","CSS","A,B",2,"Python and JavaScript are programming languages, while HTML and CSS are markup and styling languages"`;
+    const csvContent = `survey_id,survey_title,section_id,section_title,section_order,question_text,question_type,complexity,points,explanation,question_order,option_a,option_b,option_c,option_d,correct_options
+"550e8400-e29b-41d4-a716-446655440020","Digital Literacy Assessment","550e8400-e29b-41d4-a716-446655440030","Basic Computer Skills",1,"What is the primary function of an operating system?","single_choice","easy",1,"An operating system manages all hardware and software resources of a computer.",1,"To manage hardware and software resources","To create documents","To browse the internet","To play games","A"
+"550e8400-e29b-41d4-a716-446655440020","Digital Literacy Assessment","550e8400-e29b-41d4-a716-446655440030","Basic Computer Skills",1,"Which of the following are input devices? (Select all that apply)","multiple_choice","medium",2,"Input devices allow users to provide data to the computer. Monitor is an output device.",2,"Keyboard","Mouse","Monitor","Microphone","A,B,D"
+"550e8400-e29b-41d4-a716-446655440020","Digital Literacy Assessment","550e8400-e29b-41d4-a716-446655440031","Internet and Digital Communication",2,"What does URL stand for?","single_choice","easy",1,"URL stands for Uniform Resource Locator, which is the address of a web page.",1,"Uniform Resource Locator","Universal Resource Link","Unified Resource Location","Universal Reference Locator","A"
+"550e8400-e29b-41d4-a716-446655440020","Digital Literacy Assessment","550e8400-e29b-41d4-a716-446655440032","Digital Security and Privacy",3,"Which of the following are good password practices?","multiple_choice","medium",2,"Strong passwords should be long, complex, unique, and not shared.",1,"Use at least 8 characters","Include uppercase and lowercase letters","Share passwords with colleagues","Use unique passwords for each account","A,B,D"`;
     
     return new Blob([csvContent], { type: 'text/csv' });
   }
