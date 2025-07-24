@@ -661,7 +661,8 @@ export const testApi = {
         .single();
       
       if (resultError) {
-        throw new Error('Failed to create test result');
+        console.error('testApi: Error creating test result:', resultError);
+        throw new Error(`Failed to create test result: ${resultError.message}`);
       }
       
       // Create certificate if passed
