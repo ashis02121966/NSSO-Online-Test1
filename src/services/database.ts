@@ -1084,7 +1084,7 @@ export class QuestionService {
 
 // Test Service
 export class TestService {
-  static async createTestSession(surveyId: string, userId: string): Promise<ApiResponse<TestSession>> {
+  async createTestSession(surveyId: string, userId: string, demoSessionId?: string): Promise<ApiResponse<TestSession>> {
     try {
       console.log('TestService: Creating test session for survey:', surveyId, 'user:', userId);
       
@@ -1374,12 +1374,12 @@ export class DashboardService {
   static async getDashboardData(): Promise<ApiResponse<Dashboard>> {
     try {
       console.log('DashboardService: Fetching dashboard data');
-      
+        const sessionId = demoSessionId || `demo_session_${Date.now()}`;
       if (!supabase) {
         return {
           success: true,
           data: {
-            totalUsers: 0,
+            id: sessionId,
             totalSurveys: 0,
             totalAttempts: 0,
             averageScore: 0,

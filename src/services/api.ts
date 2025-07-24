@@ -17,6 +17,15 @@ import {
 } from './database';
 import { supabase, isDemoMode } from '../lib/supabase';
 
+// Helper function to generate UUID v4
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Production API implementation using Supabase
 console.log('API Services: Initializing with Supabase backend');
 
@@ -169,10 +178,22 @@ export const testApi = {
   async createTestSession(surveyId: string): Promise<ApiResponse<TestSession>> {
     console.log('testApi: Creating test session for survey:', surveyId);
     
-    // Get user ID from localStorage as fallback
+    if (isDemoMode || !supabase) {
+      // Generate UUID-formatted session ID for demo mode
+      const demoSessionId = generateUUID();
+      console.log('testApi: Creating demo session with UUID:', demoSessionId);
+      
+      const userData = localStorage.getItem('userData');
+      const currentUser = userData ? JSON.parse(userData) : null;
+      const fallbackUserId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440014';
+      
+      return await TestService.createTestSession(surveyId, fallbackUserId, demoSessionId);
+    }
+    
+    // For production mode with Supabase
     const userData = localStorage.getItem('userData');
     const currentUser = userData ? JSON.parse(userData) : null;
-    const fallbackUserId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440014'; // Default to enumerator
+    const fallbackUserId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440014';
     
     console.log('testApi: Using user ID for session creation:', fallbackUserId);
     return await TestService.createTestSession(surveyId, fallbackUserId);
