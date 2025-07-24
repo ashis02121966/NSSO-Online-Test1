@@ -578,32 +578,62 @@ export class SurveyService {
           // Get the first available admin user as fallback
           const { data: adminUser, error: adminError } = await supabase
             .from('users')
-            .select('id')
-            .eq('role_id', '550e8400-e29b-41d4-a716-446655440010')
+            .select('id, role_id')
+            .eq('role_id', '550e8400-e29b-41d4-a716-446655440001')
             .limit(1)
             .single();
 
           if (adminError || !adminUser) {
-            return { success: false, message: 'No valid user found to create survey' };
+            console.error('SurveyService: No admin user found with role_id 550e8400-e29b-41d4-a716-446655440001');
+            console.log('SurveyService: Attempting to find any user to use as creator');
+            
+            // Fallback: get any user as creator
+            const { data: anyUser, error: anyUserError } = await supabase
+              .from('users')
+              .select('id')
+              .limit(1)
+              .single();
+            
+            if (anyUserError || !anyUser) {
+              return { success: false, message: 'No users found in database. Please create a user first.' };
+            }
+            
+            console.log('SurveyService: Using fallback user as creator:', anyUser.id);
+            surveyData.createdBy = anyUser.id;
+          } else {
+            console.log('SurveyService: Using admin user as creator:', adminUser.id);
+            surveyData.createdBy = adminUser.id;
           }
-
-          console.log('SurveyService: Using admin user as creator:', adminUser.id);
-          surveyData.createdBy = adminUser.id;
         }
       } else {
         // If no createdBy provided, get the first admin user
         const { data: adminUser, error: adminError } = await supabase
           .from('users')
           .select('id')
-          .eq('role_id', '550e8400-e29b-41d4-a716-446655440010')
+          .eq('role_id', '550e8400-e29b-41d4-a716-446655440001')
           .limit(1)
           .single();
 
         if (adminError || !adminUser) {
-          return { success: false, message: 'No admin user found to create survey' };
-        }
+          console.error('SurveyService: No admin user found');
+          
+          // Fallback: get any user as creator
+          const { data: anyUser, error: anyUserError } = await supabase
+            .from('users')
+            .select('id')
+            .limit(1)
+            .single();
+          
+          if (anyUserError || !anyUser) {
+            return { success: false, message: 'No valid user found to create survey' };
+          }
 
-        surveyData.createdBy = adminUser.id;
+          console.log('SurveyService: Using fallback user as creator:', anyUser.id);
+          surveyData.createdBy = anyUser.id;
+        } else {
+          console.log('SurveyService: Using admin user as creator:', adminUser.id);
+          surveyData.createdBy = adminUser.id;
+        }
       }
 
       const { data: survey, error } = await supabase
