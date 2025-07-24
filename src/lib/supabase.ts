@@ -18,13 +18,8 @@ const hasValidSupabaseConfig = supabaseUrl &&
   isValidUrl(supabaseUrl) && 
   !supabaseUrl.includes('your_supabase_project_url') &&
   !supabaseAnonKey.includes('your_supabase_anon_key');
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  }
-});
+
+let supabase;
 
 if (!hasValidSupabaseConfig) {
   console.warn('Supabase not configured properly. Running in demo mode.');
@@ -32,7 +27,7 @@ if (!hasValidSupabaseConfig) {
   const dummyUrl = 'https://dummy.supabase.co';
   const dummyKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.dummy';
   
-  export const supabase = createClient(dummyUrl, dummyKey, {
+  supabase = createClient(dummyUrl, dummyKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -40,7 +35,16 @@ if (!hasValidSupabaseConfig) {
     }
   });
 } else {
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    }
+  });
 }
+
+export { supabase };
 // Database types
 export interface Database {
   public: {
