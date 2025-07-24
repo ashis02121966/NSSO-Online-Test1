@@ -3,31 +3,11 @@ import bcrypt from 'bcryptjs';
 
 export class DataInitializer {
   static async initializeDatabase() {
-    // Check if Supabase is properly configured
-    if (!import.meta.env.VITE_SUPABASE_URL || 
-        !import.meta.env.VITE_SUPABASE_ANON_KEY ||
-        import.meta.env.VITE_SUPABASE_URL.includes('your_supabase_project_url') ||
-        import.meta.env.VITE_SUPABASE_ANON_KEY.includes('your_supabase_anon_key')) {
-      console.log('Supabase not configured - skipping database initialization');
-      return { success: false, message: 'Supabase configuration required for database initialization' };
-    }
-
     try {
       console.log('Starting database initialization...');
       
-      // Use service role for initialization to bypass RLS
-      const { createClient } = await import('@supabase/supabase-js');
-      
-      // Validate service role key
-      const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-      if (!serviceRoleKey || serviceRoleKey.includes('your_supabase')) {
-        throw new Error('Valid Supabase service role key required for initialization');
-      }
-      
-      const supabaseAdmin = createClient(
-        import.meta.env.VITE_SUPABASE_URL!,
-        serviceRoleKey
-      );
+      // Use the existing supabase client
+      const supabaseAdmin = supabase;
       
       // Check if data already exists
       const { data: existingRoles } = await supabaseAdmin

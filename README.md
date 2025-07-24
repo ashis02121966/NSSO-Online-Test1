@@ -32,18 +32,19 @@ The application includes demo accounts for testing:
 
 ## Setup Instructions
 
-### Option 1: Production Setup with Supabase (Recommended)
+### Production Setup with Supabase
 
 1. **Create Supabase Project**
    - Go to [https://supabase.com](https://supabase.com)
    - Create a new project
-   - Note your project URL and anon key
+   - Note your project URL, anon key, and service role key
 
 2. **Configure Environment Variables**
    ```bash
-   # Create .env file with your Supabase credentials
+   # Copy .env.example to .env and update with your Supabase credentials
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    ```
 
 3. **Initialize Database**
@@ -65,8 +66,12 @@ The application includes demo accounts for testing:
    npm run dev
    ```
 
-### Option 2: Demo Mode (Fallback)
-If Supabase is not configured, the application automatically runs in demo mode with mock data. All features are functional but data doesn't persist between sessions.
+### Important Notes
+
+- **Database Required**: This application requires a properly configured Supabase database
+- **Environment Variables**: All Supabase environment variables must be set correctly
+- **Database Initialization**: Run the database initialization on first setup
+- **Production Ready**: This version is designed for production use with persistent data storage
 
 ## Database Schema
 

@@ -3,60 +3,40 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if environment variables are properly configured
-const isValidUrl = (url: string) => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const hasValidSupabaseConfig = supabaseUrl && 
-  supabaseAnonKey && 
-  isValidUrl(supabaseUrl) && 
-  !supabaseUrl.includes('your_supabase_project_url') &&
-  !supabaseAnonKey.includes('your_supabase_anon_key') &&
-  supabaseUrl !== 'https://dummy.supabase.co';
-
-let supabase;
-
-if (!hasValidSupabaseConfig) {
-  console.warn('Supabase not configured properly. Running in demo mode.', {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseAnonKey,
-    urlValid: supabaseUrl ? isValidUrl(supabaseUrl) : false,
-    urlNotPlaceholder: supabaseUrl ? !supabaseUrl.includes('your_supabase_project_url') : false,
-    keyNotPlaceholder: supabaseAnonKey ? !supabaseAnonKey.includes('your_supabase_anon_key') : false
-  });
-  // Create a dummy client that won't be used
-  const dummyUrl = 'https://dummy.supabase.co';
-  const dummyKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.dummy';
-  
-  supabase = createClient(dummyUrl, dummyKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-      detectSessionInUrl: false
-    }
-  });
-} else {
-  console.log('Supabase configured properly. Using real database.');
-  supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true
-    }
-  });
+// Validate Supabase configuration
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase configuration. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
 }
 
-export { supabase };
+if (supabaseUrl.includes('your_supabase_project_url') || supabaseAnonKey.includes('your_supabase_anon_key')) {
+  throw new Error('Please replace placeholder values in environment variables with actual Supabase credentials.');
+}
 
-// Export demo mode flag for API services to use
-export const isDemoMode = !hasValidSupabaseConfig;
+console.log('Supabase client initialized with URL:', supabaseUrl);
 
+// Create Supabase client
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
+
+// Test database connection on initialization
+supabase
+  .from('roles')
+  .select('count', { count: 'exact', head: true })
+  .then(({ error }) => {
+    if (error) {
+      console.error('Supabase connection test failed:', error);
+    } else {
+      console.log('Supabase connection test successful');
+    }
+  });
+
+// Export demo mode flag (always false in production)
+export const isDemoMode = false;
 // Database types
 export interface Database {
   public: {
