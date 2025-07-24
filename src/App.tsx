@@ -27,16 +27,16 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <NetworkProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/*" element={
-              <ProtectedRoute>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/*" element={
+            <ProtectedRoute>
+              <NetworkProvider>
                 <ProtectedRoutes />
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </NetworkProvider>
+              </NetworkProvider>
+            </ProtectedRoute>
+          } />
+        </Routes>
       </AuthProvider>
     </Router>
   );
