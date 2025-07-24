@@ -15,7 +15,7 @@ import {
   DashboardService,
   CertificateService
 } from './database';
-import { isDemoMode } from '../lib/supabase';
+import { supabase, isDemoMode } from '../lib/supabase';
 
 // Production API implementation using Supabase
 console.log('API Services: Initializing with Supabase backend');
