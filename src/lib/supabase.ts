@@ -3,40 +3,42 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Validate Supabase configuration
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase configuration. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
+// Check if Supabase is configured
+const isSupabaseConfigured = supabaseUrl && 
+  supabaseAnonKey && 
+  !supabaseUrl.includes('your_supabase_project_url') && 
+  !supabaseAnonKey.includes('your_supabase_anon_key');
+
+if (!isSupabaseConfigured) {
+  console.warn('Supabase not configured - using demo mode');
 }
 
-if (supabaseUrl.includes('your_supabase_project_url') || supabaseAnonKey.includes('your_supabase_anon_key')) {
-  throw new Error('Please replace placeholder values in environment variables with actual Supabase credentials.');
+// Create Supabase client (with fallback for demo mode)
+export const supabase = isSupabaseConfigured 
+  ? createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
+  : null;
+
+// Test database connection on initialization (only if configured)
+if (supabase) {
+  console.log('Supabase client initialized with URL:', supabaseUrl);
+  supabase
+    .from('roles')
+    .select('count', { count: 'exact', head: true })
+    .then(({ error }) => {
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+      } else {
+        console.log('Supabase connection test successful');
+      }
+    });
 }
 
-console.log('Supabase client initialized with URL:', supabaseUrl);
-
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
-  }
-});
-
-// Test database connection on initialization
-supabase
-  .from('roles')
-  .select('count', { count: 'exact', head: true })
-  .then(({ error }) => {
-    if (error) {
-      console.error('Supabase connection test failed:', error);
-    } else {
-      console.log('Supabase connection test successful');
-    }
-  });
-
-// Export demo mode flag (always false in production)
-export const isDemoMode = false;
 // Database types
 export interface Database {
   public: {
