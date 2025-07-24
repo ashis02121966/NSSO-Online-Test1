@@ -514,7 +514,7 @@ export const questionApi = {
     }
   },
 
-  createQuestion: async (questionData: any): Promise<ApiResponse<Question>> => {
+  async createQuestion(questionData: any): Promise<ApiResponse<Question>> {
     try {
       console.log('API: Creating question with data:', questionData);
       
@@ -532,7 +532,7 @@ export const questionApi = {
     }
   },
 
-  createMockQuestion: async (questionData: any): Promise<ApiResponse<Question>> => {
+  async createMockQuestion(questionData: any): Promise<ApiResponse<Question>> {
     await delay(800);
     const newQuestion: Question = {
       id: Date.now().toString(),
