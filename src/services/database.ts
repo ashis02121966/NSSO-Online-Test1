@@ -1264,7 +1264,47 @@ export class TestService extends BaseService {
 export class DashboardService extends BaseService {
   static async getDashboardData(): Promise<ApiResponse<Dashboard>> {
     try {
-      console.log('DashboardService: Fetching dashboard data');
+      if (!supabase) {
+        console.log('DashboardService: Supabase not configured, returning demo data');
+        return {
+          success: true,
+          data: {
+            totalUsers: 25,
+            totalSurveys: 3,
+            totalAttempts: 150,
+            averageScore: 78.5,
+            passRate: 82.3,
+            recentActivity: [
+              {
+                id: '1',
+                type: 'test_completed',
+                description: 'John Doe completed Digital Literacy Assessment',
+                userId: '1',
+                userName: 'John Doe',
+                timestamp: new Date()
+              }
+            ],
+            performanceByRole: [
+              { name: 'Admin', value: 5, total: 5, percentage: 100 },
+              { name: 'Supervisor', value: 8, total: 10, percentage: 80 },
+              { name: 'Enumerator', value: 12, total: 15, percentage: 80 }
+            ],
+            performanceBySurvey: [
+              { name: 'Digital Literacy', value: 45, total: 60, percentage: 75 },
+              { name: 'Data Collection', value: 30, total: 40, percentage: 75 },
+              { name: 'Survey Methodology', value: 25, total: 30, percentage: 83 }
+            ],
+            monthlyTrends: [
+              { month: 'Jan', attempts: 20, passed: 16, failed: 4, passRate: 80 },
+              { month: 'Feb', attempts: 25, passed: 21, failed: 4, passRate: 84 },
+              { month: 'Mar', attempts: 30, passed: 25, failed: 5, passRate: 83 }
+            ]
+          },
+          message: 'Dashboard data fetched successfully (Demo Mode)'
+        };
+      }
+
+      console.log('DashboardService: Fetching dashboard data from Supabase');
       const client = new DashboardService().checkSupabaseConnection();
 
       // Get basic counts
