@@ -1231,4 +1231,3 @@ export class SettingsService {
     }
   }
 }
-}
