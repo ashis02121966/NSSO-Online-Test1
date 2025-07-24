@@ -128,10 +128,10 @@ export function TestInterface() {
         console.log('Using session data from navigation state');
         setSession(location.state.sessionData);
         setTimeRemaining(location.state.sessionData.timeRemaining);
-        await loadQuestionsForSession();
+        loadQuestionsForSession();
       } else {
         console.log('Loading session from API');
-        await loadTestSession();
+        loadTestSession();
       }
     }
   }, [sessionId]);
