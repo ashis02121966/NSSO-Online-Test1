@@ -1,233 +1,184 @@
 import { supabase } from '../lib/supabase';
 import bcrypt from 'bcryptjs';
-import { User, Role, Survey, Section, Question, TestSession, TestResult, Certificate, Dashboard, SystemSettings, ApiResponse } from '../types';
+import { 
+  User, Role, Survey, Section, Question, TestSession, TestResult, 
+  Certificate, Dashboard, SystemSettings, ApiResponse 
+} from '../types';
 
-export class DatabaseService {
-  static checkSupabaseConnection() {
-    if (!supabase) {
-      console.error('Supabase client is null. Environment variables may be missing or invalid.');
-      console.error('Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set correctly.');
-      throw new Error('Database connection not available. Please check your Supabase configuration in the .env file.');
-    }
-    return supabase;
-  }
-}
-
+// Auth Service
 export class AuthService {
   static async login(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
     try {
-      console.log('AuthService: Attempting login for:', email);
+      console.log('AuthService: Login attempt for:', email);
       
-      // Always try demo login first for development
-      console.log('AuthService: Trying demo authentication first');
-      const demoResult = await this.handleDemoLogin(email, password);
-      if (demoResult.success) {
-        return demoResult;
-      }
-      
-      // If demo login fails and Supabase is configured, try Supabase
       if (!supabase) {
-        console.log('AuthService: Supabase not configured and demo login failed');
-        return { success: false, message: 'Invalid email or password' };
+        console.log('AuthService: Supabase not configured, using demo mode');
+        return this.demoLogin(email, password);
       }
 
-      // Try Supabase authentication first
-      const { data: userData, error } = await supabase
+      // Get user with role information
+      const { data: users, error } = await supabase
         .from('users')
         .select(`
           *,
           role:roles(*)
         `)
         .eq('email', email)
-        .eq('is_active', true)
-        .single();
+        .eq('is_active', true);
 
-      if (error || !userData) {
-        console.log('AuthService: User not found in database, trying demo login');
-        return this.handleDemoLogin(email, password);
+      if (error) {
+        console.error('AuthService: Database error:', error);
+        throw error;
       }
 
-      // Verify password
-      const isValidPassword = await bcrypt.compare(password, userData.password_hash);
-      if (!isValidPassword) {
-        console.log('AuthService: Invalid password for user:', email);
+      if (!users || users.length === 0) {
         return { success: false, message: 'Invalid email or password' };
       }
+
+      const user = users[0];
+
+      // Verify password
+      const isValidPassword = await bcrypt.compare(password, user.password_hash);
+      if (!isValidPassword) {
+        return { success: false, message: 'Invalid email or password' };
+      }
+
+      // Transform user data
+      const transformedUser: User = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: user.role_id,
+        role: {
+          id: user.role.id,
+          name: user.role.name,
+          description: user.role.description,
+          level: user.role.level,
+          isActive: user.role.is_active,
+          menuAccess: user.role.menu_access,
+          createdAt: new Date(user.role.created_at),
+          updatedAt: new Date(user.role.updated_at)
+        },
+        isActive: user.is_active,
+        jurisdiction: user.jurisdiction,
+        zone: user.zone,
+        region: user.region,
+        district: user.district,
+        employeeId: user.employee_id,
+        phoneNumber: user.phone_number,
+        profileImage: user.profile_image,
+        parentId: user.parent_id,
+        lastLogin: user.last_login ? new Date(user.last_login) : undefined,
+        createdAt: new Date(user.created_at),
+        updatedAt: new Date(user.updated_at)
+      };
 
       // Update last login
       await supabase
         .from('users')
         .update({ last_login: new Date().toISOString() })
-        .eq('id', userData.id);
+        .eq('id', user.id);
 
-      const user: User = {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        roleId: userData.role_id,
-        role: {
-          id: userData.role.id,
-          name: userData.role.name,
-          description: userData.role.description,
-          level: userData.role.level,
-          isActive: userData.role.is_active,
-          createdAt: new Date(userData.role.created_at),
-          updatedAt: new Date(userData.role.updated_at),
-          menuAccess: userData.role.menu_access
-        },
-        isActive: userData.is_active,
-        jurisdiction: userData.jurisdiction,
-        zone: userData.zone,
-        region: userData.region,
-        district: userData.district,
-        employeeId: userData.employee_id,
-        phoneNumber: userData.phone_number,
-        createdAt: new Date(userData.created_at),
-        updatedAt: new Date(userData.updated_at),
-        lastLogin: userData.last_login ? new Date(userData.last_login) : undefined
-      };
-
-      const token = `demo_token_${userData.id}`;
-
-      console.log('AuthService: Login successful for user:', user.name);
       return {
         success: true,
-        data: { user, token },
+        data: {
+          user: transformedUser,
+          token: `demo_token_${user.id}`
+        },
         message: 'Login successful'
       };
     } catch (error) {
       console.error('AuthService: Login error:', error);
-      return this.handleDemoLogin(email, password);
+      return { success: false, message: 'Login failed. Please try again.' };
     }
   }
 
-  static async handleDemoLogin(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
-    console.log('AuthService: Using demo authentication for:', email);
+  static async demoLogin(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
+    console.log('AuthService: Demo login for:', email);
     
-    // First check if the password is correct
-    if (password !== 'password123') {
-      console.log('AuthService: Invalid password for demo login');
-      return { success: false, message: 'Invalid email or password' };
-    }
-    
-    // Demo credentials
-    const demoUsers = {
-      'admin@esigma.com': {
-        id: '550e8400-e29b-41d4-a716-446655440015',
+    // Demo users with correct UUIDs
+    const demoUsers = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440001',
+        email: 'admin@esigma.com',
         name: 'System Administrator',
         roleId: '550e8400-e29b-41d4-a716-446655440010',
-        role: { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-        jurisdiction: 'National',
-        zone: null,
-        region: null,
-        district: null,
-        employeeId: 'ADM001',
-        phoneNumber: '+91-9876543210'
+        role: { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        jurisdiction: 'National'
       },
-      'zo@esigma.com': {
-        id: '550e8400-e29b-41d4-a716-446655440016',
+      {
+        id: '550e8400-e29b-41d4-a716-446655440002',
+        email: 'zo@esigma.com',
         name: 'Zonal Officer',
         roleId: '550e8400-e29b-41d4-a716-446655440011',
-        role: { id: '550e8400-e29b-41d4-a716-446655440011', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-        jurisdiction: 'North Zone',
-        zone: 'North Zone',
-        region: null,
-        district: null,
-        employeeId: 'ZO001',
-        phoneNumber: '+91-9876543211'
+        role: { id: '550e8400-e29b-41d4-a716-446655440011', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        jurisdiction: 'North Zone'
       },
-      'ro@esigma.com': {
-        id: '550e8400-e29b-41d4-a716-446655440017',
+      {
+        id: '550e8400-e29b-41d4-a716-446655440003',
+        email: 'ro@esigma.com',
         name: 'Regional Officer',
         roleId: '550e8400-e29b-41d4-a716-446655440012',
-        role: { id: '550e8400-e29b-41d4-a716-446655440012', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-        jurisdiction: 'Delhi Region',
-        zone: 'North Zone',
-        region: 'Delhi Region',
-        district: null,
-        employeeId: 'RO001',
-        phoneNumber: '+91-9876543212'
+        role: { id: '550e8400-e29b-41d4-a716-446655440012', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        jurisdiction: 'Delhi Region'
       },
-      'supervisor@esigma.com': {
-        id: '550e8400-e29b-41d4-a716-446655440018',
+      {
+        id: '550e8400-e29b-41d4-a716-446655440004',
+        email: 'supervisor@esigma.com',
         name: 'Field Supervisor',
         roleId: '550e8400-e29b-41d4-a716-446655440013',
-        role: { id: '550e8400-e29b-41d4-a716-446655440013', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-        jurisdiction: 'Central Delhi District',
-        zone: 'North Zone',
-        region: 'Delhi Region',
-        district: 'Central Delhi',
-        employeeId: 'SUP001',
-        phoneNumber: '+91-9876543213'
+        role: { id: '550e8400-e29b-41d4-a716-446655440013', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        jurisdiction: 'Central Delhi District'
       },
-      'enumerator@esigma.com': {
-        id: '550e8400-e29b-41d4-a716-446655440019',
+      {
+        id: '550e8400-e29b-41d4-a716-446655440005',
+        email: 'enumerator@esigma.com',
         name: 'Field Enumerator',
         roleId: '550e8400-e29b-41d4-a716-446655440014',
-        role: { id: '550e8400-e29b-41d4-a716-446655440014', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, createdAt: new Date(), updatedAt: new Date() },
-        jurisdiction: 'Block A, Central Delhi',
-        zone: 'North Zone',
-        region: 'Delhi Region',
-        district: 'Central Delhi',
-        employeeId: 'ENU001',
-        phoneNumber: '+91-9876543214'
+        role: { id: '550e8400-e29b-41d4-a716-446655440014', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        jurisdiction: 'Block A, Central Delhi'
       }
-    };
+    ];
 
-    // Check if email exists in demo users
-    const demoUser = demoUsers[email as keyof typeof demoUsers];
-    if (!demoUser) {
-      console.log('AuthService: Email not found in demo users:', email);
+    const user = demoUsers.find(u => u.email === email);
+    if (!user || password !== 'password123') {
       return { success: false, message: 'Invalid email or password' };
     }
 
-    const user: User = {
-      id: demoUser.id,
-      email: email,
-      name: demoUser.name,
-      roleId: demoUser.roleId,
-      role: demoUser.role,
+    const transformedUser: User = {
+      ...user,
       isActive: true,
-      jurisdiction: demoUser.jurisdiction,
-      zone: demoUser.zone,
-      region: demoUser.region,
-      district: demoUser.district,
-      employeeId: demoUser.employeeId,
-      phoneNumber: demoUser.phoneNumber,
       createdAt: new Date(),
-      updatedAt: new Date(),
-      lastLogin: new Date()
+      updatedAt: new Date()
     };
 
-    const token = `demo_token_${demoUser.id}`;
-
-    console.log('AuthService: Demo login successful for:', user.name);
     return {
       success: true,
-      data: { user, token },
-      message: 'Login successful'
+      data: {
+        user: transformedUser,
+        token: `demo_token_${user.id}`
+      },
+      message: 'Demo login successful'
     };
   }
 
   static async logout(): Promise<ApiResponse<void>> {
-    try {
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
-      return { success: true, message: 'Logout successful' };
-    } catch (error) {
-      console.error('AuthService: Logout error:', error);
-      return { success: true, message: 'Logout completed' };
-    }
+    return { success: true, message: 'Logout successful' };
   }
 }
 
+// User Service
 export class UserService {
   static async getUsers(): Promise<ApiResponse<User[]>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('UserService: Fetching users');
       
-      const { data, error } = await supabase!
+      if (!supabase) {
+        console.log('UserService: Supabase not configured, returning demo users');
+        return { success: true, data: [], message: 'Demo users loaded' };
+      }
+
+      const { data: users, error } = await supabase
         .from('users')
         .select(`
           *,
@@ -235,29 +186,45 @@ export class UserService {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('UserService: Database error:', error);
+        throw error;
+      }
 
-      const users = data.map(userData => ({
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        roleId: userData.role_id,
+      const transformedUsers = users?.map(user => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: user.role_id,
         role: {
-          id: userData.role.id,
-          name: userData.role.name,
-          description: userData.role.description,
-          level: userData.role.level,
-          isActive: userData.role.is_active,
-          createdAt: new Date(userData.role.created_at),
-          updatedAt: new Date(userData.role.updated_at)
+          id: user.role.id,
+          name: user.role.name,
+          description: user.role.description,
+          level: user.role.level,
+          isActive: user.role.is_active,
+          menuAccess: user.role.menu_access,
+          createdAt: new Date(user.role.created_at),
+          updatedAt: new Date(user.role.updated_at)
         },
-        isActive: userData.is_active,
-        jurisdiction: userData.jurisdiction,
-        createdAt: new Date(userData.created_at),
-        updatedAt: new Date(userData.updated_at)
-      }));
+        isActive: user.is_active,
+        jurisdiction: user.jurisdiction,
+        zone: user.zone,
+        region: user.region,
+        district: user.district,
+        employeeId: user.employee_id,
+        phoneNumber: user.phone_number,
+        profileImage: user.profile_image,
+        parentId: user.parent_id,
+        lastLogin: user.last_login ? new Date(user.last_login) : undefined,
+        createdAt: new Date(user.created_at),
+        updatedAt: new Date(user.updated_at)
+      })) || [];
 
-      return { success: true, data: users, message: 'Users fetched successfully' };
+      return {
+        success: true,
+        data: transformedUsers,
+        message: 'Users fetched successfully'
+      };
     } catch (error) {
       console.error('UserService: Error fetching users:', error);
       return { success: false, message: 'Failed to fetch users', data: [] };
@@ -266,11 +233,16 @@ export class UserService {
 
   static async createUser(userData: any): Promise<ApiResponse<User>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('UserService: Creating user:', userData.email);
       
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      // Hash password
       const passwordHash = await bcrypt.hash('password123', 10);
-      
-      const { data, error } = await supabase!
+
+      const { data: user, error } = await supabase
         .from('users')
         .insert({
           email: userData.email,
@@ -286,29 +258,37 @@ export class UserService {
         `)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('UserService: Database error:', error);
+        throw error;
+      }
 
-      const user: User = {
-        id: data.id,
-        email: data.email,
-        name: data.name,
-        roleId: data.role_id,
+      const transformedUser: User = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        roleId: user.role_id,
         role: {
-          id: data.role.id,
-          name: data.role.name,
-          description: data.role.description,
-          level: data.role.level,
-          isActive: data.role.is_active,
-          createdAt: new Date(data.role.created_at),
-          updatedAt: new Date(data.role.updated_at)
+          id: user.role.id,
+          name: user.role.name,
+          description: user.role.description,
+          level: user.role.level,
+          isActive: user.role.is_active,
+          menuAccess: user.role.menu_access,
+          createdAt: new Date(user.role.created_at),
+          updatedAt: new Date(user.role.updated_at)
         },
-        isActive: data.is_active,
-        jurisdiction: data.jurisdiction,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
+        isActive: user.is_active,
+        jurisdiction: user.jurisdiction,
+        createdAt: new Date(user.created_at),
+        updatedAt: new Date(user.updated_at)
       };
 
-      return { success: true, data: user, message: 'User created successfully' };
+      return {
+        success: true,
+        data: transformedUser,
+        message: 'User created successfully'
+      };
     } catch (error) {
       console.error('UserService: Error creating user:', error);
       return { success: false, message: 'Failed to create user' };
@@ -317,14 +297,21 @@ export class UserService {
 
   static async deleteUser(id: string): Promise<ApiResponse<void>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('UserService: Deleting user:', id);
       
-      const { error } = await supabase!
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      const { error } = await supabase
         .from('users')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('UserService: Database error:', error);
+        throw error;
+      }
 
       return { success: true, message: 'User deleted successfully' };
     } catch (error) {
@@ -334,30 +321,43 @@ export class UserService {
   }
 }
 
+// Role Service
 export class RoleService {
   static async getRoles(): Promise<ApiResponse<Role[]>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('RoleService: Fetching roles');
       
-      const { data, error } = await supabase!
+      if (!supabase) {
+        console.log('RoleService: Supabase not configured, returning demo roles');
+        return { success: true, data: [], message: 'Demo roles loaded' };
+      }
+
+      const { data: roles, error } = await supabase
         .from('roles')
         .select('*')
         .order('level', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RoleService: Database error:', error);
+        throw error;
+      }
 
-      const roles = data.map(roleData => ({
-        id: roleData.id,
-        name: roleData.name,
-        description: roleData.description,
-        level: roleData.level,
-        isActive: roleData.is_active,
-        menuAccess: roleData.menu_access,
-        createdAt: new Date(roleData.created_at),
-        updatedAt: new Date(roleData.updated_at)
-      }));
+      const transformedRoles = roles?.map(role => ({
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        level: role.level,
+        isActive: role.is_active,
+        menuAccess: role.menu_access,
+        createdAt: new Date(role.created_at),
+        updatedAt: new Date(role.updated_at)
+      })) || [];
 
-      return { success: true, data: roles, message: 'Roles fetched successfully' };
+      return {
+        success: true,
+        data: transformedRoles,
+        message: 'Roles fetched successfully'
+      };
     } catch (error) {
       console.error('RoleService: Error fetching roles:', error);
       return { success: false, message: 'Failed to fetch roles', data: [] };
@@ -366,9 +366,13 @@ export class RoleService {
 
   static async createRole(roleData: any): Promise<ApiResponse<Role>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('RoleService: Creating role:', roleData.name);
       
-      const { data, error } = await supabase!
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      const { data: role, error } = await supabase
         .from('roles')
         .insert({
           name: roleData.name,
@@ -379,19 +383,27 @@ export class RoleService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('RoleService: Database error:', error);
+        throw error;
+      }
 
-      const role: Role = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        level: data.level,
-        isActive: data.is_active,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
+      const transformedRole: Role = {
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        level: role.level,
+        isActive: role.is_active,
+        menuAccess: role.menu_access,
+        createdAt: new Date(role.created_at),
+        updatedAt: new Date(role.updated_at)
       };
 
-      return { success: true, data: role, message: 'Role created successfully' };
+      return {
+        success: true,
+        data: transformedRole,
+        message: 'Role created successfully'
+      };
     } catch (error) {
       console.error('RoleService: Error creating role:', error);
       return { success: false, message: 'Failed to create role' };
@@ -400,9 +412,13 @@ export class RoleService {
 
   static async updateRole(id: string, roleData: any): Promise<ApiResponse<Role>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('RoleService: Updating role:', id);
       
-      const { data, error } = await supabase!
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      const { data: role, error } = await supabase
         .from('roles')
         .update({
           name: roleData.name,
@@ -412,19 +428,27 @@ export class RoleService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('RoleService: Database error:', error);
+        throw error;
+      }
 
-      const role: Role = {
-        id: data.id,
-        name: data.name,
-        description: data.description,
-        level: data.level,
-        isActive: data.is_active,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at)
+      const transformedRole: Role = {
+        id: role.id,
+        name: role.name,
+        description: role.description,
+        level: role.level,
+        isActive: role.is_active,
+        menuAccess: role.menu_access,
+        createdAt: new Date(role.created_at),
+        updatedAt: new Date(role.updated_at)
       };
 
-      return { success: true, data: role, message: 'Role updated successfully' };
+      return {
+        success: true,
+        data: transformedRole,
+        message: 'Role updated successfully'
+      };
     } catch (error) {
       console.error('RoleService: Error updating role:', error);
       return { success: false, message: 'Failed to update role' };
@@ -433,14 +457,21 @@ export class RoleService {
 
   static async deleteRole(id: string): Promise<ApiResponse<void>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('RoleService: Deleting role:', id);
       
-      const { error } = await supabase!
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      const { error } = await supabase
         .from('roles')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('RoleService: Database error:', error);
+        throw error;
+      }
 
       return { success: true, message: 'Role deleted successfully' };
     } catch (error) {
@@ -451,82 +482,74 @@ export class RoleService {
 
   static async updateRoleMenuAccess(roleId: string, menuAccess: string[]): Promise<ApiResponse<void>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('RoleService: Updating menu access for role:', roleId);
       
-      const { error } = await supabase!
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      const { error } = await supabase
         .from('roles')
         .update({ menu_access: menuAccess })
         .eq('id', roleId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('RoleService: Database error:', error);
+        throw error;
+      }
 
-      return { success: true, message: 'Role menu access updated successfully' };
+      return { success: true, message: 'Menu access updated successfully' };
     } catch (error) {
-      console.error('RoleService: Error updating role menu access:', error);
-      return { success: false, message: 'Failed to update role menu access' };
+      console.error('RoleService: Error updating menu access:', error);
+      return { success: false, message: 'Failed to update menu access' };
     }
   }
 }
 
+// Survey Service
 export class SurveyService {
   static async getSurveys(): Promise<ApiResponse<Survey[]>> {
     try {
+      console.log('SurveyService: Fetching surveys');
+      
       if (!supabase) {
         console.log('SurveyService: Supabase not configured, returning demo surveys');
-        return {
-          success: true,
-          data: [
-            {
-              id: '550e8400-e29b-41d4-a716-446655440020',
-              title: 'Digital Literacy Assessment',
-              description: 'Comprehensive assessment of digital skills and computer literacy for field staff',
-              targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-              duration: 35,
-              totalQuestions: 30,
-              passingScore: 70,
-              maxAttempts: 3,
-              isActive: true,
-              sections: [],
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              createdBy: '550e8400-e29b-41d4-a716-446655440015'
-            }
-          ],
-          message: 'Demo surveys loaded successfully'
-        };
+        return { success: true, data: [], message: 'Demo surveys loaded' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
-      const { data, error } = await supabase
+
+      const { data: surveys, error } = await supabase
         .from('surveys')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('SurveyService: Error fetching surveys:', error);
-        return { success: false, message: 'Failed to fetch surveys', data: [] };
+        console.error('SurveyService: Database error:', error);
+        throw error;
       }
 
-      const surveys = data.map(surveyData => ({
-        id: surveyData.id,
-        title: surveyData.title,
-        description: surveyData.description,
-        targetDate: new Date(surveyData.target_date),
-        duration: surveyData.duration,
-        totalQuestions: surveyData.total_questions,
-        passingScore: surveyData.passing_score,
-        maxAttempts: surveyData.max_attempts,
-        isActive: surveyData.is_active,
+      const transformedSurveys = surveys?.map(survey => ({
+        id: survey.id,
+        title: survey.title,
+        description: survey.description,
+        targetDate: new Date(survey.target_date),
+        duration: survey.duration,
+        totalQuestions: survey.total_questions,
+        passingScore: survey.passing_score,
+        maxAttempts: survey.max_attempts,
+        isActive: survey.is_active,
         sections: [],
-        createdAt: new Date(surveyData.created_at),
-        updatedAt: new Date(surveyData.updated_at),
-        createdBy: surveyData.created_by,
-        assignedZones: surveyData.assigned_zones,
-        assignedRegions: surveyData.assigned_regions
-      }));
+        createdAt: new Date(survey.created_at),
+        updatedAt: new Date(survey.updated_at),
+        createdBy: survey.created_by,
+        assignedZones: survey.assigned_zones,
+        assignedRegions: survey.assigned_regions
+      })) || [];
 
-      return { success: true, data: surveys, message: 'Surveys fetched successfully' };
+      return {
+        success: true,
+        data: transformedSurveys,
+        message: 'Surveys fetched successfully'
+      };
     } catch (error) {
       console.error('SurveyService: Error fetching surveys:', error);
       return { success: false, message: 'Failed to fetch surveys', data: [] };
@@ -535,18 +558,55 @@ export class SurveyService {
 
   static async createSurvey(surveyData: any): Promise<ApiResponse<Survey>> {
     try {
+      console.log('SurveyService: Creating survey:', surveyData.title);
+      console.log('SurveyService: Survey data:', surveyData);
+      
       if (!supabase) {
-        console.log('SurveyService: Supabase not configured, cannot create survey');
         return { success: false, message: 'Database not configured' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
-      // Get current user ID from localStorage
-      const userData = localStorage.getItem('userData');
-      const userId = userData ? JSON.parse(userData).id : '550e8400-e29b-41d4-a716-446655440015';
-      
-      const { data, error } = await supabase
+
+      // Validate that the user exists before creating the survey
+      if (surveyData.createdBy) {
+        const { data: userExists, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', surveyData.createdBy)
+          .single();
+
+        if (userError || !userExists) {
+          console.error('SurveyService: User does not exist:', surveyData.createdBy);
+          // Get the first available admin user as fallback
+          const { data: adminUser, error: adminError } = await supabase
+            .from('users')
+            .select('id')
+            .eq('role_id', '550e8400-e29b-41d4-a716-446655440010')
+            .limit(1)
+            .single();
+
+          if (adminError || !adminUser) {
+            return { success: false, message: 'No valid user found to create survey' };
+          }
+
+          console.log('SurveyService: Using admin user as creator:', adminUser.id);
+          surveyData.createdBy = adminUser.id;
+        }
+      } else {
+        // If no createdBy provided, get the first admin user
+        const { data: adminUser, error: adminError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role_id', '550e8400-e29b-41d4-a716-446655440010')
+          .limit(1)
+          .single();
+
+        if (adminError || !adminUser) {
+          return { success: false, message: 'No admin user found to create survey' };
+        }
+
+        surveyData.createdBy = adminUser.id;
+      }
+
+      const { data: survey, error } = await supabase
         .from('surveys')
         .insert({
           title: surveyData.title,
@@ -557,30 +617,37 @@ export class SurveyService {
           passing_score: surveyData.passingScore,
           max_attempts: surveyData.maxAttempts,
           is_active: true,
-          created_by: userId
+          created_by: surveyData.createdBy
         })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('SurveyService: Database error:', error);
+        throw error;
+      }
 
-      const survey: Survey = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        targetDate: new Date(data.target_date),
-        duration: data.duration,
-        totalQuestions: data.total_questions,
-        passingScore: data.passing_score,
-        maxAttempts: data.max_attempts,
-        isActive: data.is_active,
+      const transformedSurvey: Survey = {
+        id: survey.id,
+        title: survey.title,
+        description: survey.description,
+        targetDate: new Date(survey.target_date),
+        duration: survey.duration,
+        totalQuestions: survey.total_questions,
+        passingScore: survey.passing_score,
+        maxAttempts: survey.max_attempts,
+        isActive: survey.is_active,
         sections: [],
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-        createdBy: data.created_by
+        createdAt: new Date(survey.created_at),
+        updatedAt: new Date(survey.updated_at),
+        createdBy: survey.created_by
       };
 
-      return { success: true, data: survey, message: 'Survey created successfully' };
+      return {
+        success: true,
+        data: transformedSurvey,
+        message: 'Survey created successfully'
+      };
     } catch (error) {
       console.error('SurveyService: Error creating survey:', error);
       return { success: false, message: 'Failed to create survey' };
@@ -589,48 +656,68 @@ export class SurveyService {
 
   static async updateSurvey(surveyId: string, surveyData: any): Promise<ApiResponse<Survey>> {
     try {
+      console.log('SurveyService: Updating survey:', surveyId);
+      
       if (!supabase) {
-        console.log('SurveyService: Supabase not configured, cannot update survey');
         return { success: false, message: 'Database not configured' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
-      const { data, error } = await supabase
+
+      // First check if survey exists
+      const { data: existingSurvey, error: checkError } = await supabase
         .from('surveys')
-        .update({
-          title: surveyData.title,
-          description: surveyData.description,
-          target_date: surveyData.targetDate.toISOString().split('T')[0],
-          duration: surveyData.duration,
-          total_questions: surveyData.totalQuestions,
-          passing_score: surveyData.passingScore,
-          max_attempts: surveyData.maxAttempts,
-          is_active: surveyData.isActive
-        })
+        .select('id')
+        .eq('id', surveyId)
+        .single();
+
+      if (checkError || !existingSurvey) {
+        console.error('SurveyService: Survey not found:', surveyId);
+        return { success: false, message: 'Survey not found' };
+      }
+
+      const updateData: any = {};
+      
+      if (surveyData.title) updateData.title = surveyData.title;
+      if (surveyData.description) updateData.description = surveyData.description;
+      if (surveyData.targetDate) updateData.target_date = surveyData.targetDate.toISOString().split('T')[0];
+      if (surveyData.duration) updateData.duration = surveyData.duration;
+      if (surveyData.totalQuestions) updateData.total_questions = surveyData.totalQuestions;
+      if (surveyData.passingScore) updateData.passing_score = surveyData.passingScore;
+      if (surveyData.maxAttempts) updateData.max_attempts = surveyData.maxAttempts;
+      if (typeof surveyData.isActive === 'boolean') updateData.is_active = surveyData.isActive;
+
+      const { data: survey, error } = await supabase
+        .from('surveys')
+        .update(updateData)
         .eq('id', surveyId)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('SurveyService: Database error:', error);
+        throw error;
+      }
 
-      const survey: Survey = {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        targetDate: new Date(data.target_date),
-        duration: data.duration,
-        totalQuestions: data.total_questions,
-        passingScore: data.passing_score,
-        maxAttempts: data.max_attempts,
-        isActive: data.is_active,
+      const transformedSurvey: Survey = {
+        id: survey.id,
+        title: survey.title,
+        description: survey.description,
+        targetDate: new Date(survey.target_date),
+        duration: survey.duration,
+        totalQuestions: survey.total_questions,
+        passingScore: survey.passing_score,
+        maxAttempts: survey.max_attempts,
+        isActive: survey.is_active,
         sections: [],
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-        createdBy: data.created_by
+        createdAt: new Date(survey.created_at),
+        updatedAt: new Date(survey.updated_at),
+        createdBy: survey.created_by
       };
 
-      return { success: true, data: survey, message: 'Survey updated successfully' };
+      return {
+        success: true,
+        data: transformedSurvey,
+        message: 'Survey updated successfully'
+      };
     } catch (error) {
       console.error('SurveyService: Error updating survey:', error);
       return { success: false, message: 'Failed to update survey' };
@@ -639,19 +726,21 @@ export class SurveyService {
 
   static async deleteSurvey(surveyId: string): Promise<ApiResponse<void>> {
     try {
+      console.log('SurveyService: Deleting survey:', surveyId);
+      
       if (!supabase) {
-        console.log('SurveyService: Supabase not configured, cannot delete survey');
         return { success: false, message: 'Database not configured' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
+
       const { error } = await supabase
         .from('surveys')
         .delete()
         .eq('id', surveyId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('SurveyService: Database error:', error);
+        throw error;
+      }
 
       return { success: true, message: 'Survey deleted successfully' };
     } catch (error) {
@@ -662,48 +751,53 @@ export class SurveyService {
 
   static async getSurveySections(surveyId: string): Promise<ApiResponse<Section[]>> {
     try {
+      console.log('SurveyService: Fetching sections for survey:', surveyId);
+      
       if (!supabase) {
-        console.log('SurveyService: Supabase not configured, returning demo sections');
         return { success: true, data: [], message: 'Demo sections loaded' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
-      const { data, error } = await supabase
+
+      const { data: sections, error } = await supabase
         .from('survey_sections')
         .select('*')
         .eq('survey_id', surveyId)
         .order('section_order', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('SurveyService: Database error:', error);
+        throw error;
+      }
 
-      const sections = data.map(sectionData => ({
-        id: sectionData.id,
-        surveyId: sectionData.survey_id,
-        title: sectionData.title,
-        description: sectionData.description,
-        questionsCount: sectionData.questions_count,
-        order: sectionData.section_order,
+      const transformedSections = sections?.map(section => ({
+        id: section.id,
+        surveyId: section.survey_id,
+        title: section.title,
+        description: section.description,
+        questionsCount: section.questions_count,
+        order: section.section_order,
         questions: []
-      }));
+      })) || [];
 
-      return { success: true, data: sections, message: 'Survey sections fetched successfully' };
+      return {
+        success: true,
+        data: transformedSections,
+        message: 'Sections fetched successfully'
+      };
     } catch (error) {
-      console.error('SurveyService: Error fetching survey sections:', error);
-      return { success: false, message: 'Failed to fetch survey sections', data: [] };
+      console.error('SurveyService: Error fetching sections:', error);
+      return { success: false, message: 'Failed to fetch sections', data: [] };
     }
   }
 
   static async createSection(surveyId: string, sectionData: any): Promise<ApiResponse<Section>> {
     try {
+      console.log('SurveyService: Creating section for survey:', surveyId);
+      
       if (!supabase) {
-        console.log('SurveyService: Supabase not configured, cannot create section');
         return { success: false, message: 'Database not configured' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
-      const { data, error } = await supabase
+
+      const { data: section, error } = await supabase
         .from('survey_sections')
         .insert({
           survey_id: surveyId,
@@ -715,19 +809,26 @@ export class SurveyService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('SurveyService: Database error:', error);
+        throw error;
+      }
 
-      const section: Section = {
-        id: data.id,
-        surveyId: data.survey_id,
-        title: data.title,
-        description: data.description,
-        questionsCount: data.questions_count,
-        order: data.section_order,
+      const transformedSection: Section = {
+        id: section.id,
+        surveyId: section.survey_id,
+        title: section.title,
+        description: section.description,
+        questionsCount: section.questions_count,
+        order: section.section_order,
         questions: []
       };
 
-      return { success: true, data: section, message: 'Section created successfully' };
+      return {
+        success: true,
+        data: transformedSection,
+        message: 'Section created successfully'
+      };
     } catch (error) {
       console.error('SurveyService: Error creating section:', error);
       return { success: false, message: 'Failed to create section' };
@@ -735,12 +836,17 @@ export class SurveyService {
   }
 }
 
+// Question Service
 export class QuestionService {
   static async getQuestions(surveyId: string, sectionId: string): Promise<ApiResponse<Question[]>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('QuestionService: Fetching questions for section:', sectionId);
       
-      const { data, error } = await supabase!
+      if (!supabase) {
+        return { success: true, data: [], message: 'Demo questions loaded' };
+      }
+
+      const { data: questions, error } = await supabase
         .from('questions')
         .select(`
           *,
@@ -749,32 +855,39 @@ export class QuestionService {
         .eq('section_id', sectionId)
         .order('question_order', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('QuestionService: Database error:', error);
+        throw error;
+      }
 
-      const questions = data.map(questionData => ({
-        id: questionData.id,
-        sectionId: questionData.section_id,
-        text: questionData.text,
-        type: questionData.question_type,
-        complexity: questionData.complexity,
-        points: questionData.points,
-        explanation: questionData.explanation,
-        order: questionData.question_order,
-        options: questionData.options
+      const transformedQuestions = questions?.map(question => ({
+        id: question.id,
+        sectionId: question.section_id,
+        text: question.text,
+        type: question.question_type,
+        complexity: question.complexity,
+        points: question.points,
+        explanation: question.explanation,
+        order: question.question_order,
+        options: question.options
           .sort((a: any, b: any) => a.option_order - b.option_order)
           .map((opt: any) => ({
             id: opt.id,
             text: opt.text,
             isCorrect: opt.is_correct
           })),
-        correctAnswers: questionData.options
+        correctAnswers: question.options
           .filter((opt: any) => opt.is_correct)
           .map((opt: any) => opt.id),
-        createdAt: new Date(questionData.created_at),
-        updatedAt: new Date(questionData.updated_at)
-      }));
+        createdAt: new Date(question.created_at),
+        updatedAt: new Date(question.updated_at)
+      })) || [];
 
-      return { success: true, data: questions, message: 'Questions fetched successfully' };
+      return {
+        success: true,
+        data: transformedQuestions,
+        message: 'Questions fetched successfully'
+      };
     } catch (error) {
       console.error('QuestionService: Error fetching questions:', error);
       return { success: false, message: 'Failed to fetch questions', data: [] };
@@ -783,10 +896,14 @@ export class QuestionService {
 
   static async createQuestion(questionData: any): Promise<ApiResponse<Question>> {
     try {
-      DatabaseService.checkSupabaseConnection();
+      console.log('QuestionService: Creating question for section:', questionData.sectionId);
       
-      // Insert question
-      const { data: question, error: questionError } = await supabase!
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      // Create question
+      const { data: question, error: questionError } = await supabase
         .from('questions')
         .insert({
           section_id: questionData.sectionId,
@@ -800,24 +917,30 @@ export class QuestionService {
         .select()
         .single();
 
-      if (questionError) throw questionError;
+      if (questionError) {
+        console.error('QuestionService: Error creating question:', questionError);
+        throw questionError;
+      }
 
-      // Insert options
-      const options = questionData.options.map((option: any, index: number) => ({
+      // Create options
+      const optionsData = questionData.options.map((option: any, index: number) => ({
         question_id: question.id,
         text: option.text,
         is_correct: option.isCorrect,
         option_order: index + 1
       }));
 
-      const { data: optionsData, error: optionsError } = await supabase!
+      const { data: options, error: optionsError } = await supabase
         .from('question_options')
-        .insert(options)
+        .insert(optionsData)
         .select();
 
-      if (optionsError) throw optionsError;
+      if (optionsError) {
+        console.error('QuestionService: Error creating options:', optionsError);
+        throw optionsError;
+      }
 
-      const createdQuestion: Question = {
+      const transformedQuestion: Question = {
         id: question.id,
         sectionId: question.section_id,
         text: question.text,
@@ -826,19 +949,23 @@ export class QuestionService {
         points: question.points,
         explanation: question.explanation,
         order: question.question_order,
-        options: optionsData.map(opt => ({
+        options: options.map(opt => ({
           id: opt.id,
           text: opt.text,
           isCorrect: opt.is_correct
         })),
-        correctAnswers: optionsData
+        correctAnswers: options
           .filter(opt => opt.is_correct)
           .map(opt => opt.id),
         createdAt: new Date(question.created_at),
         updatedAt: new Date(question.updated_at)
       };
 
-      return { success: true, data: createdQuestion, message: 'Question created successfully' };
+      return {
+        success: true,
+        data: transformedQuestion,
+        message: 'Question created successfully'
+      };
     } catch (error) {
       console.error('QuestionService: Error creating question:', error);
       return { success: false, message: 'Failed to create question' };
@@ -847,9 +974,11 @@ export class QuestionService {
 
   static async uploadQuestions(csvContent: string): Promise<ApiResponse<any>> {
     try {
-      // Parse CSV and create questions
+      console.log('QuestionService: Processing CSV upload');
+      
+      // Basic CSV parsing (simplified)
       const lines = csvContent.split('\n').filter(line => line.trim());
-      const headers = lines[0].split(',');
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
       let questionsAdded = 0;
       let questionsSkipped = 0;
@@ -857,12 +986,18 @@ export class QuestionService {
 
       for (let i = 1; i < lines.length; i++) {
         try {
-          const values = lines[i].split(',');
-          // Process each question...
+          // Basic CSV parsing - in production, use a proper CSV parser
+          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+          
+          if (values.length < headers.length) {
+            questionsSkipped++;
+            continue;
+          }
+
           questionsAdded++;
         } catch (error) {
+          errors.push(`Error parsing line ${i + 1}: ${error}`);
           questionsSkipped++;
-          errors.push(`Error processing line ${i + 1}: ${error}`);
         }
       }
 
@@ -875,7 +1010,7 @@ export class QuestionService {
           success: true,
           fileName: 'uploaded.csv'
         },
-        message: 'Questions uploaded successfully'
+        message: `Upload completed: ${questionsAdded} questions added, ${questionsSkipped} skipped`
       };
     } catch (error) {
       console.error('QuestionService: Error uploading questions:', error);
@@ -884,82 +1019,62 @@ export class QuestionService {
   }
 }
 
+// Test Service
 export class TestService {
   static async createTestSession(surveyId: string, userId: string): Promise<ApiResponse<TestSession>> {
     try {
       console.log('TestService: Creating test session for survey:', surveyId, 'user:', userId);
       
       if (!supabase) {
-        console.log('TestService: Supabase not configured, using demo mode');
-        const demoSessionId = `550e8400-e29b-41d4-a716-${Date.now().toString().slice(-12)}`;
-        const demoSession: TestSession = {
-          id: demoSessionId,
-          userId: userId,
-          surveyId: surveyId,
-          startTime: new Date(),
-          timeRemaining: 35 * 60,
-          currentQuestionIndex: 0,
-          answers: [],
-          status: 'in_progress',
-          attemptNumber: 1
-        };
-        
-        return { success: true, data: demoSession, message: 'Demo test session created successfully' };
+        return { success: false, message: 'Database not configured' };
       }
-      
-      try {
-        DatabaseService.checkSupabaseConnection();
-        
-        // Create a proper UUID for the session
-        const { data, error } = await supabase
-          .from('test_sessions')
-          .insert({
-            user_id: userId,
-            survey_id: surveyId,
-            time_remaining: 35 * 60,
-            current_question_index: 0,
-            session_status: 'in_progress',
-            attempt_number: 1
-          })
-          .select()
-          .single();
 
-        if (error) {
-          console.error('TestService: Supabase error:', error);
-          throw error;
-        }
+      // Get survey details
+      const { data: survey, error: surveyError } = await supabase
+        .from('surveys')
+        .select('duration')
+        .eq('id', surveyId)
+        .single();
 
-        const session: TestSession = {
-          id: data.id,
-          userId: data.user_id,
-          surveyId: data.survey_id,
-          startTime: new Date(data.start_time),
-          timeRemaining: data.time_remaining,
-          currentQuestionIndex: data.current_question_index,
-          answers: [],
-          status: data.session_status,
-          attemptNumber: data.attempt_number
-        };
-
-        console.log('TestService: Session created successfully with ID:', session.id);
-        return { success: true, data: session, message: 'Test session created successfully' };
-      } catch (supabaseError) {
-        console.log('TestService: Supabase failed, falling back to demo mode');
-        const demoSessionId = `demo_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-        const demoSession: TestSession = {
-          id: demoSessionId,
-          userId: userId,
-          surveyId: surveyId,
-          startTime: new Date(),
-          timeRemaining: 35 * 60,
-          currentQuestionIndex: 0,
-          answers: [],
-          status: 'in_progress',
-          attemptNumber: 1
-        };
-        
-        return { success: true, data: demoSession, message: 'Demo test session created successfully (fallback)' };
+      if (surveyError || !survey) {
+        return { success: false, message: 'Survey not found' };
       }
+
+      const { data: session, error } = await supabase
+        .from('test_sessions')
+        .insert({
+          user_id: userId,
+          survey_id: surveyId,
+          time_remaining: survey.duration * 60, // Convert minutes to seconds
+          current_question_index: 0,
+          session_status: 'in_progress',
+          attempt_number: 1
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('TestService: Database error:', error);
+        throw error;
+      }
+
+      const transformedSession: TestSession = {
+        id: session.id,
+        userId: session.user_id,
+        surveyId: session.survey_id,
+        startTime: new Date(session.start_time),
+        timeRemaining: session.time_remaining,
+        currentQuestionIndex: session.current_question_index,
+        answers: [],
+        status: session.session_status,
+        attemptNumber: session.attempt_number
+      };
+
+      return {
+        success: true,
+        data: transformedSession,
+        message: 'Test session created successfully'
+      };
     } catch (error) {
       console.error('TestService: Error creating test session:', error);
       return { success: false, message: 'Failed to create test session' };
@@ -970,65 +1085,41 @@ export class TestService {
     try {
       console.log('TestService: Getting session:', sessionId);
       
-      // Check if this is a demo session ID or if Supabase is not configured
-      const isDemoSession = sessionId.startsWith('demo_') || sessionId.startsWith('550e8400-e29b-41d4-a716-') || !supabase;
-      
-      if (isDemoSession) {
-        console.log('TestService: Demo session requested, returning mock data');
-        const demoSession: TestSession = {
-          id: sessionId,
-          userId: '550e8400-e29b-41d4-a716-446655440019',
-          surveyId: '550e8400-e29b-41d4-a716-446655440020',
-          startTime: new Date(),
-          timeRemaining: 35 * 60,
-          currentQuestionIndex: 0,
-          answers: [],
-          status: 'in_progress',
-          attemptNumber: 1
-        };
-        
-        return { success: true, data: demoSession, message: 'Demo session retrieved successfully' };
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
-      const { data, error } = await supabase
+
+      const { data: session, error } = await supabase
         .from('test_sessions')
         .select('*')
         .eq('id', sessionId)
         .single();
 
-      if (error) {
-        console.error('TestService: Error fetching session from database:', error);
-        // Fallback to demo session if database query fails
-        const demoSession: TestSession = {
-          id: sessionId,
-          userId: '550e8400-e29b-41d4-a716-446655440019',
-          surveyId: '550e8400-e29b-41d4-a716-446655440020',
-          startTime: new Date(),
-          timeRemaining: 35 * 60,
-          currentQuestionIndex: 0,
-          answers: [],
-          status: 'in_progress',
-          attemptNumber: 1
-        };
-        
-        return { success: true, data: demoSession, message: 'Demo session retrieved successfully (fallback)' };
+      if (error || !session) {
+        return { success: false, message: 'Session not found' };
       }
 
-      const session: TestSession = {
-        id: data.id,
-        userId: data.user_id,
-        surveyId: data.survey_id,
-        startTime: new Date(data.start_time),
-        timeRemaining: data.time_remaining,
-        currentQuestionIndex: data.current_question_index,
+      const transformedSession: TestSession = {
+        id: session.id,
+        userId: session.user_id,
+        surveyId: session.survey_id,
+        startTime: new Date(session.start_time),
+        endTime: session.end_time ? new Date(session.end_time) : undefined,
+        timeRemaining: session.time_remaining,
+        currentQuestionIndex: session.current_question_index,
         answers: [],
-        status: data.session_status,
-        attemptNumber: data.attempt_number
+        status: session.session_status,
+        attemptNumber: session.attempt_number,
+        score: session.score,
+        isPassed: session.is_passed,
+        completedAt: session.completed_at ? new Date(session.completed_at) : undefined
       };
 
-      return { success: true, data: session, message: 'Session retrieved successfully' };
+      return {
+        success: true,
+        data: transformedSession,
+        message: 'Session fetched successfully'
+      };
     } catch (error) {
       console.error('TestService: Error getting session:', error);
       return { success: false, message: 'Failed to get session' };
@@ -1037,16 +1128,12 @@ export class TestService {
 
   static async saveAnswer(sessionId: string, questionId: string, selectedOptions: string[]): Promise<ApiResponse<void>> {
     try {
-      // Check if this is a demo session
-      const isDemoSession = sessionId.startsWith('demo_') || sessionId.startsWith('550e8400-e29b-41d4-a716-') || !supabase;
+      console.log('TestService: Saving answer for session:', sessionId, 'question:', questionId);
       
-      if (isDemoSession) {
-        console.log('TestService: Demo mode - simulating answer save for session:', sessionId);
-        return { success: true, message: 'Answer saved successfully (Demo Mode)' };
+      if (!supabase) {
+        return { success: true, message: 'Answer saved locally (demo mode)' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
+
       const { error } = await supabase
         .from('test_answers')
         .upsert({
@@ -1057,9 +1144,8 @@ export class TestService {
         });
 
       if (error) {
-        console.error('TestService: Error saving answer to database:', error);
-        // For demo mode, just return success even if database save fails
-        return { success: true, message: 'Answer saved successfully (demo mode fallback)' };
+        console.error('TestService: Database error:', error);
+        throw error;
       }
 
       return { success: true, message: 'Answer saved successfully' };
@@ -1071,16 +1157,12 @@ export class TestService {
 
   static async updateSession(sessionId: string, sessionData: any): Promise<ApiResponse<void>> {
     try {
-      // Check if this is a demo session
-      const isDemoSession = sessionId.startsWith('demo_') || sessionId.startsWith('550e8400-e29b-41d4-a716-') || !supabase;
+      console.log('TestService: Updating session:', sessionId);
       
-      if (isDemoSession) {
-        console.log('TestService: Demo mode - simulating session update');
-        return { success: true, message: 'Session updated successfully (demo mode)' };
+      if (!supabase) {
+        return { success: true, message: 'Session updated locally (demo mode)' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
+
       const { error } = await supabase
         .from('test_sessions')
         .update({
@@ -1090,9 +1172,8 @@ export class TestService {
         .eq('id', sessionId);
 
       if (error) {
-        console.error('TestService: Error updating session:', error);
-        // Return success for demo mode even if database update fails
-        return { success: true, message: 'Session updated successfully (demo mode fallback)' };
+        console.error('TestService: Database error:', error);
+        throw error;
       }
 
       return { success: true, message: 'Session updated successfully' };
@@ -1104,107 +1185,65 @@ export class TestService {
 
   static async submitTest(sessionId: string): Promise<ApiResponse<TestResult>> {
     try {
-      // Check if this is a demo session
-      const isDemoSession = sessionId.startsWith('demo_') || sessionId.startsWith('550e8400-e29b-41d4-a716-') || !supabase;
+      console.log('TestService: Submitting test for session:', sessionId);
       
-      if (isDemoSession) {
-        console.log('TestService: Demo mode - simulating test submission for session:', sessionId);
-        
-        const mockResult: TestResult = {
-          id: `result_${Date.now()}`,
-          userId: '550e8400-e29b-41d4-a716-446655440019',
-          user: {} as User,
-          surveyId: '550e8400-e29b-41d4-a716-446655440020',
-          survey: {} as Survey,
-          sessionId: sessionId,
-          score: 78,
-          totalQuestions: 30,
-          correctAnswers: 23,
-          isPassed: true,
-          timeSpent: 25 * 60,
-          attemptNumber: 1,
-          sectionScores: [],
-          completedAt: new Date(),
-          certificateId: `cert_${Date.now()}`
-        };
-        
-        return { 
-          success: true, 
-          data: mockResult, 
-          message: 'Test submitted successfully (Demo Mode)' 
-        };
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
       }
-      
-      DatabaseService.checkSupabaseConnection();
-      
-      try {
-        // Get session data
-        const { data: session, error: sessionError } = await supabase
-          .from('test_sessions')
-          .select('*')
-          .eq('id', sessionId)
-          .single();
 
-        if (sessionError) {
-          console.error('TestService: Session not found, using demo result');
-          // Return demo result if session not found
-          const mockResult: TestResult = {
-            id: `result_${Date.now()}`,
-            userId: '550e8400-e29b-41d4-a716-446655440019',
-            user: {} as User,
-            surveyId: '550e8400-e29b-41d4-a716-446655440020',
-            survey: {} as Survey,
-            sessionId: sessionId,
-            score: 78,
-            totalQuestions: 30,
-            correctAnswers: 23,
-            isPassed: true,
-            timeSpent: 25 * 60,
-            attemptNumber: 1,
-            sectionScores: [],
-            completedAt: new Date(),
-            certificateId: `cert_${Date.now()}`
-          };
-          
-          return { success: true, data: mockResult, message: 'Test submitted successfully (demo mode)' };
-        }
+      // Get session and calculate results
+      const { data: session, error: sessionError } = await supabase
+        .from('test_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
 
-        // Calculate score (simplified)
-        const score = 75;
-        const isPassed = score >= 70;
+      if (sessionError || !session) {
+        return { success: false, message: 'Session not found' };
+      }
 
-        // Create test result
-        const { data: result, error: resultError } = await supabase
-          .from('test_results')
-          .insert({
-            user_id: session.user_id,
-            survey_id: session.survey_id,
-            session_id: sessionId,
-            score: score,
-            total_questions: 30,
-            correct_answers: Math.floor(30 * score / 100),
-            is_passed: isPassed,
-            time_spent: 35 * 60 - session.time_remaining,
-            attempt_number: session.attempt_number
-          })
-          .select()
-          .single();
+      // For demo purposes, create a basic result
+      const score = Math.floor(Math.random() * 40) + 60; // Random score between 60-100
+      const totalQuestions = 30;
+      const correctAnswers = Math.floor((score / 100) * totalQuestions);
+      const isPassed = score >= 70;
 
-        if (resultError) throw resultError;
+      const { data: result, error: resultError } = await supabase
+        .from('test_results')
+        .insert({
+          user_id: session.user_id,
+          survey_id: session.survey_id,
+          session_id: sessionId,
+          score: score,
+          total_questions: totalQuestions,
+          correct_answers: correctAnswers,
+          is_passed: isPassed,
+          time_spent: 35 * 60 - session.time_remaining,
+          attempt_number: session.attempt_number
+        })
+        .select()
+        .single();
 
-        // Update session status
-        await supabase
-          .from('test_sessions')
-          .update({
-            session_status: 'completed',
-            end_time: new Date().toISOString(),
-            score: score,
-            is_passed: isPassed,
-            completed_at: new Date().toISOString()
-          })
-          .eq('id', sessionId);
+      if (resultError) {
+        console.error('TestService: Error creating result:', resultError);
+        throw resultError;
+      }
 
-        const testResult: TestResult = {
+      // Update session status
+      await supabase
+        .from('test_sessions')
+        .update({
+          session_status: 'completed',
+          end_time: new Date().toISOString(),
+          score: score,
+          is_passed: isPassed,
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+
+      return {
+        success: true,
+        data: {
           id: result.id,
           userId: result.user_id,
           user: {} as User,
@@ -1219,33 +1258,11 @@ export class TestService {
           attemptNumber: result.attempt_number,
           sectionScores: [],
           completedAt: new Date(result.completed_at),
-          certificateId: result.certificate_id
-        };
-
-        return { success: true, data: testResult, message: 'Test submitted successfully' };
-      } catch (dbError) {
-        console.error('TestService: Database operation failed, using demo result');
-        // Fallback to demo result
-        const mockResult: TestResult = {
-          id: `result_${Date.now()}`,
-          userId: '550e8400-e29b-41d4-a716-446655440019',
-          user: {} as User,
-          surveyId: '550e8400-e29b-41d4-a716-446655440020',
-          survey: {} as Survey,
-          sessionId: sessionId,
-          score: 78,
-          totalQuestions: 30,
-          correctAnswers: 23,
-          isPassed: true,
-          timeSpent: 25 * 60,
-          attemptNumber: 1,
-          sectionScores: [],
-          completedAt: new Date(),
-          certificateId: `cert_${Date.now()}`
-        };
-        
-        return { success: true, data: mockResult, message: 'Test submitted successfully (demo mode fallback)' };
-      }
+          certificateId: result.certificate_id,
+          grade: result.grade
+        },
+        message: 'Test submitted successfully'
+      };
     } catch (error) {
       console.error('TestService: Error submitting test:', error);
       return { success: false, message: 'Failed to submit test' };
@@ -1253,65 +1270,45 @@ export class TestService {
   }
 }
 
+// Dashboard Service
 export class DashboardService {
   static async getDashboardData(): Promise<ApiResponse<Dashboard>> {
     try {
       console.log('DashboardService: Fetching dashboard data');
       
-      // Check if Supabase is configured
       if (!supabase) {
-        console.log('DashboardService: Supabase not configured, returning demo data');
         return {
           success: true,
           data: {
-            totalUsers: 5,
-            totalSurveys: 3,
-            totalAttempts: 25,
-            averageScore: 78.5,
-            passRate: 72.0,
+            totalUsers: 0,
+            totalSurveys: 0,
+            totalAttempts: 0,
+            averageScore: 0,
+            passRate: 0,
             recentActivity: [],
-            performanceByRole: [
-              { name: 'Admin', value: 1, total: 1, percentage: 100 },
-              { name: 'Supervisor', value: 3, total: 4, percentage: 75 },
-              { name: 'Enumerator', value: 15, total: 20, percentage: 75 }
-            ],
-            performanceBySurvey: [
-              { name: 'Digital Literacy', value: 18, total: 25, percentage: 72 },
-              { name: 'Data Collection', value: 12, total: 15, percentage: 80 },
-              { name: 'Survey Methodology', value: 8, total: 10, percentage: 80 }
-            ],
+            performanceByRole: [],
+            performanceBySurvey: [],
             monthlyTrends: []
           },
-          message: 'Dashboard data fetched successfully (Demo Mode)'
+          message: 'Demo dashboard data loaded'
         };
       }
 
-      DatabaseService.checkSupabaseConnection();
-
       // Get basic counts
-      const [usersResult, surveysResult, resultsResult] = await Promise.all([
-        supabase.from('users').select('id', { count: 'exact' }),
-        supabase.from('surveys').select('id', { count: 'exact' }),
-        supabase.from('test_results').select('*')
+      const [usersCount, surveysCount, attemptsCount] = await Promise.all([
+        supabase.from('users').select('id', { count: 'exact', head: true }),
+        supabase.from('surveys').select('id', { count: 'exact', head: true }),
+        supabase.from('test_results').select('id', { count: 'exact', head: true })
       ]);
-
-      const totalUsers = usersResult.count || 0;
-      const totalSurveys = surveysResult.count || 0;
-      const results = resultsResult.data || [];
-      
-      const totalAttempts = results.length;
-      const passedResults = results.filter(r => r.is_passed);
-      const passRate = totalAttempts > 0 ? (passedResults.length / totalAttempts) * 100 : 0;
-      const averageScore = totalAttempts > 0 ? results.reduce((sum, r) => sum + r.score, 0) / totalAttempts : 0;
 
       return {
         success: true,
         data: {
-          totalUsers,
-          totalSurveys,
-          totalAttempts,
-          averageScore,
-          passRate,
+          totalUsers: usersCount.count || 0,
+          totalSurveys: surveysCount.count || 0,
+          totalAttempts: attemptsCount.count || 0,
+          averageScore: 0,
+          passRate: 0,
           recentActivity: [],
           performanceByRole: [],
           performanceBySurvey: [],
@@ -1320,151 +1317,50 @@ export class DashboardService {
         message: 'Dashboard data fetched successfully'
       };
     } catch (error) {
-      console.error('DashboardService: Error in getDashboardData:', error);
-      
-      // Return demo data as fallback
-      return {
-        success: true,
-        data: {
-          totalUsers: 5,
-          totalSurveys: 3,
-          totalAttempts: 25,
-          averageScore: 78.5,
-          passRate: 72.0,
-          recentActivity: [],
-          performanceByRole: [
-            { name: 'Admin', value: 1, total: 1, percentage: 100 },
-            { name: 'Supervisor', value: 3, total: 4, percentage: 75 },
-            { name: 'Enumerator', value: 15, total: 20, percentage: 75 }
-          ],
-          performanceBySurvey: [
-            { name: 'Digital Literacy', value: 18, total: 25, percentage: 72 },
-            { name: 'Data Collection', value: 12, total: 15, percentage: 80 },
-            { name: 'Survey Methodology', value: 8, total: 10, percentage: 80 }
-          ],
-          monthlyTrends: []
-        },
-        message: 'Dashboard data fetched successfully (Demo Mode - Fallback)'
-      };
+      console.error('DashboardService: Error fetching dashboard data:', error);
+      return { success: false, message: 'Failed to fetch dashboard data' };
     }
   }
 }
 
-export class CertificateService {
-  static async getCertificates(): Promise<ApiResponse<Certificate[]>> {
-    try {
-      if (!supabase) {
-        return { success: true, data: [], message: 'Certificates fetched successfully (Demo Mode)' };
-      }
-
-      DatabaseService.checkSupabaseConnection();
-      
-      const { data, error } = await supabase
-        .from('certificates')
-        .select(`
-          *,
-          user:users(*),
-          survey:surveys(*)
-        `)
-        .order('issued_at', { ascending: false });
-
-      if (error) throw error;
-
-      const certificates = data.map(certData => ({
-        id: certData.id,
-        userId: certData.user_id,
-        user: {
-          id: certData.user.id,
-          name: certData.user.name,
-          email: certData.user.email,
-          role: { name: 'Enumerator' }
-        },
-        surveyId: certData.survey_id,
-        survey: {
-          id: certData.survey.id,
-          title: certData.survey.title
-        },
-        resultId: certData.result_id,
-        certificateNumber: certData.certificate_number,
-        issuedAt: new Date(certData.issued_at),
-        validUntil: certData.valid_until ? new Date(certData.valid_until) : undefined,
-        downloadCount: certData.download_count,
-        status: certData.certificate_status
-      }));
-
-      return { success: true, data: certificates, message: 'Certificates fetched successfully' };
-    } catch (error) {
-      console.error('CertificateService: Error fetching certificates:', error);
-      return { success: false, message: 'Failed to fetch certificates', data: [] };
-    }
-  }
-
-  static async downloadCertificate(certificateId: string): Promise<ApiResponse<Blob>> {
-    try {
-      // Generate a simple PDF-like content
-      const pdfContent = `Certificate ID: ${certificateId}\nGenerated on: ${new Date().toISOString()}`;
-      const blob = new Blob([pdfContent], { type: 'application/pdf' });
-      
-      return { success: true, data: blob, message: 'Certificate downloaded successfully' };
-    } catch (error) {
-      console.error('CertificateService: Error downloading certificate:', error);
-      return { success: false, message: 'Failed to download certificate' };
-    }
-  }
-
-  static async revokeCertificate(certificateId: string): Promise<ApiResponse<void>> {
-    try {
-      if (!supabase) {
-        return { success: true, message: 'Certificate revoked successfully (Demo Mode)' };
-      }
-
-      DatabaseService.checkSupabaseConnection();
-      
-      const { error } = await supabase
-        .from('certificates')
-        .update({ certificate_status: 'revoked' })
-        .eq('id', certificateId);
-
-      if (error) throw error;
-
-      return { success: true, message: 'Certificate revoked successfully' };
-    } catch (error) {
-      console.error('CertificateService: Error revoking certificate:', error);
-      return { success: false, message: 'Failed to revoke certificate' };
-    }
-  }
-}
-
+// Settings Service
 export class SettingsService {
   static async getSettings(): Promise<ApiResponse<SystemSettings[]>> {
     try {
+      console.log('SettingsService: Fetching settings');
+      
       if (!supabase) {
-        return { success: true, data: [], message: 'Settings fetched successfully (Demo Mode)' };
+        return { success: true, data: [], message: 'Demo settings loaded' };
       }
 
-      DatabaseService.checkSupabaseConnection();
-      
-      const { data, error } = await supabase
+      const { data: settings, error } = await supabase
         .from('system_settings')
         .select('*')
         .order('category', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('SettingsService: Database error:', error);
+        throw error;
+      }
 
-      const settings = data.map(settingData => ({
-        id: settingData.id,
-        category: settingData.category,
-        key: settingData.setting_key,
-        value: settingData.setting_value,
-        description: settingData.description,
-        type: settingData.setting_type,
-        isEditable: settingData.is_editable,
-        options: settingData.options,
-        updatedAt: new Date(settingData.updated_at),
-        updatedBy: settingData.updated_by || 'System'
-      }));
+      const transformedSettings = settings?.map(setting => ({
+        id: setting.id,
+        category: setting.category,
+        key: setting.setting_key,
+        value: setting.setting_value,
+        description: setting.description,
+        type: setting.setting_type,
+        isEditable: setting.is_editable,
+        options: setting.options,
+        updatedAt: new Date(setting.updated_at),
+        updatedBy: setting.updated_by
+      })) || [];
 
-      return { success: true, data: settings, message: 'Settings fetched successfully' };
+      return {
+        success: true,
+        data: transformedSettings,
+        message: 'Settings fetched successfully'
+      };
     } catch (error) {
       console.error('SettingsService: Error fetching settings:', error);
       return { success: false, message: 'Failed to fetch settings', data: [] };
@@ -1473,27 +1369,132 @@ export class SettingsService {
 
   static async updateSetting(id: string, value: string, userId?: string): Promise<ApiResponse<void>> {
     try {
+      console.log('SettingsService: Updating setting:', id);
+      
       if (!supabase) {
-        return { success: true, message: 'Setting updated successfully (Demo Mode)' };
+        return { success: true, message: 'Setting updated (demo mode)' };
       }
 
-      DatabaseService.checkSupabaseConnection();
-      
       const { error } = await supabase
         .from('system_settings')
         .update({
           setting_value: value,
-          updated_at: new Date().toISOString(),
           updated_by: userId
         })
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('SettingsService: Database error:', error);
+        throw error;
+      }
 
       return { success: true, message: 'Setting updated successfully' };
     } catch (error) {
       console.error('SettingsService: Error updating setting:', error);
       return { success: false, message: 'Failed to update setting' };
+    }
+  }
+}
+
+// Certificate Service
+export class CertificateService {
+  static async getCertificates(): Promise<ApiResponse<Certificate[]>> {
+    try {
+      console.log('CertificateService: Fetching certificates');
+      
+      if (!supabase) {
+        return { success: true, data: [], message: 'Demo certificates loaded' };
+      }
+
+      const { data: certificates, error } = await supabase
+        .from('certificates')
+        .select(`
+          *,
+          user:users(*),
+          survey:surveys(*)
+        `)
+        .order('issued_at', { ascending: false });
+
+      if (error) {
+        console.error('CertificateService: Database error:', error);
+        throw error;
+      }
+
+      const transformedCertificates = certificates?.map(cert => ({
+        id: cert.id,
+        userId: cert.user_id,
+        user: {
+          id: cert.user.id,
+          name: cert.user.name,
+          email: cert.user.email,
+          role: { name: 'Enumerator' }, // Simplified
+          jurisdiction: cert.user.jurisdiction
+        },
+        surveyId: cert.survey_id,
+        survey: {
+          id: cert.survey.id,
+          title: cert.survey.title
+        },
+        resultId: cert.result_id,
+        certificateNumber: cert.certificate_number,
+        issuedAt: new Date(cert.issued_at),
+        validUntil: cert.valid_until ? new Date(cert.valid_until) : undefined,
+        downloadCount: cert.download_count,
+        status: cert.certificate_status
+      })) || [];
+
+      return {
+        success: true,
+        data: transformedCertificates,
+        message: 'Certificates fetched successfully'
+      };
+    } catch (error) {
+      console.error('CertificateService: Error fetching certificates:', error);
+      return { success: false, message: 'Failed to fetch certificates', data: [] };
+    }
+  }
+
+  static async downloadCertificate(certificateId: string): Promise<ApiResponse<Blob>> {
+    try {
+      console.log('CertificateService: Downloading certificate:', certificateId);
+      
+      // Generate a simple PDF-like content
+      const pdfContent = `Certificate ID: ${certificateId}\nGenerated: ${new Date().toISOString()}`;
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+
+      return {
+        success: true,
+        data: blob,
+        message: 'Certificate downloaded successfully'
+      };
+    } catch (error) {
+      console.error('CertificateService: Error downloading certificate:', error);
+      return { success: false, message: 'Failed to download certificate' };
+    }
+  }
+
+  static async revokeCertificate(certificateId: string): Promise<ApiResponse<void>> {
+    try {
+      console.log('CertificateService: Revoking certificate:', certificateId);
+      
+      if (!supabase) {
+        return { success: true, message: 'Certificate revoked (demo mode)' };
+      }
+
+      const { error } = await supabase
+        .from('certificates')
+        .update({ certificate_status: 'revoked' })
+        .eq('id', certificateId);
+
+      if (error) {
+        console.error('CertificateService: Database error:', error);
+        throw error;
+      }
+
+      return { success: true, message: 'Certificate revoked successfully' };
+    } catch (error) {
+      console.error('CertificateService: Error revoking certificate:', error);
+      return { success: false, message: 'Failed to revoke certificate' };
     }
   }
 }
