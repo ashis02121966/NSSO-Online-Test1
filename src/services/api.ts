@@ -169,15 +169,16 @@ export const testApi = {
   async createTestSession(surveyId: string): Promise<ApiResponse<TestSession>> {
     console.log('testApi: Creating test session for survey:', surveyId);
     
-    // Get current user ID from localStorage
-    const userData = localStorage.getItem('userData');
-    const userId = userData ? JSON.parse(userData).id : null;
+    // Get current user ID from Supabase auth session to ensure RLS policy compliance
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     
-    if (!userId) {
-      return { success: false, message: 'User not authenticated' };
+    if (authError || !user) {
+      console.error('testApi: Authentication error:', authError);
+      return { success: false, message: 'User not authenticated or session expired' };
     }
     
-    return await TestService.createTestSession(surveyId, userId);
+    console.log('testApi: Using authenticated user ID:', user.id);
+    return await TestService.createTestSession(surveyId, user.id);
   },
 
   async getSession(sessionId: string): Promise<ApiResponse<TestSession>> {
