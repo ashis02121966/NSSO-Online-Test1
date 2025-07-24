@@ -168,7 +168,8 @@ const mockAuthLogin = async (email: string, password: string): Promise<ApiRespon
 export const userApi = {
   getUsers: async (): Promise<ApiResponse<User[]>> => {
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL) {
+      if (!import.meta.env.VITE_SUPABASE_URL || 
+          import.meta.env.VITE_SUPABASE_URL.includes('your_supabase_project_url')) {
         await delay(600);
         return { success: true, data: mockUsers, message: 'Users fetched successfully (demo mode)' };
       }

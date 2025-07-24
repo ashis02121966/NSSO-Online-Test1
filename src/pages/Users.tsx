@@ -30,9 +30,10 @@ export function Users() {
     try {
       setIsLoading(true);
       const response = await userApi.getUsers();
-      setUsers(response.data);
+      setUsers(response.data || []);
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setUsers([]); // Ensure users is always an array
     } finally {
       setIsLoading(false);
     }
