@@ -180,26 +180,74 @@ export const testApi = {
     return await TestService.createTestSession(surveyId, userId);
   },
 
-  async getQuestionsForSession(sessionId: string): Promise<ApiResponse<Question[]>> {
+  async getSession(sessionId: string): Promise<ApiResponse<TestSession>> {
+    console.log('testApi: Getting session:', sessionId);
+    return await TestService.getSession(sessionId);
+  },
+
+  async getQuestionsForSurvey(surveyId: string): Promise<ApiResponse<Question[]>> {
     try {
-      console.log('testApi: Fetching questions for session:', sessionId);
+      console.log('testApi: Fetching questions for survey:', surveyId);
       
-      // Get session to find survey and sections
-      const { data: session } = await supabase
-        .from('test_sessions')
-        .select('survey_id')
-        .eq('id', sessionId)
-        .single();
-
-      if (!session) {
-        return { success: false, message: 'Session not found' };
+      // Check if this is a demo survey
+      const isDemoSurvey = surveyId === '550e8400-e29b-41d4-a716-446655440020';
+      
+      if (isDemoSurvey || !supabase) {
+        console.log('testApi: Using demo questions');
+        // Return demo questions
+        const demoQuestions: Question[] = [
+          {
+            id: 'q1',
+            sectionId: '550e8400-e29b-41d4-a716-446655440030',
+            text: 'What is the primary function of an operating system?',
+            type: 'single_choice',
+            complexity: 'easy',
+            points: 1,
+            explanation: 'An operating system manages all hardware and software resources of a computer.',
+            order: 1,
+            options: [
+              { id: 'q1a', text: 'To manage hardware and software resources', isCorrect: true },
+              { id: 'q1b', text: 'To create documents', isCorrect: false },
+              { id: 'q1c', text: 'To browse the internet', isCorrect: false },
+              { id: 'q1d', text: 'To play games', isCorrect: false }
+            ],
+            correctAnswers: ['q1a'],
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: 'q2',
+            sectionId: '550e8400-e29b-41d4-a716-446655440030',
+            text: 'Which of the following are input devices? (Select all that apply)',
+            type: 'multiple_choice',
+            complexity: 'medium',
+            points: 2,
+            explanation: 'Input devices allow users to provide data to the computer. Monitor is an output device.',
+            order: 2,
+            options: [
+              { id: 'q2a', text: 'Keyboard', isCorrect: true },
+              { id: 'q2b', text: 'Mouse', isCorrect: true },
+              { id: 'q2c', text: 'Monitor', isCorrect: false },
+              { id: 'q2d', text: 'Microphone', isCorrect: true }
+            ],
+            correctAnswers: ['q2a', 'q2b', 'q2d'],
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ];
+        
+        return {
+          success: true,
+          data: demoQuestions,
+          message: 'Demo questions loaded successfully'
+        };
       }
-
+      
       // Get all sections for the survey
       const { data: sections } = await supabase
         .from('survey_sections')
         .select('id')
-        .eq('survey_id', session.survey_id)
+        .eq('survey_id', surveyId)
         .order('section_order');
 
       if (!sections || sections.length === 0) {
@@ -248,8 +296,25 @@ export const testApi = {
           createdAt: new Date(question.created_at),
           updatedAt: new Date(question.updated_at)
         })),
-        message: 'Questions loaded for session'
+        message: 'Questions loaded for survey'
       };
+    } catch (error) {
+      console.error('testApi: Error in getQuestionsForSurvey:', error);
+      return { success: false, message: 'Failed to load questions' };
+    }
+  },
+  async getQuestionsForSession(sessionId: string): Promise<ApiResponse<Question[]>> {
+    try {
+      console.log('testApi: Fetching questions for session:', sessionId);
+      
+      // Get session to find survey ID
+      const sessionResponse = await this.getSession(sessionId);
+      if (!sessionResponse.success || !sessionResponse.data) {
+        return { success: false, message: 'Session not found' };
+      }
+
+      // Use the survey ID to get questions
+      return await this.getQuestionsForSurvey(sessionResponse.data.surveyId);
     } catch (error) {
       console.error('testApi: Error in getQuestionsForSession:', error);
       return { success: false, message: 'Failed to load questions' };

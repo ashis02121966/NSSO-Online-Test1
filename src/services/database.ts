@@ -834,11 +834,17 @@ export class QuestionService {
 export class TestService {
   static async createTestSession(surveyId: string, userId: string): Promise<ApiResponse<TestSession>> {
     try {
-      // Check if Supabase is available, if not use demo mode
-      if (!supabase) {
-        console.log('TestService: Supabase not configured, creating demo session');
+      console.log('TestService: Creating test session for survey:', surveyId, 'user:', userId);
+      
+      // Check if we should use demo mode
+      const isDemoMode = !supabase || userId.startsWith('550e8400-e29b-41d4-a716-446655440');
+      
+      if (isDemoMode) {
+        console.log('TestService: Using demo mode for session creation');
+        // Generate a UUID-like string for demo mode
+        const demoSessionId = `550e8400-e29b-41d4-a716-${Date.now().toString().slice(-12)}`;
         const demoSession: TestSession = {
-          id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: demoSessionId,
           userId: userId,
           surveyId: surveyId,
           startTime: new Date(),
@@ -852,19 +858,94 @@ export class TestService {
         return { success: true, data: demoSession, message: 'Demo test session created successfully' };
       }
       
+      // Use Supabase for real users
+      try {
+        DatabaseService.checkSupabaseConnection();
+        
+        const { data, error } = await supabase!
+          .from('test_sessions')
+          .insert({
+            user_id: userId,
+            survey_id: surveyId,
+            time_remaining: 35 * 60, // 35 minutes in seconds
+            current_question_index: 0,
+            session_status: 'in_progress',
+            attempt_number: 1
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const session: TestSession = {
+          id: data.id,
+          userId: data.user_id,
+          surveyId: data.survey_id,
+          startTime: new Date(data.start_time),
+          timeRemaining: data.time_remaining,
+          currentQuestionIndex: data.current_question_index,
+          answers: [],
+          status: data.session_status,
+          attemptNumber: data.attempt_number
+        };
+
+        return { success: true, data: session, message: 'Test session created successfully' };
+      } catch (supabaseError) {
+        console.log('TestService: Supabase failed, falling back to demo mode');
+        // Fallback to demo mode if Supabase fails
+        const demoSessionId = `550e8400-e29b-41d4-a716-${Date.now().toString().slice(-12)}`;
+        const demoSession: TestSession = {
+          id: demoSessionId,
+          userId: userId,
+          surveyId: surveyId,
+          startTime: new Date(),
+          timeRemaining: 35 * 60,
+          currentQuestionIndex: 0,
+          answers: [],
+          status: 'in_progress',
+          attemptNumber: 1
+        };
+        
+        return { success: true, data: demoSession, message: 'Demo test session created successfully (fallback)' };
+      }
+    } catch (error) {
+      console.error('TestService: Error creating test session:', error);
+      return { success: false, message: 'Failed to create test session' };
+    }
+  }
+
+  static async getSession(sessionId: string): Promise<ApiResponse<TestSession>> {
+    try {
+      console.log('TestService: Getting session:', sessionId);
+      
+      // Check if this is a demo session ID
+      const isDemoSession = sessionId.startsWith('550e8400-e29b-41d4-a716-');
+      
+      if (isDemoSession || !supabase) {
+        console.log('TestService: Demo session requested, returning mock data');
+        // Return a mock session for demo mode
+        const demoSession: TestSession = {
+          id: sessionId,
+          userId: '550e8400-e29b-41d4-a716-446655440019', // Demo enumerator ID
+          surveyId: '550e8400-e29b-41d4-a716-446655440020', // Demo survey ID
+          startTime: new Date(),
+          timeRemaining: 35 * 60,
+          currentQuestionIndex: 0,
+          answers: [],
+          status: 'in_progress',
+          attemptNumber: 1
+        };
+        
+        return { success: true, data: demoSession, message: 'Demo session retrieved successfully' };
+      }
+      
+      // Use Supabase for real sessions
       DatabaseService.checkSupabaseConnection();
       
       const { data, error } = await supabase!
         .from('test_sessions')
-        .insert({
-          user_id: userId,
-          survey_id: surveyId,
-          time_remaining: 35 * 60, // 35 minutes in seconds
-          current_question_index: 0,
-          session_status: 'in_progress',
-          attempt_number: 1
-        })
-        .select()
+        .select('*')
+        .eq('id', sessionId)
         .single();
 
       if (error) throw error;
@@ -881,25 +962,10 @@ export class TestService {
         attemptNumber: data.attempt_number
       };
 
-      return { success: true, data: session, message: 'Test session created successfully' };
+      return { success: true, data: session, message: 'Session retrieved successfully' };
     } catch (error) {
-      console.error('TestService: Error creating test session:', error);
-      
-      // Fallback to demo session if database fails
-      console.log('TestService: Database failed, creating demo session as fallback');
-      const demoSession: TestSession = {
-        id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId: userId,
-        surveyId: surveyId,
-        startTime: new Date(),
-        timeRemaining: 35 * 60, // 35 minutes in seconds
-        currentQuestionIndex: 0,
-        answers: [],
-        status: 'in_progress',
-        attemptNumber: 1
-      };
-      
-      return { success: true, data: demoSession, message: 'Demo test session created successfully (fallback)' };
+      console.error('TestService: Error getting session:', error);
+      return { success: false, message: 'Failed to get session' };
     }
   }
 

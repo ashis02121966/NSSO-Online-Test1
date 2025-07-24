@@ -183,9 +183,9 @@ export function TestInterface() {
       setIsLoading(true);
       console.log('Loading test session for ID:', sessionId);
       
-      // If no session data in navigation state, try to load from API or create fallback
+      // If no session data in navigation state, try to load from API
       if (location.state?.surveyId) {
-        // Create session from navigation data
+        // Use session data from navigation state
         const surveyId = location.state.surveyId;
         const startTime = location.state.startTime || new Date().toISOString();
         
@@ -207,7 +207,16 @@ export function TestInterface() {
         // Load questions
         await loadQuestionsForSession();
       } else {
-        throw new Error('No session data available');
+        // Try to load session from API
+        console.log('Loading session from API');
+        const sessionResponse = await testApi.getSession(sessionId!);
+        if (sessionResponse.success && sessionResponse.data) {
+          setSession(sessionResponse.data);
+          setTimeRemaining(sessionResponse.data.timeRemaining);
+          await loadQuestionsForSession();
+        } else {
+          throw new Error('No session data available');
+        }
       }
     } catch (error) {
       console.error('Failed to load test session:', error);
