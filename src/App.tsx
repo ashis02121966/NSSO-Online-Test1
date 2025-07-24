@@ -202,13 +202,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <AuthProvider>
-      <NetworkProvider>
-        <Router>
+    <Router>
+      <AuthProvider>
+        <NetworkProvider>
           <AppRoutes />
-        </Router>
-      </NetworkProvider>
-    </AuthProvider>
+        </NetworkProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
