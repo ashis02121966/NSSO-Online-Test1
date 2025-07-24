@@ -56,10 +56,17 @@ if (supabase) {
     .then(({ error }) => {
       if (error) {
         console.error('Supabase connection test failed:', error);
+        console.error('This may indicate:');
+        console.error('1. Invalid Supabase URL or API key');
+        console.error('2. Network connectivity issues');
+        console.error('3. Supabase project is paused or deleted');
+        console.error('4. RLS policies preventing access');
       } else {
         console.log('Supabase connection test successful');
       }
     });
+} else {
+  console.warn('Supabase client not initialized - running in demo mode');
 }
 
 // Database types

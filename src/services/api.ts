@@ -281,10 +281,30 @@ export const testApi = {
       console.log('testApi: Fetching questions for survey:', surveyId);
       
       if (!supabase) {
-        console.log('testApi: Supabase not configured, using demo questions');
+        console.log('testApi: Supabase not configured - cannot load questions');
         return {
           success: false,
-          message: 'Database not configured. Please configure Supabase to load questions.',
+          message: 'Database not configured. Please check your Supabase configuration in the .env file and restart the development server.',
+          data: []
+        };
+      }
+      
+      // Test Supabase connection first
+      try {
+        const { error: connectionError } = await supabase.from('roles').select('count', { count: 'exact', head: true });
+        if (connectionError) {
+          console.error('testApi: Supabase connection test failed:', connectionError);
+          return {
+            success: false,
+            message: `Database connection failed: ${connectionError.message}. Please check your Supabase configuration and network connection.`,
+            data: []
+          };
+        }
+      } catch (networkError) {
+        console.error('testApi: Network error connecting to Supabase:', networkError);
+        return {
+          success: false,
+          message: 'Network error: Cannot connect to database. Please check your internet connection and Supabase configuration.',
           data: []
         };
       }
@@ -292,27 +312,40 @@ export const testApi = {
       console.log('testApi: Fetching all questions for survey from database');
       
       // Get all questions for the survey with their sections and options
-      const { data: questions, error } = await supabase
-        .from('questions')
-        .select(`
-          *,
-          options:question_options(*),
-          section:survey_sections!inner(
-            id,
-            title,
-            section_order,
-            survey_id
-          )
-        `)
-        .eq('section.survey_id', surveyId)
-        .order('section_order', { foreignTable: 'survey_sections', ascending: true })
-        .order('question_order', { ascending: true });
+      let questions, error;
+      try {
+        const result = await supabase
+          .from('questions')
+          .select(`
+            *,
+            options:question_options(*),
+            section:survey_sections!inner(
+              id,
+              title,
+              section_order,
+              survey_id
+            )
+          `)
+          .eq('section.survey_id', surveyId)
+          .order('section_order', { foreignTable: 'survey_sections', ascending: true })
+          .order('question_order', { ascending: true });
+        
+        questions = result.data;
+        error = result.error;
+      } catch (fetchError) {
+        console.error('testApi: Network fetch error:', fetchError);
+        return {
+          success: false,
+          message: 'Network error: Failed to fetch questions from database. Please check your internet connection.',
+          data: []
+        };
+      }
 
       if (error) {
         console.error('testApi: Database error:', error);
         return {
           success: false,
-          message: `Failed to load questions: ${error.message}`,
+          message: `Database error: ${error.message}. Please check your Supabase configuration and RLS policies.`,
           data: []
         };
       }
@@ -321,7 +354,7 @@ export const testApi = {
         console.log('testApi: No questions found for survey:', surveyId);
         return {
           success: false,
-          message: `No questions found for survey ${surveyId}. Please ensure the survey has questions added.`,
+          message: `No questions found for survey. Please ensure questions have been added to this survey in the Question Bank.`,
           data: []
         };
       }
@@ -361,7 +394,7 @@ export const testApi = {
       console.error('testApi: Error in getQuestionsForSurvey:', error);
       return {
         success: false,
-        message: `Error loading questions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        message: `Network or configuration error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your Supabase configuration and internet connection.`,
         data: []
       };
     }

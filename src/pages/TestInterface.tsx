@@ -176,34 +176,26 @@ export function TestInterface() {
         console.log('Questions loaded successfully:', questionsResponse.data.length);
         setQuestions(questionsResponse.data);
         
-        // Get actual section information from database
-        if (supabase) {
-          const { data: sectionsData } = await supabase
-            .from('survey_sections')
-            .select('*')
-            .in('id', [...new Set(questionsResponse.data.map(q => q.sectionId))]);
-          
-          if (sectionsData) {
-            const sections: Record<string, { title: string; order: number }> = {};
-            sectionsData.forEach(section => {
-              sections[section.id] = {
-                title: section.title,
-                order: section.section_order
-              };
-            });
-            setSectionInfo(sections);
-          }
-        }
+        // Extract section information from the loaded questions
+        const sections: Record<string, { title: string; order: number }> = {};
+        questionsResponse.data.forEach(question => {
+          const sectionOrder = Math.floor(question.order / 1000);
+          sections[question.sectionId] = {
+            title: `Section ${sectionOrder}`,
+            order: sectionOrder
+          };
+        });
+        setSectionInfo(sections);
       } else {
         const errorMessage = questionsResponse.message || 'Failed to load questions';
         console.error('Failed to load questions:', errorMessage);
-        alert(`Error: ${errorMessage}\n\nPlease contact your administrator to ensure questions are properly configured for this survey.`);
+        alert(`Error loading test questions:\n\n${errorMessage}\n\nPossible solutions:\n1. Check your internet connection\n2. Verify Supabase configuration in .env file\n3. Ensure questions exist for this survey\n4. Contact your administrator if the problem persists`);
         navigate('/available-tests');
         return;
       }
     } catch (error) {
       console.error('Failed to load questions:', error);
-      alert(`Failed to load test questions: ${error instanceof Error ? error.message : 'Unknown error'}\n\nReturning to available tests.`);
+      alert(`Network error loading test questions:\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\nThis usually indicates:\n• Internet connection issues\n• Supabase configuration problems\n• Server connectivity issues\n\nPlease check your connection and try again.`);
       navigate('/available-tests');
     } finally {
       setIsLoading(false);
