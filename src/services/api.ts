@@ -220,23 +220,9 @@ export const testApi = {
       
       if (authError || !user) {
         console.log('testApi: No authenticated user, creating demo session');
-        const demoSessionId = generateUUID();
-        const demoSession: TestSession = {
-          id: demoSessionId,
-          userId: fallbackUserId,
-          surveyId: surveyId,
-          startTime: new Date(),
-          timeRemaining: 35 * 60,
-          currentQuestionIndex: 0,
-          answers: [],
-          status: 'in_progress',
-          attemptNumber: 1
-        };
-        
         return {
-          success: true,
-          data: demoSession,
-          message: 'Demo test session created successfully'
+          success: false,
+          message: 'User not authenticated. Please log in to start the test.'
         };
       }
       
@@ -256,24 +242,9 @@ export const testApi = {
       
       if (sessionError) {
         console.error('testApi: Error creating session in database:', sessionError);
-        // Fallback to demo session
-        const demoSessionId = generateUUID();
-        const demoSession: TestSession = {
-          id: demoSessionId,
-          userId: fallbackUserId,
-          surveyId: surveyId,
-          startTime: new Date(),
-          timeRemaining: 35 * 60,
-          currentQuestionIndex: 0,
-          answers: [],
-          status: 'in_progress',
-          attemptNumber: 1
-        };
-        
         return {
-          success: true,
-          data: demoSession,
-          message: 'Demo test session created successfully (database fallback)'
+          success: false,
+          message: `Failed to create test session: ${sessionError.message}`
         };
       }
       
@@ -296,24 +267,9 @@ export const testApi = {
       };
     } catch (error) {
       console.error('testApi: Error in createTestSession:', error);
-      // Final fallback to demo session
-      const demoSessionId = generateUUID();
-      const demoSession: TestSession = {
-        id: demoSessionId,
-        userId: fallbackUserId,
-        surveyId: surveyId,
-        startTime: new Date(),
-        timeRemaining: 35 * 60,
-        currentQuestionIndex: 0,
-        answers: [],
-        status: 'in_progress',
-        attemptNumber: 1
-      };
-      
       return {
-        success: true,
-        data: demoSession,
-        message: 'Demo test session created successfully (error fallback)'
+        success: false,
+        message: `Failed to create test session: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   },
