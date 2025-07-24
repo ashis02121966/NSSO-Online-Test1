@@ -30,11 +30,13 @@ export function Roles() {
   const fetchRoles = async () => {
         setRoles(response.data || []);
       setIsLoading(true);
-      const response = await roleApi.getRoles();
+        setRoles(response.data || []);
         setRoles([]);
       setRoles(response.data);
+        setRoles([]);
     } catch (error) {
       console.error('Failed to fetch roles:', error);
+      setRoles([]);
       setRoles([]);
     } finally {
       setIsLoading(false);
