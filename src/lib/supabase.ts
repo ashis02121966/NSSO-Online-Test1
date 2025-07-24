@@ -17,12 +17,19 @@ const hasValidSupabaseConfig = supabaseUrl &&
   supabaseAnonKey && 
   isValidUrl(supabaseUrl) && 
   !supabaseUrl.includes('your_supabase_project_url') &&
-  !supabaseAnonKey.includes('your_supabase_anon_key');
+  !supabaseAnonKey.includes('your_supabase_anon_key') &&
+  supabaseUrl !== 'https://dummy.supabase.co';
 
 let supabase;
 
 if (!hasValidSupabaseConfig) {
-  console.warn('Supabase not configured properly. Running in demo mode.');
+  console.warn('Supabase not configured properly. Running in demo mode.', {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseAnonKey,
+    urlValid: supabaseUrl ? isValidUrl(supabaseUrl) : false,
+    urlNotPlaceholder: supabaseUrl ? !supabaseUrl.includes('your_supabase_project_url') : false,
+    keyNotPlaceholder: supabaseAnonKey ? !supabaseAnonKey.includes('your_supabase_anon_key') : false
+  });
   // Create a dummy client that won't be used
   const dummyUrl = 'https://dummy.supabase.co';
   const dummyKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.dummy';
@@ -35,6 +42,7 @@ if (!hasValidSupabaseConfig) {
     }
   });
 } else {
+  console.log('Supabase configured properly. Using real database.');
   supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       autoRefreshToken: true,

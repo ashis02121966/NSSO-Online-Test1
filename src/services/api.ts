@@ -516,66 +516,49 @@ export const questionApi = {
 
   createQuestion: async (questionData: any): Promise<ApiResponse<Question>> => {
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL || 
-          import.meta.env.VITE_SUPABASE_URL.includes('your_supabase_project_url')) {
-        await delay(800);
-        const newQuestion: Question = {
-          id: Date.now().toString(),
-          sectionId: questionData.sectionId,
-          text: questionData.text,
-          type: questionData.type,
-          complexity: questionData.complexity,
-          points: questionData.points,
-          explanation: questionData.explanation,
-          order: questionData.order,
-          options: questionData.options.map((opt: any, index: number) => ({
-            id: `opt_${Date.now()}_${index}`,
-            text: opt.text,
-            isCorrect: opt.isCorrect
-          })),
-          correctAnswers: questionData.options
-            .map((opt: any, index: number) => opt.isCorrect ? `opt_${Date.now()}_${index}` : null)
-            .filter((id: string | null) => id !== null),
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-        return {
-          success: true,
-          data: newQuestion,
-          message: 'Question created successfully (demo mode)'
-        };
+      console.log('API: Creating question with data:', questionData);
+      
+      if (isDemoMode) {
+        console.log('Running in demo mode - using mock data');
+        return await this.createMockQuestion(questionData);
       }
+      
+      console.log('Using real database service');
       return await QuestionService.createQuestion(questionData);
     } catch (error) {
       console.error('Error creating question:', error);
-      // Fallback to demo mode if database fails
-      await delay(800);
-      const newQuestion: Question = {
-        id: Date.now().toString(),
-        sectionId: questionData.sectionId,
-        text: questionData.text,
-        type: questionData.type,
-        complexity: questionData.complexity,
-        points: questionData.points,
-        explanation: questionData.explanation,
-        order: questionData.order,
-        options: questionData.options.map((opt: any, index: number) => ({
-          id: `opt_${Date.now()}_${index}`,
-          text: opt.text,
-          isCorrect: opt.isCorrect
-        })),
-        correctAnswers: questionData.options
-          .map((opt: any, index: number) => opt.isCorrect ? `opt_${Date.now()}_${index}` : null)
-          .filter((id: string | null) => id !== null),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      return {
-        success: true,
-        data: newQuestion,
-        message: 'Question created successfully (fallback mode)'
-      };
+      console.log('Database failed, falling back to demo mode');
+      return await this.createMockQuestion(questionData);
     }
+  },
+
+  createMockQuestion: async (questionData: any): Promise<ApiResponse<Question>> => {
+    await delay(800);
+    const newQuestion: Question = {
+      id: Date.now().toString(),
+      sectionId: questionData.sectionId,
+      text: questionData.text,
+      type: questionData.type,
+      complexity: questionData.complexity,
+      points: questionData.points,
+      explanation: questionData.explanation,
+      order: questionData.order,
+      options: questionData.options.map((opt: any, index: number) => ({
+        id: `opt_${Date.now()}_${index}`,
+        text: opt.text,
+        isCorrect: opt.isCorrect
+      })),
+      correctAnswers: questionData.options
+        .map((opt: any, index: number) => opt.isCorrect ? `opt_${Date.now()}_${index}` : null)
+        .filter((id: string | null) => id !== null),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    return {
+      success: true,
+      data: newQuestion,
+      message: 'Question created successfully (demo mode)'
+    };
   },
 
   uploadQuestions: async (surveyId: string, file: File): Promise<ApiResponse<FileUploadResult>> => {
@@ -597,6 +580,7 @@ export const questionApi = {
 
       // Read file content
       const csvContent = await file.text();
+      console.log('Uploading questions via database service');
       return await QuestionService.uploadQuestions(csvContent);
     } catch (error) {
       console.error('Error uploading questions:', error);

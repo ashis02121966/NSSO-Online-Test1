@@ -233,6 +233,9 @@ export function Questions() {
   const handleAddQuestion = async () => {
     if (!selectedSection) return;
 
+    console.log('Adding question to section:', selectedSection.id);
+    console.log('Question form data:', questionFormData);
+
     try {
       const questionData = {
         sectionId: selectedSection.id,
@@ -244,23 +247,28 @@ export function Questions() {
         options: questionFormData.options.map((text, index) => ({
           text,
           isCorrect: questionFormData.correctAnswers.includes(index),
-          optionOrder: index + 1
         })),
         order: questions.length + 1
       };
 
+      console.log('Calling API to create question:', questionData);
       const response = await questionApi.createQuestion(questionData);
+      console.log('API response:', response);
+      
       if (response.success && response.data) {
         setQuestions([...questions, response.data]);
         setIsAddQuestionModalOpen(false);
         resetQuestionForm();
         
         // Show success message
-        alert('Question added successfully!');
+        alert(`Question added successfully! ${response.message}`);
+      } else {
+        console.error('Failed to create question:', response.message);
+        alert(`Failed to create question: ${response.message}`);
       }
     } catch (error) {
       console.error('Failed to create question:', error);
-      alert('Failed to create question. Please try again.');
+      alert(`Failed to create question: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
     }
   };
 

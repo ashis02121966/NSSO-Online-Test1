@@ -571,8 +571,55 @@ export class SettingsService {
 
 // Question Service
 export class QuestionService {
+  static async getQuestions(surveyId: string, sectionId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select(`
+          *,
+          options:question_options(*)
+        `)
+        .eq('section_id', sectionId)
+        .order('question_order', { ascending: true });
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data.map(question => ({
+          id: question.id,
+          sectionId: question.section_id,
+          text: question.text,
+          type: question.question_type,
+          complexity: question.complexity,
+          points: question.points,
+          explanation: question.explanation,
+          order: question.question_order,
+          options: question.options
+            .sort((a: any, b: any) => a.option_order - b.option_order)
+            .map((opt: any) => ({
+              id: opt.id,
+              text: opt.text,
+              isCorrect: opt.is_correct
+            })),
+          correctAnswers: question.options
+            .filter((opt: any) => opt.is_correct)
+            .map((opt: any) => opt.id),
+          createdAt: new Date(question.created_at),
+          updatedAt: new Date(question.updated_at)
+        })),
+        message: 'Questions fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      return { success: false, message: 'Failed to fetch questions' };
+    }
+  }
+
   static async createQuestion(questionData: any) {
     try {
+      console.log('Creating question with data:', questionData);
+      
       // First create the question
       const { data: question, error: questionError } = await supabase
         .from('questions')
@@ -588,7 +635,12 @@ export class QuestionService {
         .select('*')
         .single();
 
-      if (questionError) throw questionError;
+      if (questionError) {
+        console.error('Question creation error:', questionError);
+        throw questionError;
+      }
+
+      console.log('Question created successfully:', question);
 
       // Then create the options
       const optionsData = questionData.options.map((option: any, index: number) => ({
@@ -598,16 +650,21 @@ export class QuestionService {
         option_order: index + 1
       }));
 
+      console.log('Creating options with data:', optionsData);
+
       const { data: options, error: optionsError } = await supabase
         .from('question_options')
         .insert(optionsData)
         .select('*');
 
       if (optionsError) {
+        console.error('Options creation error:', optionsError);
         // Rollback question creation if options fail
         await supabase.from('questions').delete().eq('id', question.id);
         throw optionsError;
       }
+
+      console.log('Options created successfully:', options);
 
       return {
         success: true,
@@ -635,7 +692,8 @@ export class QuestionService {
       console.error('Error creating question:', error);
       return { 
         success: false, 
-        message: `Failed to create question: ${error instanceof Error ? error.message : 'Unknown error'}` 
+        message: `Failed to create question: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error: error
       };
     }
   }
@@ -713,6 +771,7 @@ export class QuestionService {
             .single();
 
           if (questionError) {
+            console.error('Question creation error for row', i + 1, ':', questionError);
             errors.push(`Row ${i + 1}: Failed to create question - ${questionError.message}`);
             questionsSkipped++;
             continue;
@@ -740,6 +799,7 @@ export class QuestionService {
             .insert(optionsData);
 
           if (optionsError) {
+            console.error('Options creation error for row', i + 1, ':', optionsError);
             // Rollback question creation
             await supabase.from('questions').delete().eq('id', question.id);
             errors.push(`Row ${i + 1}: Failed to create options - ${optionsError.message}`);
@@ -749,6 +809,7 @@ export class QuestionService {
 
           questionsAdded++;
         } catch (error) {
+          console.error('Unexpected error for row', i + 1, ':', error);
           errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
           questionsSkipped++;
         }
@@ -768,51 +829,6 @@ export class QuestionService {
     } catch (error) {
       console.error('Error uploading questions:', error);
       return { success: false, message: 'Failed to upload questions' };
-    }
-  }
-
-  static async getQuestions(surveyId: string, sectionId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('questions')
-        .select(`
-          *,
-          options:question_options(*)
-        `)
-        .eq('section_id', sectionId)
-        .order('question_order', { ascending: true });
-
-      if (error) throw error;
-
-      return {
-        success: true,
-        data: data.map(question => ({
-          id: question.id,
-          sectionId: question.section_id,
-          text: question.text,
-          type: question.question_type,
-          complexity: question.complexity,
-          points: question.points,
-          explanation: question.explanation,
-          order: question.question_order,
-          options: question.options
-            .sort((a: any, b: any) => a.option_order - b.option_order)
-            .map((opt: any) => ({
-              id: opt.id,
-              text: opt.text,
-              isCorrect: opt.is_correct
-            })),
-          correctAnswers: question.options
-            .filter((opt: any) => opt.is_correct)
-            .map((opt: any) => opt.id),
-          createdAt: new Date(question.created_at),
-          updatedAt: new Date(question.updated_at)
-        })),
-        message: 'Questions fetched successfully'
-      };
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-      return { success: false, message: 'Failed to fetch questions' };
     }
   }
 }
