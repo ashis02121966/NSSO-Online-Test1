@@ -141,11 +141,15 @@ export function Surveys() {
   const openEditModal = (survey: Survey, event: React.MouseEvent) => {
     event.stopPropagation();
     
+    // Handle potentially invalid date
+    const dateObj = new Date(survey.targetDate);
+    const targetDateString = isNaN(dateObj.getTime()) ? '' : dateObj.toISOString().split('T')[0];
+    
     setSelectedSurvey(survey);
     setFormData({
       title: survey.title,
       description: survey.description,
-      targetDate: survey.targetDate.toISOString().split('T')[0],
+      targetDate: targetDateString,
       duration: survey.duration,
       totalQuestions: survey.totalQuestions,
       passingScore: survey.passingScore,
