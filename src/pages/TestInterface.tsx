@@ -128,10 +128,10 @@ export function TestInterface() {
         console.log('Using session data from navigation state');
         setSession(location.state.sessionData);
         setTimeRemaining(location.state.sessionData.timeRemaining);
-        loadQuestionsForSession();
+        await loadQuestionsForSession();
       } else {
         console.log('Loading session from API');
-        loadTestSession();
+        await loadTestSession();
       }
     }
   }, [sessionId]);
@@ -162,15 +162,13 @@ export function TestInterface() {
   const loadQuestionsForSession = async () => {
     try {
       setIsLoading(true);
-      console.log('Loading questions for session:', sessionId);
+      console.log('Loading questions for survey:', session?.surveyId);
       
-      // Get survey ID from session
-      const sessionResponse = await testApi.getSession(sessionId!);
-      if (!sessionResponse.success || !sessionResponse.data) {
-        throw new Error('Session not found');
+      if (!session?.surveyId) {
+        throw new Error('Survey ID not available');
       }
       
-      const surveyId = sessionResponse.data.surveyId;
+      const surveyId = session.surveyId;
       console.log('Loading questions for survey:', surveyId);
       
       const questionsResponse = await testApi.getQuestionsForSurvey(surveyId);
@@ -228,7 +226,7 @@ export function TestInterface() {
         setSession(newSession);
         setTimeRemaining(newSession.timeRemaining);
         
-        // Load questions
+        // Load questions after session is set
         await loadQuestionsForSession();
       } else {
         // Try to load session from API
@@ -237,6 +235,7 @@ export function TestInterface() {
         if (sessionResponse.success && sessionResponse.data) {
           setSession(sessionResponse.data);
           setTimeRemaining(sessionResponse.data.timeRemaining);
+          setSession(sessionResponse.data);
           await loadQuestionsForSession();
         } else {
           throw new Error('No session data available');
