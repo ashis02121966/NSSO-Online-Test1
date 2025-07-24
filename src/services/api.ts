@@ -189,14 +189,223 @@ export const testApi = {
     try {
       console.log('testApi: Fetching questions for survey:', surveyId);
       
-      // Always try to fetch from Supabase first
       if (!supabase) {
         console.log('testApi: Supabase not configured, using demo questions');
         return this.getDemoQuestions();
       }
       
-      // Get all sections for the survey ordered by section_order
-      const { data: sections } = await supabase
+      console.log('testApi: Fetching all questions for survey from database');
+      
+      // Get all questions for the survey with their sections and options
+      const { data: questions, error } = await supabase
+        .from('questions')
+        .select(`
+          *,
+          options:question_options(*),
+          section:survey_sections!inner(
+            id,
+            title,
+            section_order,
+            survey_id
+          )
+        `)
+        .eq('section.survey_id', surveyId)
+        .order('section.section_order', { ascending: true })
+        .order('question_order', { ascending: true });
+
+      if (error) {
+        console.error('testApi: Database error:', error);
+        console.log('testApi: Falling back to demo questions');
+        return this.getDemoQuestions();
+      }
+
+      if (!questions || questions.length === 0) {
+        console.log('testApi: No questions found in database, using demo questions');
+        return this.getDemoQuestions();
+      }
+
+      console.log('testApi: Successfully fetched', questions.length, 'questions from database');
+
+      // Transform database questions to match our Question interface
+      const transformedQuestions = questions.map((question, globalIndex) => ({
+        id: question.id,
+        sectionId: question.section_id,
+        text: question.text,
+        type: question.question_type,
+        complexity: question.complexity,
+        points: question.points,
+        explanation: question.explanation,
+        order: (question.section.section_order * 1000) + question.question_order,
+        options: question.options
+          .sort((a: any, b: any) => a.option_order - b.option_order)
+          .map((opt: any) => ({
+            id: opt.id,
+            text: opt.text,
+            isCorrect: opt.is_correct
+          })),
+        correctAnswers: question.options
+          .filter((opt: any) => opt.is_correct)
+          .map((opt: any) => opt.id),
+        createdAt: new Date(question.created_at),
+        updatedAt: new Date(question.updated_at)
+      }));
+
+      return {
+        success: true,
+        data: transformedQuestions,
+        message: `Loaded ${transformedQuestions.length} questions from ${new Set(questions.map(q => q.section.id)).size} sections`
+      };
+    } catch (error) {
+      console.error('testApi: Error in getQuestionsForSurvey:', error);
+      console.log('testApi: Error occurred, falling back to demo questions');
+      return this.getDemoQuestions();
+    }
+  },
+
+  getDemoQuestions(): ApiResponse<Question[]> {
+    console.log('testApi: Returning demo questions');
+    const demoQuestions: Question[] = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440040',
+        sectionId: '550e8400-e29b-41d4-a716-446655440030',
+        text: 'What is the primary function of an operating system?',
+        type: 'single_choice',
+        complexity: 'easy',
+        points: 1,
+        explanation: 'An operating system manages all hardware and software resources of a computer.',
+        order: 1001,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440050', text: 'To manage hardware and software resources', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440051', text: 'To create documents', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440052', text: 'To browse the internet', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440053', text: 'To play games', isCorrect: false }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440050'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440041',
+        sectionId: '550e8400-e29b-41d4-a716-446655440030',
+        text: 'Which of the following are input devices? (Select all that apply)',
+        type: 'multiple_choice',
+        complexity: 'medium',
+        points: 2,
+        explanation: 'Input devices allow users to provide data to the computer. Monitor is an output device.',
+        order: 1002,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440054', text: 'Keyboard', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440055', text: 'Mouse', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440056', text: 'Monitor', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440057', text: 'Microphone', isCorrect: true }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440054', '550e8400-e29b-41d4-a716-446655440055', '550e8400-e29b-41d4-a716-446655440057'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440042',
+        sectionId: '550e8400-e29b-41d4-a716-446655440031',
+        text: 'What does URL stand for?',
+        type: 'single_choice',
+        complexity: 'easy',
+        points: 1,
+        explanation: 'URL stands for Uniform Resource Locator, which is the address of a web page.',
+        order: 2001,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440058', text: 'Uniform Resource Locator', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440059', text: 'Universal Resource Link', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440060', text: 'Unified Resource Location', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440061', text: 'Universal Reference Locator', isCorrect: false }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440058'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440043',
+        sectionId: '550e8400-e29b-41d4-a716-446655440032',
+        text: 'Which of the following are good password practices?',
+        type: 'multiple_choice',
+        complexity: 'medium',
+        points: 2,
+        explanation: 'Strong passwords should be long, complex, unique, and not shared.',
+        order: 3001,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440062', text: 'Use at least 8 characters', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440063', text: 'Include uppercase and lowercase letters', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440064', text: 'Share passwords with colleagues', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440065', text: 'Use unique passwords for each account', isCorrect: true }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440062', '550e8400-e29b-41d4-a716-446655440063', '550e8400-e29b-41d4-a716-446655440065'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440044',
+        sectionId: '550e8400-e29b-41d4-a716-446655440030',
+        text: 'Which file format is commonly used for spreadsheets?',
+        type: 'single_choice',
+        complexity: 'easy',
+        points: 1,
+        explanation: 'Excel files use .xlsx format, while .docx is for Word documents, .pptx for PowerPoint, and .pdf for portable documents.',
+        order: 1003,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440066', text: '.xlsx', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440067', text: '.docx', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440068', text: '.pptx', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440069', text: '.pdf', isCorrect: false }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440066'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440045',
+        sectionId: '550e8400-e29b-41d4-a716-446655440031',
+        text: 'What is the purpose of a web browser?',
+        type: 'single_choice',
+        complexity: 'easy',
+        points: 1,
+        explanation: 'A web browser is software used to access and view websites on the internet.',
+        order: 2002,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440070', text: 'To access and view websites', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440071', text: 'To create documents', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440072', text: 'To edit photos', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440073', text: 'To play music', isCorrect: false }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440070'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440046',
+        sectionId: '550e8400-e29b-41d4-a716-446655440032',
+        text: 'What should you do if you receive a suspicious email?',
+        type: 'single_choice',
+        complexity: 'medium',
+        points: 1,
+        explanation: 'Suspicious emails should not be opened or clicked. Report them to IT security.',
+        order: 3002,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440074', text: 'Click on all links to investigate', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440075', text: 'Forward it to all colleagues', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440076', text: 'Delete it and report to IT security', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440077', text: 'Reply with personal information', isCorrect: false }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440076'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+    
+    return {
+      success: true,
+      data: demoQuestions,
+      message: 'Demo questions loaded successfully'
+    };
+  },
         .from('survey_sections')
         .select('id, title, section_order')
         .eq('survey_id', surveyId)
