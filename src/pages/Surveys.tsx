@@ -34,9 +34,10 @@ export function Surveys() {
     try {
       setIsLoading(true);
       const response = await surveyApi.getSurveys();
-      setSurveys(response.data);
+      setSurveys(response.data || []);
     } catch (error) {
       console.error('Failed to fetch surveys:', error);
+      setSurveys([]);
     } finally {
       setIsLoading(false);
     }
