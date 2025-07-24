@@ -137,10 +137,25 @@ export function Questions() {
       setIsUploading(true);
       const response = await questionApi.uploadQuestions(selectedSurvey!.id, uploadFile);
       if (response.success) {
-        alert(`Upload successful! ${response.data.questionsAdded} questions added.`);
+        const result = response.data;
+        let message = `Upload completed!\n\n`;
+        message += `✅ Questions added: ${result.questionsAdded}\n`;
+        if (result.questionsSkipped > 0) {
+          message += `⚠️ Questions skipped: ${result.questionsSkipped}\n`;
+        }
+        if (result.errors.length > 0) {
+          message += `\nErrors encountered:\n${result.errors.slice(0, 5).join('\n')}`;
+          if (result.errors.length > 5) {
+            message += `\n... and ${result.errors.length - 5} more errors`;
+          }
+        }
+        alert(message);
         setIsUploadModalOpen(false);
         setUploadFile(null);
-        // Refresh questions if a section is selected
+        // Refresh sections and questions
+        if (selectedSurvey) {
+          fetchSections(selectedSurvey.id);
+        }
         if (selectedSection) {
           fetchQuestions(selectedSurvey!.id, selectedSection.id);
         }
