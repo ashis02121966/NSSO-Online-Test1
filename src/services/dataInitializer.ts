@@ -41,7 +41,7 @@ export class DataInitializer {
     
     const roles = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440010',
+        id: '550e8400-e29b-41d4-a716-446655440001',
         name: 'Admin',
         description: 'System Administrator with full access',
         level: 1,
@@ -53,7 +53,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440011',
+        id: '550e8400-e29b-41d4-a716-446655440002',
         name: 'ZO User',
         description: 'Zonal Office User',
         level: 2,
@@ -63,7 +63,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440012',
+        id: '550e8400-e29b-41d4-a716-446655440003',
         name: 'RO User',
         description: 'Regional Office User',
         level: 3,
@@ -73,7 +73,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440013',
+        id: '550e8400-e29b-41d4-a716-446655440004',
         name: 'Supervisor',
         description: 'Field Supervisor',
         level: 4,
@@ -84,7 +84,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440014',
+        id: '550e8400-e29b-41d4-a716-446655440005',
         name: 'Enumerator',
         description: 'Field Enumerator',
         level: 5,
@@ -111,11 +111,11 @@ export class DataInitializer {
     
     const users = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440001',
+        id: '550e8400-e29b-41d4-a716-446655440010',
         email: 'admin@esigma.com',
         password_hash: passwordHash,
         name: 'System Administrator',
-        role_id: '550e8400-e29b-41d4-a716-446655440010',
+        role_id: '550e8400-e29b-41d4-a716-446655440001',
         is_active: true,
         jurisdiction: 'National',
         zone: null,
@@ -125,11 +125,11 @@ export class DataInitializer {
         phone_number: '+91-9876543210'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440002',
+        id: '550e8400-e29b-41d4-a716-446655440011',
         email: 'zo@esigma.com',
         password_hash: passwordHash,
         name: 'Zonal Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440011',
+        role_id: '550e8400-e29b-41d4-a716-446655440002',
         is_active: true,
         jurisdiction: 'North Zone',
         zone: 'North Zone',
@@ -139,11 +139,11 @@ export class DataInitializer {
         phone_number: '+91-9876543211'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440003',
+        id: '550e8400-e29b-41d4-a716-446655440012',
         email: 'ro@esigma.com',
         password_hash: passwordHash,
         name: 'Regional Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440012',
+        role_id: '550e8400-e29b-41d4-a716-446655440003',
         is_active: true,
         jurisdiction: 'Delhi Region',
         zone: 'North Zone',
@@ -153,11 +153,11 @@ export class DataInitializer {
         phone_number: '+91-9876543212'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440004',
+        id: '550e8400-e29b-41d4-a716-446655440013',
         email: 'supervisor@esigma.com',
         password_hash: passwordHash,
         name: 'Field Supervisor',
-        role_id: '550e8400-e29b-41d4-a716-446655440013',
+        role_id: '550e8400-e29b-41d4-a716-446655440004',
         is_active: true,
         jurisdiction: 'Central Delhi District',
         zone: 'North Zone',
@@ -165,14 +165,14 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'SUP001',
         phone_number: '+91-9876543213',
-        parent_id: '550e8400-e29b-41d4-a716-446655440003'
+        parent_id: '550e8400-e29b-41d4-a716-446655440012'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440005',
+        id: '550e8400-e29b-41d4-a716-446655440014',
         email: 'enumerator@esigma.com',
         password_hash: passwordHash,
         name: 'Field Enumerator',
-        role_id: '550e8400-e29b-41d4-a716-446655440014',
+        role_id: '550e8400-e29b-41d4-a716-446655440005',
         is_active: true,
         jurisdiction: 'Block A, Central Delhi',
         zone: 'North Zone',
@@ -180,7 +180,7 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'ENU001',
         phone_number: '+91-9876543214',
-        parent_id: '550e8400-e29b-41d4-a716-446655440004'
+        parent_id: '550e8400-e29b-41d4-a716-446655440013'
       }
     ];
 
@@ -208,7 +208,7 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone', 'South Zone'],
         assigned_regions: ['Delhi Region', 'Mumbai Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440001'
+        created_by: '550e8400-e29b-41d4-a716-446655440010'
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440021',
@@ -222,7 +222,7 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone'],
         assigned_regions: ['Delhi Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440001'
+        created_by: '550e8400-e29b-41d4-a716-446655440010'
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440022',
@@ -236,7 +236,7 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone', 'South Zone', 'East Zone'],
         assigned_regions: ['Delhi Region', 'Mumbai Region', 'Kolkata Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440001'
+        created_by: '550e8400-e29b-41d4-a716-446655440010'
       }
     ];
 

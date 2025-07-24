@@ -56,6 +56,7 @@ export function Surveys() {
         ...formData,
         targetDate: new Date(formData.targetDate),
         createdBy: user?.id || '550e8400-e29b-41d4-a716-446655440001'
+        createdBy: user?.id || '550e8400-e29b-41d4-a716-446655440010'
       });
       if (response.success && response.data) {
         setSurveys([...surveys, response.data]);
@@ -157,6 +158,7 @@ export function Surveys() {
         passingScore: survey.passingScore,
         maxAttempts: survey.maxAttempts,
         createdBy: user?.id || '550e8400-e29b-41d4-a716-446655440001'
+        createdBy: user?.id || '550e8400-e29b-41d4-a716-446655440010'
       };
       
       const response = await surveyApi.createSurvey(duplicateData);
