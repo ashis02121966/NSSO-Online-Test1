@@ -97,6 +97,15 @@ export const roleApi = {
 // Survey API
 export const surveyApi = {
   async getSurveys(): Promise<ApiResponse<Survey[]>> {
+    if (isDemoMode) {
+      console.log('surveyApi: Returning empty surveys (Demo Mode)');
+      return {
+        success: true,
+        data: [],
+        message: 'Surveys fetched successfully (Demo Mode)'
+      };
+    }
+    
     console.log('surveyApi: Fetching surveys');
     return await SurveyService.getSurveys();
   },
@@ -117,6 +126,15 @@ export const surveyApi = {
   },
 
   async getSurveySections(surveyId: string): Promise<ApiResponse<Section[]>> {
+    if (isDemoMode) {
+      console.log('surveyApi: Returning empty sections (Demo Mode)');
+      return {
+        success: true,
+        data: [],
+        message: 'Survey sections fetched successfully (Demo Mode)'
+      };
+    }
+    
     console.log('surveyApi: Fetching sections for survey:', surveyId);
     return await SurveyService.getSurveySections(surveyId);
   },

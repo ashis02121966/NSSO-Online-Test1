@@ -24,6 +24,9 @@ export const supabase = isSupabaseConfigured
     })
   : null;
 
+// Export demo mode status
+export const isDemoMode = !isSupabaseConfigured;
+
 // Test database connection on initialization (only if configured)
 if (supabase) {
   console.log('Supabase client initialized with URL:', supabaseUrl);
