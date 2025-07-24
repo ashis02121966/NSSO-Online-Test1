@@ -3,10 +3,21 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
-}
+// Check if environment variables are properly configured
+const isValidUrl = (url: string) => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
+const hasValidSupabaseConfig = supabaseUrl && 
+  supabaseAnonKey && 
+  isValidUrl(supabaseUrl) && 
+  !supabaseUrl.includes('your_supabase_project_url') &&
+  !supabaseAnonKey.includes('your_supabase_anon_key');
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -15,6 +26,21 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+if (!hasValidSupabaseConfig) {
+  console.warn('Supabase not configured properly. Running in demo mode.');
+  // Create a dummy client that won't be used
+  const dummyUrl = 'https://dummy.supabase.co';
+  const dummyKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR1bW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.dummy';
+  
+  export const supabase = createClient(dummyUrl, dummyKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false
+    }
+  });
+} else {
+}
 // Database types
 export interface Database {
   public: {
