@@ -3,18 +3,34 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+console.log('Environment check:');
+console.log('VITE_SUPABASE_URL:', supabaseUrl);
+console.log('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set (length: ' + supabaseAnonKey.length + ')' : 'Not set');
+
 // Check if Supabase is configured
-const isSupabaseConfigured = supabaseUrl && 
+const isSupabaseConfigured = Boolean(
+  supabaseUrl && 
   supabaseAnonKey && 
   supabaseUrl !== 'your_supabase_project_url' && 
+  supabaseUrl !== 'https://your-project-id.supabase.co' &&
   supabaseAnonKey !== 'your_supabase_anon_key' &&
-  supabaseUrl.startsWith('https://') &&
-  supabaseAnonKey.length > 20;
+  supabaseAnonKey !== 'your-supabase-anon-key' &&
+  supabaseUrl.includes('.supabase.co') &&
+  supabaseAnonKey.length > 20
+);
+
+console.log('Supabase configuration status:', isSupabaseConfigured);
 
 if (!isSupabaseConfigured) {
-  console.warn('Supabase not configured properly. Please check your environment variables.');
-  console.warn('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
-  console.warn('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'Missing');
+  console.warn('=== SUPABASE CONFIGURATION REQUIRED ===');
+  console.warn('Please update your .env file with your actual Supabase credentials:');
+  console.warn('1. Go to https://supabase.com and create a project');
+  console.warn('2. Get your Project URL and anon key from Settings > API');
+  console.warn('3. Update .env file with your actual values');
+  console.warn('4. Restart the development server');
+  console.warn('Current values:');
+  console.warn('  VITE_SUPABASE_URL:', supabaseUrl || 'Not set');
+  console.warn('  VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set but may be placeholder' : 'Not set');
 }
 
 // Create Supabase client (with fallback for demo mode)
