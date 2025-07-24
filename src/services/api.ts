@@ -358,6 +358,25 @@ export const enumeratorDashboardApi = {
     try {
       console.log('enumeratorDashboardApi: Fetching enumerator dashboard data');
       
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.log('enumeratorDashboardApi: Supabase not configured, returning demo data');
+        return {
+          success: true,
+          data: {
+            availableTests: [],
+            completedTests: [],
+            upcomingTests: [],
+            certificates: [],
+            overallProgress: 0,
+            averageScore: 0,
+            totalAttempts: 0,
+            passedTests: 0
+          },
+          message: 'Enumerator Dashboard data fetched successfully (Demo Mode)'
+        };
+      }
+
       // Get current user
       const userData = localStorage.getItem('userData');
       const currentUser = userData ? JSON.parse(userData) : null;
