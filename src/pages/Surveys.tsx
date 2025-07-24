@@ -105,14 +105,15 @@ export function Surveys() {
         const response = await surveyApi.deleteSurvey(surveyId);
         if (response.success) {
           setSurveys(surveys.filter(survey => survey.id !== surveyId));
+          alert('Survey deleted successfully!');
+        } else {
+          alert(`Failed to delete survey: ${response.message}`);
         }
-        alert('Survey deleted successfully!');
-      } else {
-        alert(`Failed to delete survey: ${response.message}`);
       } catch (error) {
         console.error('Failed to delete survey:', error);
+        alert('Failed to delete survey. Please try again.');
       }
-      alert('Failed to delete survey. Please try again.');
+        }
     }
   };
 
