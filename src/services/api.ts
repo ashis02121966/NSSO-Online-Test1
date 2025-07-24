@@ -282,7 +282,11 @@ export const testApi = {
       
       if (!supabase) {
         console.log('testApi: Supabase not configured, using demo questions');
-        return this.getDemoQuestions();
+        return {
+          success: false,
+          message: 'Database not configured. Please configure Supabase to load questions.',
+          data: []
+        };
       }
       
       console.log('testApi: Fetching all questions for survey from database');
@@ -301,7 +305,7 @@ export const testApi = {
           )
         `)
         .eq('section.survey_id', surveyId)
-        .order('section_order', { referencedTable: 'survey_sections', ascending: true })
+        .order('section_order', { foreignTable: 'survey_sections', ascending: true })
         .order('question_order', { ascending: true });
 
       if (error) {
@@ -363,194 +367,349 @@ export const testApi = {
     }
   },
 
-  getDemoQuestions(): ApiResponse<Question[]> {
-    console.log('testApi: Returning demo questions');
-    const demoQuestions: Question[] = [
-      {
-        id: '550e8400-e29b-41d4-a716-446655440040',
-        sectionId: '550e8400-e29b-41d4-a716-446655440030',
-        text: 'What is the primary function of an operating system?',
-        type: 'single_choice',
-        complexity: 'easy',
-        points: 1,
-        explanation: 'An operating system manages all hardware and software resources of a computer.',
-        order: 1001,
-        options: [
-          { id: '550e8400-e29b-41d4-a716-446655440050', text: 'To manage hardware and software resources', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440051', text: 'To create documents', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440052', text: 'To browse the internet', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440053', text: 'To play games', isCorrect: false }
-        ],
-        correctAnswers: ['550e8400-e29b-41d4-a716-446655440050'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '550e8400-e29b-41d4-a716-446655440041',
-        sectionId: '550e8400-e29b-41d4-a716-446655440030',
-        text: 'Which of the following are input devices? (Select all that apply)',
-        type: 'multiple_choice',
-        complexity: 'medium',
-        points: 2,
-        explanation: 'Input devices allow users to provide data to the computer. Monitor is an output device.',
-        order: 1002,
-        options: [
-          { id: '550e8400-e29b-41d4-a716-446655440054', text: 'Keyboard', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440055', text: 'Mouse', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440056', text: 'Monitor', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440057', text: 'Microphone', isCorrect: true }
-        ],
-        correctAnswers: ['550e8400-e29b-41d4-a716-446655440054', '550e8400-e29b-41d4-a716-446655440055', '550e8400-e29b-41d4-a716-446655440057'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '550e8400-e29b-41d4-a716-446655440042',
-        sectionId: '550e8400-e29b-41d4-a716-446655440031',
-        text: 'What does URL stand for?',
-        type: 'single_choice',
-        complexity: 'easy',
-        points: 1,
-        explanation: 'URL stands for Uniform Resource Locator, which is the address of a web page.',
-        order: 2001,
-        options: [
-          { id: '550e8400-e29b-41d4-a716-446655440058', text: 'Uniform Resource Locator', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440059', text: 'Universal Resource Link', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440060', text: 'Unified Resource Location', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440061', text: 'Universal Reference Locator', isCorrect: false }
-        ],
-        correctAnswers: ['550e8400-e29b-41d4-a716-446655440058'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '550e8400-e29b-41d4-a716-446655440043',
-        sectionId: '550e8400-e29b-41d4-a716-446655440032',
-        text: 'Which of the following are good password practices?',
-        type: 'multiple_choice',
-        complexity: 'medium',
-        points: 2,
-        explanation: 'Strong passwords should be long, complex, unique, and not shared.',
-        order: 3001,
-        options: [
-          { id: '550e8400-e29b-41d4-a716-446655440062', text: 'Use at least 8 characters', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440063', text: 'Include uppercase and lowercase letters', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440064', text: 'Share passwords with colleagues', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440065', text: 'Use unique passwords for each account', isCorrect: true }
-        ],
-        correctAnswers: ['550e8400-e29b-41d4-a716-446655440062', '550e8400-e29b-41d4-a716-446655440063', '550e8400-e29b-41d4-a716-446655440065'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '550e8400-e29b-41d4-a716-446655440044',
-        sectionId: '550e8400-e29b-41d4-a716-446655440030',
-        text: 'Which file format is commonly used for spreadsheets?',
-        type: 'single_choice',
-        complexity: 'easy',
-        points: 1,
-        explanation: 'Excel files use .xlsx format, while .docx is for Word documents, .pptx for PowerPoint, and .pdf for portable documents.',
-        order: 1003,
-        options: [
-          { id: '550e8400-e29b-41d4-a716-446655440066', text: '.xlsx', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440067', text: '.docx', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440068', text: '.pptx', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440069', text: '.pdf', isCorrect: false }
-        ],
-        correctAnswers: ['550e8400-e29b-41d4-a716-446655440066'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '550e8400-e29b-41d4-a716-446655440045',
-        sectionId: '550e8400-e29b-41d4-a716-446655440031',
-        text: 'What is the purpose of a web browser?',
-        type: 'single_choice',
-        complexity: 'easy',
-        points: 1,
-        explanation: 'A web browser is software used to access and view websites on the internet.',
-        order: 2002,
-        options: [
-          { id: '550e8400-e29b-41d4-a716-446655440070', text: 'To access and view websites', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440071', text: 'To create documents', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440072', text: 'To edit photos', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440073', text: 'To play music', isCorrect: false }
-        ],
-        correctAnswers: ['550e8400-e29b-41d4-a716-446655440070'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: '550e8400-e29b-41d4-a716-446655440046',
-        sectionId: '550e8400-e29b-41d4-a716-446655440032',
-        text: 'What should you do if you receive a suspicious email?',
-        type: 'single_choice',
-        complexity: 'medium',
-        points: 1,
-        explanation: 'Suspicious emails should not be opened or clicked. Report them to IT security.',
-        order: 3002,
-        options: [
-          { id: '550e8400-e29b-41d4-a716-446655440074', text: 'Click on all links to investigate', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440075', text: 'Forward it to all colleagues', isCorrect: false },
-          { id: '550e8400-e29b-41d4-a716-446655440076', text: 'Delete it and report to IT security', isCorrect: true },
-          { id: '550e8400-e29b-41d4-a716-446655440077', text: 'Reply with personal information', isCorrect: false }
-        ],
-        correctAnswers: ['550e8400-e29b-41d4-a716-446655440076'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-    ];
-    
-    return {
-      success: true,
-      data: demoQuestions,
-      message: 'Demo questions loaded successfully'
-    };
-  },
 
   async getQuestionsForSession(sessionId: string): Promise<ApiResponse<Question[]>> {
     try {
       console.log('testApi: Fetching questions for session:', sessionId);
       
-      // For demo sessions, extract survey ID from session storage or use default
-      const userData = localStorage.getItem('userData');
-      const defaultSurveyId = '550e8400-e29b-41d4-a716-446655440020';
-      
-      // Try to get survey ID from session storage first
-      const sessionData = localStorage.getItem(`session_${sessionId}`);
-      let surveyId = defaultSurveyId;
-      
-      if (sessionData) {
-        try {
-          const parsed = JSON.parse(sessionData);
-          surveyId = parsed.surveyId || defaultSurveyId;
-        } catch (e) {
-          console.log('testApi: Could not parse session data, using default survey');
-        }
+      if (!supabase) {
+        return {
+          success: false,
+          message: 'Database not configured',
+          data: []
+        };
       }
       
-      console.log('testApi: Using survey ID for questions:', surveyId);
-      return await this.getQuestionsForSurvey(surveyId);
+      // Get the survey ID from the test session
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('test_sessions')
+        .select('survey_id')
+        .eq('id', sessionId)
+        .single();
+      
+      if (sessionError || !sessionData) {
+        console.error('testApi: Error fetching session:', sessionError);
+        return {
+          success: false,
+          message: 'Session not found',
+          data: []
+        };
+      }
+      
+      console.log('testApi: Using survey ID for questions:', sessionData.survey_id);
+      return await this.getQuestionsForSurvey(sessionData.survey_id);
     } catch (error) {
       console.error('testApi: Error in getQuestionsForSession:', error);
-      // Fallback to demo questions
-      return this.getDemoQuestions();
+      return {
+        success: false,
+        message: `Error loading questions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data: []
+      };
     }
   },
 
   async saveAnswer(sessionId: string, questionId: string, selectedOptions: string[]): Promise<ApiResponse<void>> {
     console.log('testApi: Saving answer for session:', sessionId, 'question:', questionId);
-    return await TestService.saveAnswer(sessionId, questionId, selectedOptions);
+    
+    if (!supabase) {
+      console.log('testApi: Supabase not configured, saving to localStorage');
+      const key = `answer_${sessionId}_${questionId}`;
+      localStorage.setItem(key, JSON.stringify(selectedOptions));
+      return { success: true, message: 'Answer saved locally' };
+    }
+    
+    try {
+      // Check if answer already exists
+      const { data: existingAnswer } = await supabase
+        .from('test_answers')
+        .select('id')
+        .eq('session_id', sessionId)
+        .eq('question_id', questionId)
+        .single();
+      
+      if (existingAnswer) {
+        // Update existing answer
+        const { error } = await supabase
+          .from('test_answers')
+          .update({
+            selected_options: selectedOptions,
+            answered: selectedOptions.length > 0,
+            updated_at: new Date().toISOString()
+          })
+          .eq('session_id', sessionId)
+          .eq('question_id', questionId);
+        
+        if (error) throw error;
+      } else {
+        // Insert new answer
+        const { error } = await supabase
+          .from('test_answers')
+          .insert({
+            session_id: sessionId,
+            question_id: questionId,
+            selected_options: selectedOptions,
+            answered: selectedOptions.length > 0,
+            is_correct: false, // Will be calculated on submission
+            time_spent: 0
+          });
+        
+        if (error) throw error;
+      }
+      
+      return { success: true, message: 'Answer saved successfully' };
+    } catch (error) {
+      console.error('testApi: Error saving answer:', error);
+      return { 
+        success: false, 
+        message: `Failed to save answer: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
+    }
   },
 
   async updateSession(sessionId: string, sessionData: any): Promise<ApiResponse<void>> {
     console.log('testApi: Updating session:', sessionId);
-    return await TestService.updateSession(sessionId, sessionData);
+    
+    if (!supabase) {
+      console.log('testApi: Supabase not configured, saving to localStorage');
+      localStorage.setItem(`session_${sessionId}`, JSON.stringify(sessionData));
+      return { success: true, message: 'Session updated locally' };
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('test_sessions')
+        .update({
+          current_question_index: sessionData.currentQuestionIndex,
+          time_remaining: sessionData.timeRemaining,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+      
+      if (error) throw error;
+      
+      return { success: true, message: 'Session updated successfully' };
+    } catch (error) {
+      console.error('testApi: Error updating session:', error);
+      return { 
+        success: false, 
+        message: `Failed to update session: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
+    }
   },
 
   async submitTest(sessionId: string): Promise<ApiResponse<TestResult>> {
     console.log('testApi: Submitting test for session:', sessionId);
-    return await TestService.submitTest(sessionId);
+    
+    if (!supabase) {
+      console.log('testApi: Supabase not configured, creating demo result');
+      const demoResult: TestResult = {
+        id: 'demo-result-' + Date.now(),
+        userId: '550e8400-e29b-41d4-a716-446655440014',
+        user: { name: 'Demo User', email: 'demo@example.com', role: { name: 'Enumerator' } } as any,
+        surveyId: '550e8400-e29b-41d4-a716-446655440020',
+        survey: { title: 'Demo Survey', maxAttempts: 3 } as any,
+        sessionId: sessionId,
+        score: 75,
+        totalQuestions: 4,
+        correctAnswers: 3,
+        isPassed: true,
+        timeSpent: 1200,
+        attemptNumber: 1,
+        sectionScores: [],
+        completedAt: new Date(),
+        grade: 'B'
+      };
+      return { success: true, data: demoResult, message: 'Demo test submitted' };
+    }
+    
+    try {
+      // Get session data
+      const { data: session, error: sessionError } = await supabase
+        .from('test_sessions')
+        .select('*')
+        .eq('id', sessionId)
+        .single();
+      
+      if (sessionError || !session) {
+        throw new Error('Session not found');
+      }
+      
+      // Get all answers for this session
+      const { data: answers, error: answersError } = await supabase
+        .from('test_answers')
+        .select('*')
+        .eq('session_id', sessionId);
+      
+      if (answersError) {
+        throw new Error('Failed to fetch answers');
+      }
+      
+      // Get questions to calculate score
+      const questionsResponse = await this.getQuestionsForSurvey(session.survey_id);
+      if (!questionsResponse.success || !questionsResponse.data) {
+        throw new Error('Failed to load questions for scoring');
+      }
+      
+      const questions = questionsResponse.data;
+      let correctAnswers = 0;
+      let totalPoints = 0;
+      let earnedPoints = 0;
+      
+      // Calculate score
+      questions.forEach(question => {
+        totalPoints += question.points;
+        const userAnswer = answers?.find(a => a.question_id === question.id);
+        
+        if (userAnswer && userAnswer.selected_options) {
+          const selectedOptions = userAnswer.selected_options;
+          const correctOptions = question.correctAnswers;
+          
+          // Check if answer is correct
+          const isCorrect = selectedOptions.length === correctOptions.length &&
+            selectedOptions.every(option => correctOptions.includes(option));
+          
+          if (isCorrect) {
+            correctAnswers++;
+            earnedPoints += question.points;
+          }
+          
+          // Update answer with correctness
+          supabase
+            .from('test_answers')
+            .update({ is_correct: isCorrect })
+            .eq('id', userAnswer.id)
+            .then(() => {});
+        }
+      });
+      
+      const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0;
+      
+      // Get survey details for passing score
+      const { data: survey, error: surveyError } = await supabase
+        .from('surveys')
+        .select('*')
+        .eq('id', session.survey_id)
+        .single();
+      
+      if (surveyError) {
+        throw new Error('Failed to fetch survey details');
+      }
+      
+      const isPassed = score >= survey.passing_score;
+      
+      // Update session status
+      await supabase
+        .from('test_sessions')
+        .update({
+          session_status: 'completed',
+          score: score,
+          is_passed: isPassed,
+          completed_at: new Date().toISOString(),
+          end_time: new Date().toISOString()
+        })
+        .eq('id', sessionId);
+      
+      // Create test result
+      const { data: result, error: resultError } = await supabase
+        .from('test_results')
+        .insert({
+          user_id: session.user_id,
+          survey_id: session.survey_id,
+          session_id: sessionId,
+          score: score,
+          total_questions: questions.length,
+          correct_answers: correctAnswers,
+          is_passed: isPassed,
+          time_spent: (session.time_remaining ? (survey.duration * 60 - session.time_remaining) : survey.duration * 60),
+          attempt_number: session.attempt_number,
+          completed_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+      
+      if (resultError) {
+        throw new Error('Failed to create test result');
+      }
+      
+      // Create certificate if passed
+      let certificateId = null;
+      if (isPassed) {
+        const certificateNumber = `CERT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+        
+        const { data: certificate, error: certError } = await supabase
+          .from('certificates')
+          .insert({
+            user_id: session.user_id,
+            survey_id: session.survey_id,
+            result_id: result.id,
+            certificate_number: certificateNumber,
+            certificate_status: 'active'
+          })
+          .select()
+          .single();
+        
+        if (!certError && certificate) {
+          certificateId = certificate.id;
+          
+          // Update result with certificate ID
+          await supabase
+            .from('test_results')
+            .update({ certificate_id: certificateId })
+            .eq('id', result.id);
+        }
+      }
+      
+      // Get user and survey data for response
+      const { data: userData } = await supabase
+        .from('users')
+        .select('*, role:roles(*)')
+        .eq('id', session.user_id)
+        .single();
+      
+      const testResult: TestResult = {
+        id: result.id,
+        userId: session.user_id,
+        user: userData ? {
+          id: userData.id,
+          name: userData.name,
+          email: userData.email,
+          role: userData.role,
+          jurisdiction: userData.jurisdiction,
+          isActive: userData.is_active,
+          createdAt: new Date(userData.created_at),
+          updatedAt: new Date(userData.updated_at)
+        } : {} as any,
+        surveyId: session.survey_id,
+        survey: {
+          id: survey.id,
+          title: survey.title,
+          maxAttempts: survey.max_attempts
+        } as any,
+        sessionId: sessionId,
+        score: score,
+        totalQuestions: questions.length,
+        correctAnswers: correctAnswers,
+        isPassed: isPassed,
+        timeSpent: (session.time_remaining ? (survey.duration * 60 - session.time_remaining) : survey.duration * 60),
+        attemptNumber: session.attempt_number,
+        sectionScores: [],
+        completedAt: new Date(),
+        certificateId: certificateId,
+        grade: score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F'
+      };
+      
+      return {
+        success: true,
+        data: testResult,
+        message: `Test submitted successfully! Score: ${score}% (${isPassed ? 'Passed' : 'Failed'})`
+      };
+    } catch (error) {
+      console.error('testApi: Error submitting test:', error);
+      return {
+        success: false,
+        message: `Failed to submit test: ${error instanceof Error ? error.message : 'Unknown error'}`
+      };
+    }
   },
 
   async syncOfflineData(): Promise<ApiResponse<void>> {

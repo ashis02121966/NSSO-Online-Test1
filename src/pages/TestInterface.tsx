@@ -176,19 +176,24 @@ export function TestInterface() {
         console.log('Questions loaded successfully:', questionsResponse.data.length);
         setQuestions(questionsResponse.data);
         
-        // Extract section information for display
-        const sections: Record<string, { title: string; order: number }> = {};
-        questionsResponse.data.forEach(question => {
-          if (!sections[question.sectionId]) {
-            // Extract section info from question order (section_order * 1000 + question_order)
-            const sectionOrder = Math.floor(question.order / 1000);
-            sections[question.sectionId] = {
-              title: `Section ${sectionOrder}`,
-              order: sectionOrder
-            };
+        // Get actual section information from database
+        if (supabase) {
+          const { data: sectionsData } = await supabase
+            .from('survey_sections')
+            .select('*')
+            .in('id', [...new Set(questionsResponse.data.map(q => q.sectionId))]);
+          
+          if (sectionsData) {
+            const sections: Record<string, { title: string; order: number }> = {};
+            sectionsData.forEach(section => {
+              sections[section.id] = {
+                title: section.title,
+                order: section.section_order
+              };
+            });
+            setSectionInfo(sections);
           }
-        });
-        setSectionInfo(sections);
+        }
       } else {
         const errorMessage = questionsResponse.message || 'Failed to load questions';
         console.error('Failed to load questions:', errorMessage);
