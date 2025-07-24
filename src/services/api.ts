@@ -222,23 +222,61 @@ export const userApi = {
 // Role API
 export const roleApi = {
   getRoles: async (): Promise<ApiResponse<Role[]>> => {
+    // Check if Supabase is properly configured
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    if (!supabaseUrl || supabaseUrl === 'your_supabase_project_url' || supabaseUrl.includes('dummy')) {
+      // Return mock data when Supabase isn't configured
+      return {
+        success: true,
+        data: [
+          {
+            id: '1',
+            name: 'Super Admin',
+            description: 'Full system access',
+            level: 1,
+            isActive: true,
+            menuAccess: ['dashboard', 'users', 'roles', 'surveys', 'results', 'certificates', 'settings'],
+            userCount: 1,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: '2',
+            name: 'Admin',
+            description: 'Administrative access',
+            level: 2,
+            isActive: true,
+            menuAccess: ['dashboard', 'users', 'surveys', 'results', 'certificates'],
+            userCount: 2,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: '3',
+            name: 'Supervisor',
+            description: 'Supervisory access',
+            level: 3,
+            isActive: true,
+            menuAccess: ['dashboard', 'surveys', 'results'],
+            userCount: 5,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ],
+        message: 'Roles fetched successfully (demo mode)'
+      };
+    }
+
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL) {
-        await delay(400);
-        const mockRoles: Role[] = [
-          { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/dashboard', '/users', '/roles', '/surveys', '/questions', '/settings'] },
-          { id: '550e8400-e29b-41d4-a716-446655440011', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/zo-dashboard'] },
-          { id: '550e8400-e29b-41d4-a716-446655440012', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/ro-dashboard'] },
-          { id: '550e8400-e29b-41d4-a716-446655440013', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/supervisor-dashboard', '/team-results', '/my-enumerators'] },
-          { id: '550e8400-e29b-41d4-a716-446655440014', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, userCount: 1, createdAt: new Date(), updatedAt: new Date(), menuAccess: ['/enumerator-dashboard', '/available-tests', '/my-results', '/my-certificates'] }
-        ];
-        return { success: true, data: mockRoles, message: 'Roles fetched successfully (demo mode)' };
-      }
-      return await RoleService.getRoles();
+      const response = await RoleService.getRoles();
+      return response;
     } catch (error) {
-      console.error('Error fetching roles:', error);
-      await delay(400);
-      return { success: true, data: [], message: 'Failed to fetch roles' };
+      console.error('Error in getRoles:', error);
+      return { 
+        success: false, 
+        message: 'Failed to fetch roles',
+        data: []
+      };
     }
   },
 
