@@ -210,27 +210,24 @@ export const testApi = {
     // For production mode with Supabase
     const userData = localStorage.getItem('userData');
     const currentUser = userData ? JSON.parse(userData) : null;
-    const fallbackUserId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440014';
     
-    console.log('testApi: Using user ID for session creation:', fallbackUserId);
+    console.log('testApi: Using user ID for session creation:', currentUser?.id);
+    
+    if (!currentUser) {
+      console.log('testApi: No authenticated user found in localStorage');
+      return {
+        success: false,
+        message: 'User not authenticated. Please log in to start the test.'
+      };
+    }
     
     try {
-      // Get authenticated user from Supabase
-      const { data: { user }, error: authError } = await supabase!.auth.getUser();
-      
-      if (authError || !user) {
-        console.log('testApi: No authenticated user, creating demo session');
-        return {
-          success: false,
-          message: 'User not authenticated. Please log in to start the test.'
-        };
-      }
       
       // Create test session in Supabase
       const { data: sessionData, error: sessionError } = await supabase!
         .from('test_sessions')
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           survey_id: surveyId,
           time_remaining: 35 * 60,
           current_question_index: 0,
