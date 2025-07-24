@@ -189,89 +189,50 @@ export const testApi = {
     try {
       console.log('testApi: Fetching questions for survey:', surveyId);
       
-      // Check if this is a demo survey
-      const isDemoSurvey = surveyId === '550e8400-e29b-41d4-a716-446655440020';
-      
-      if (isDemoSurvey || !supabase) {
-        console.log('testApi: Using demo questions');
-        // Return demo questions
-        const demoQuestions: Question[] = [
-          {
-            id: 'q1',
-            sectionId: '550e8400-e29b-41d4-a716-446655440030',
-            text: 'What is the primary function of an operating system?',
-            type: 'single_choice',
-            complexity: 'easy',
-            points: 1,
-            explanation: 'An operating system manages all hardware and software resources of a computer.',
-            order: 1,
-            options: [
-              { id: 'q1a', text: 'To manage hardware and software resources', isCorrect: true },
-              { id: 'q1b', text: 'To create documents', isCorrect: false },
-              { id: 'q1c', text: 'To browse the internet', isCorrect: false },
-              { id: 'q1d', text: 'To play games', isCorrect: false }
-            ],
-            correctAnswers: ['q1a'],
-            createdAt: new Date(),
-            updatedAt: new Date()
-          },
-          {
-            id: 'q2',
-            sectionId: '550e8400-e29b-41d4-a716-446655440030',
-            text: 'Which of the following are input devices? (Select all that apply)',
-            type: 'multiple_choice',
-            complexity: 'medium',
-            points: 2,
-            explanation: 'Input devices allow users to provide data to the computer. Monitor is an output device.',
-            order: 2,
-            options: [
-              { id: 'q2a', text: 'Keyboard', isCorrect: true },
-              { id: 'q2b', text: 'Mouse', isCorrect: true },
-              { id: 'q2c', text: 'Monitor', isCorrect: false },
-              { id: 'q2d', text: 'Microphone', isCorrect: true }
-            ],
-            correctAnswers: ['q2a', 'q2b', 'q2d'],
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ];
-        
-        return {
-          success: true,
-          data: demoQuestions,
-          message: 'Demo questions loaded successfully'
-        };
+      // Always try to fetch from Supabase first
+      if (!supabase) {
+        console.log('testApi: Supabase not configured, using demo questions');
+        return this.getDemoQuestions();
       }
       
-      // Get all sections for the survey
+      // Get all sections for the survey ordered by section_order
       const { data: sections } = await supabase
         .from('survey_sections')
-        .select('id')
+        .select('id, title, section_order')
         .eq('survey_id', surveyId)
-        .order('section_order');
+        .order('section_order', { ascending: true });
 
       if (!sections || sections.length === 0) {
-        return { success: false, message: 'No sections found for survey' };
+        console.log('testApi: No sections found, using demo questions');
+        return this.getDemoQuestions();
       }
 
-      // Get questions from all sections
+      // Get questions from all sections with their options
       const sectionIds = sections.map(s => s.id);
       const { data: questions, error } = await supabase
         .from('questions')
         .select(`
           *,
-          options:question_options(*)
+          options:question_options(*),
+          section:survey_sections(title, section_order)
         `)
         .in('section_id', sectionIds)
         .order('question_order', { ascending: true });
 
       if (error) {
         console.error('testApi: Error fetching questions:', error);
-        throw error;
+        console.log('testApi: Falling back to demo questions');
+        return this.getDemoQuestions();
       }
 
-      console.log('testApi: Successfully fetched questions:', questions?.length);
+      if (!questions || questions.length === 0) {
+        console.log('testApi: No questions found, using demo questions');
+        return this.getDemoQuestions();
+      }
 
+      console.log('testApi: Successfully fetched questions from database:', questions.length);
+
+      // Transform database questions to match our Question interface
       return {
         success: true,
         data: questions.map(question => ({
@@ -282,7 +243,7 @@ export const testApi = {
           complexity: question.complexity,
           points: question.points,
           explanation: question.explanation,
-          order: question.question_order,
+          order: question.question_order + (question.section?.section_order || 0) * 1000, // Ensure section ordering
           options: question.options
             .sort((a: any, b: any) => a.option_order - b.option_order)
             .map((opt: any) => ({
@@ -300,9 +261,99 @@ export const testApi = {
       };
     } catch (error) {
       console.error('testApi: Error in getQuestionsForSurvey:', error);
-      return { success: false, message: 'Failed to load questions' };
+      console.log('testApi: Error occurred, falling back to demo questions');
+      return this.getDemoQuestions();
     }
   },
+
+  getDemoQuestions(): ApiResponse<Question[]> {
+    console.log('testApi: Returning demo questions');
+    const demoQuestions: Question[] = [
+      {
+        id: '550e8400-e29b-41d4-a716-446655440040',
+        sectionId: '550e8400-e29b-41d4-a716-446655440030',
+        text: 'What is the primary function of an operating system?',
+        type: 'single_choice',
+        complexity: 'easy',
+        points: 1,
+        explanation: 'An operating system manages all hardware and software resources of a computer.',
+        order: 1001,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440050', text: 'To manage hardware and software resources', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440051', text: 'To create documents', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440052', text: 'To browse the internet', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440053', text: 'To play games', isCorrect: false }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440050'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440041',
+        sectionId: '550e8400-e29b-41d4-a716-446655440030',
+        text: 'Which of the following are input devices? (Select all that apply)',
+        type: 'multiple_choice',
+        complexity: 'medium',
+        points: 2,
+        explanation: 'Input devices allow users to provide data to the computer. Monitor is an output device.',
+        order: 1002,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440054', text: 'Keyboard', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440055', text: 'Mouse', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440056', text: 'Monitor', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440057', text: 'Microphone', isCorrect: true }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440054', '550e8400-e29b-41d4-a716-446655440055', '550e8400-e29b-41d4-a716-446655440057'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440042',
+        sectionId: '550e8400-e29b-41d4-a716-446655440031',
+        text: 'What does URL stand for?',
+        type: 'single_choice',
+        complexity: 'easy',
+        points: 1,
+        explanation: 'URL stands for Uniform Resource Locator, which is the address of a web page.',
+        order: 2001,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440058', text: 'Uniform Resource Locator', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440059', text: 'Universal Resource Link', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440060', text: 'Unified Resource Location', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440061', text: 'Universal Reference Locator', isCorrect: false }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440058'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440043',
+        sectionId: '550e8400-e29b-41d4-a716-446655440032',
+        text: 'Which of the following are good password practices?',
+        type: 'multiple_choice',
+        complexity: 'medium',
+        points: 2,
+        explanation: 'Strong passwords should be long, complex, unique, and not shared.',
+        order: 3001,
+        options: [
+          { id: '550e8400-e29b-41d4-a716-446655440062', text: 'Use at least 8 characters', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440063', text: 'Include uppercase and lowercase letters', isCorrect: true },
+          { id: '550e8400-e29b-41d4-a716-446655440064', text: 'Share passwords with colleagues', isCorrect: false },
+          { id: '550e8400-e29b-41d4-a716-446655440065', text: 'Use unique passwords for each account', isCorrect: true }
+        ],
+        correctAnswers: ['550e8400-e29b-41d4-a716-446655440062', '550e8400-e29b-41d4-a716-446655440063', '550e8400-e29b-41d4-a716-446655440065'],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ];
+    
+    return {
+      success: true,
+      data: demoQuestions,
+      message: 'Demo questions loaded successfully'
+    };
+  },
+
   async getQuestionsForSession(sessionId: string): Promise<ApiResponse<Question[]>> {
     try {
       console.log('testApi: Fetching questions for session:', sessionId);
