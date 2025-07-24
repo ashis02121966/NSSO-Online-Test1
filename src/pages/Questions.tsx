@@ -244,7 +244,7 @@ export function Questions() {
         options: questionFormData.options.map((text, index) => ({
           text,
           isCorrect: questionFormData.correctAnswers.includes(index),
-          order: index + 1
+          optionOrder: index + 1
         })),
         order: questions.length + 1
       };
@@ -254,7 +254,15 @@ export function Questions() {
         setQuestions([...questions, response.data]);
         setIsAddQuestionModalOpen(false);
         resetQuestionForm();
+        
+        // Show success message
+        alert('Question added successfully!');
       }
+    } catch (error) {
+      console.error('Failed to create question:', error);
+      alert('Failed to create question. Please try again.');
+    }
+  };
     } catch (error) {
       console.error('Failed to create question:', error);
     }

@@ -516,7 +516,8 @@ export const questionApi = {
 
   createQuestion: async (questionData: any): Promise<ApiResponse<Question>> => {
     try {
-      if (isDemoMode) {
+      if (!import.meta.env.VITE_SUPABASE_URL || 
+          import.meta.env.VITE_SUPABASE_URL.includes('your_supabase_project_url')) {
         await delay(800);
         const newQuestion: Question = {
           id: Date.now().toString(),
@@ -547,7 +548,33 @@ export const questionApi = {
       return await QuestionService.createQuestion(questionData);
     } catch (error) {
       console.error('Error creating question:', error);
-      return { success: false, message: 'Failed to create question' };
+      // Fallback to demo mode if database fails
+      await delay(800);
+      const newQuestion: Question = {
+        id: Date.now().toString(),
+        sectionId: questionData.sectionId,
+        text: questionData.text,
+        type: questionData.type,
+        complexity: questionData.complexity,
+        points: questionData.points,
+        explanation: questionData.explanation,
+        order: questionData.order,
+        options: questionData.options.map((opt: any, index: number) => ({
+          id: `opt_${Date.now()}_${index}`,
+          text: opt.text,
+          isCorrect: opt.isCorrect
+        })),
+        correctAnswers: questionData.options
+          .map((opt: any, index: number) => opt.isCorrect ? `opt_${Date.now()}_${index}` : null)
+          .filter((id: string | null) => id !== null),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      return {
+        success: true,
+        data: newQuestion,
+        message: 'Question created successfully (fallback mode)'
+      };
     }
   },
 

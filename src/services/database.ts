@@ -583,7 +583,7 @@ export class QuestionService {
           complexity: questionData.complexity,
           points: questionData.points,
           explanation: questionData.explanation,
-          question_order: questionData.order
+          question_order: questionData.order || 1
         })
         .select('*')
         .single();
@@ -633,7 +633,10 @@ export class QuestionService {
       };
     } catch (error) {
       console.error('Error creating question:', error);
-      return { success: false, message: 'Failed to create question' };
+      return { 
+        success: false, 
+        message: `Failed to create question: ${error instanceof Error ? error.message : 'Unknown error'}` 
+      };
     }
   }
 
