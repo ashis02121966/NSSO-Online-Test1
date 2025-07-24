@@ -18,10 +18,17 @@ export class AuthService {
     try {
       console.log('AuthService: Attempting login for:', email);
       
-      // Check if Supabase is configured
+      // Always try demo login first for development
+      console.log('AuthService: Trying demo authentication first');
+      const demoResult = await this.handleDemoLogin(email, password);
+      if (demoResult.success) {
+        return demoResult;
+      }
+      
+      // If demo login fails and Supabase is configured, try Supabase
       if (!supabase) {
-        console.log('AuthService: Supabase not configured, using demo mode');
-        return this.handleDemoLogin(email, password);
+        console.log('AuthService: Supabase not configured and demo login failed');
+        return { success: false, message: 'Invalid email or password' };
       }
 
       // Try Supabase authentication first
@@ -97,6 +104,12 @@ export class AuthService {
   static async handleDemoLogin(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
     console.log('AuthService: Using demo authentication for:', email);
     
+    // First check if the password is correct
+    if (password !== 'password123') {
+      console.log('AuthService: Invalid password for demo login');
+      return { success: false, message: 'Invalid email or password' };
+    }
+    
     // Demo credentials
     const demoUsers = {
       'admin@esigma.com': {
@@ -161,9 +174,10 @@ export class AuthService {
       }
     };
 
-    // Check if email exists and password is correct
+    // Check if email exists in demo users
     const demoUser = demoUsers[email as keyof typeof demoUsers];
-    if (!demoUser || password !== 'password123') {
+    if (!demoUser) {
+      console.log('AuthService: Email not found in demo users:', email);
       return { success: false, message: 'Invalid email or password' };
     }
 
