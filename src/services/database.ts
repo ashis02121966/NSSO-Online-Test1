@@ -971,6 +971,14 @@ export class TestService {
 
   static async saveAnswer(sessionId: string, questionId: string, selectedOptions: string[]): Promise<ApiResponse<void>> {
     try {
+      // Check if this is a demo session or if Supabase is not configured
+      const isDemoSession = sessionId.startsWith('550e8400-e29b-41d4-a716-') || !supabase;
+      
+      if (isDemoSession) {
+        console.log('TestService: Demo mode - simulating answer save for session:', sessionId);
+        return { success: true, message: 'Answer saved successfully (Demo Mode)' };
+      }
+      
       DatabaseService.checkSupabaseConnection();
       
       const { error } = await supabase!
@@ -1014,6 +1022,38 @@ export class TestService {
 
   static async submitTest(sessionId: string): Promise<ApiResponse<TestResult>> {
     try {
+      // Check if this is a demo session or if Supabase is not configured
+      const isDemoSession = sessionId.startsWith('550e8400-e29b-41d4-a716-') || !supabase;
+      
+      if (isDemoSession) {
+        console.log('TestService: Demo mode - simulating test submission for session:', sessionId);
+        
+        // Generate mock test result for demo mode
+        const mockResult: TestResult = {
+          id: `result_${Date.now()}`,
+          userId: '550e8400-e29b-41d4-a716-446655440019', // Demo enumerator ID
+          user: {} as User,
+          surveyId: '550e8400-e29b-41d4-a716-446655440020', // Demo survey ID
+          survey: {} as Survey,
+          sessionId: sessionId,
+          score: 78,
+          totalQuestions: 30,
+          correctAnswers: 23,
+          isPassed: true,
+          timeSpent: 25 * 60, // 25 minutes
+          attemptNumber: 1,
+          sectionScores: [],
+          completedAt: new Date(),
+          certificateId: `cert_${Date.now()}`
+        };
+        
+        return { 
+          success: true, 
+          data: mockResult, 
+          message: 'Test submitted successfully (Demo Mode)' 
+        };
+      }
+      
       DatabaseService.checkSupabaseConnection();
       
       // Get session data
