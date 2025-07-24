@@ -208,7 +208,7 @@ export function Login() {
                 <p><strong>District:</strong> Central Delhi (Supervisor, Enumerator)</p>
                 <p><strong>Hierarchy:</strong> Admin manages all → ZO manages zones → RO manages regions → Supervisors manage teams</p>
               </div>
-            </p>
+            </div>
           </div>
         </div>
       </div>
