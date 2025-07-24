@@ -99,43 +99,43 @@ export class AuthService {
     // Demo users with correct UUIDs
     const demoUsers = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440001',
+        id: '550e8400-e29b-41d4-a716-446655440010',
         email: 'admin@esigma.com',
         name: 'System Administrator',
-        roleId: '550e8400-e29b-41d4-a716-446655440010',
-        role: { id: '550e8400-e29b-41d4-a716-446655440010', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        roleId: '550e8400-e29b-41d4-a716-446655440001',
+        role: { id: '550e8400-e29b-41d4-a716-446655440001', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
         jurisdiction: 'National'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440002',
+        id: '550e8400-e29b-41d4-a716-446655440011',
         email: 'zo@esigma.com',
         name: 'Zonal Officer',
-        roleId: '550e8400-e29b-41d4-a716-446655440011',
-        role: { id: '550e8400-e29b-41d4-a716-446655440011', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        roleId: '550e8400-e29b-41d4-a716-446655440002',
+        role: { id: '550e8400-e29b-41d4-a716-446655440002', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
         jurisdiction: 'North Zone'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440003',
+        id: '550e8400-e29b-41d4-a716-446655440012',
         email: 'ro@esigma.com',
         name: 'Regional Officer',
-        roleId: '550e8400-e29b-41d4-a716-446655440012',
-        role: { id: '550e8400-e29b-41d4-a716-446655440012', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        roleId: '550e8400-e29b-41d4-a716-446655440003',
+        role: { id: '550e8400-e29b-41d4-a716-446655440003', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
         jurisdiction: 'Delhi Region'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440004',
+        id: '550e8400-e29b-41d4-a716-446655440013',
         email: 'supervisor@esigma.com',
         name: 'Field Supervisor',
-        roleId: '550e8400-e29b-41d4-a716-446655440013',
-        role: { id: '550e8400-e29b-41d4-a716-446655440013', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        roleId: '550e8400-e29b-41d4-a716-446655440004',
+        role: { id: '550e8400-e29b-41d4-a716-446655440004', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
         jurisdiction: 'Central Delhi District'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440005',
+        id: '550e8400-e29b-41d4-a716-446655440014',
         email: 'enumerator@esigma.com',
         name: 'Field Enumerator',
-        roleId: '550e8400-e29b-41d4-a716-446655440014',
-        role: { id: '550e8400-e29b-41d4-a716-446655440014', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
+        roleId: '550e8400-e29b-41d4-a716-446655440005',
+        role: { id: '550e8400-e29b-41d4-a716-446655440005', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, menuAccess: [], createdAt: new Date(), updatedAt: new Date() },
         jurisdiction: 'Block A, Central Delhi'
       }
     ];
@@ -699,7 +699,17 @@ export class SurveyService {
         .eq('id', surveyId)
         .single();
 
-      if (checkError || !existingSurvey) {
+      if (checkError) {
+        if (checkError.code === 'PGRST116') {
+          console.error('SurveyService: Survey not found:', surveyId);
+          return { success: false, message: 'Survey not found' };
+        } else {
+          console.error('SurveyService: Database error during survey check:', checkError);
+          return { success: false, message: 'Failed to verify survey existence' };
+        }
+      }
+
+      if (!existingSurvey) {
         console.error('SurveyService: Survey not found:', surveyId);
         return { success: false, message: 'Survey not found' };
       }
