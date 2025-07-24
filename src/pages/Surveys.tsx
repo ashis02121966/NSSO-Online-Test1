@@ -44,6 +44,11 @@ export function Surveys() {
   };
 
   const handleCreateSurvey = async () => {
+    if (!formData.title || !formData.description || !formData.targetDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
+    
     try {
       const response = await surveyApi.createSurvey({
         ...formData,
@@ -53,14 +58,23 @@ export function Surveys() {
         setSurveys([...surveys, response.data]);
         setIsCreateModalOpen(false);
         resetForm();
+        alert('Survey created successfully!');
+      } else {
+        alert(`Failed to create survey: ${response.message}`);
       }
     } catch (error) {
       console.error('Failed to create survey:', error);
+      alert('Failed to create survey. Please try again.');
     }
   };
 
   const handleEditSurvey = async () => {
     if (!selectedSurvey) return;
+    
+    if (!formData.title || !formData.description || !formData.targetDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
     
     try {
       const response = await surveyApi.updateSurvey(selectedSurvey.id, {
@@ -73,9 +87,13 @@ export function Surveys() {
         ));
         setIsEditModalOpen(false);
         resetForm();
+        alert('Survey updated successfully!');
+      } else {
+        alert(`Failed to update survey: ${response.message}`);
       }
     } catch (error) {
       console.error('Failed to update survey:', error);
+      alert('Failed to update survey. Please try again.');
     }
   };
 
@@ -88,9 +106,13 @@ export function Surveys() {
         if (response.success) {
           setSurveys(surveys.filter(survey => survey.id !== surveyId));
         }
+        alert('Survey deleted successfully!');
+      } else {
+        alert(`Failed to delete survey: ${response.message}`);
       } catch (error) {
         console.error('Failed to delete survey:', error);
       }
+      alert('Failed to delete survey. Please try again.');
     }
   };
 
@@ -109,9 +131,13 @@ export function Surveys() {
         setSurveys(surveys.map(s => 
           s.id === surveyId ? { ...s, isActive: !s.isActive } : s
         ));
+        alert(`Survey ${!survey.isActive ? 'activated' : 'deactivated'} successfully!`);
+      } else {
+        alert(`Failed to update survey status: ${response.message}`);
       }
     } catch (error) {
       console.error('Failed to toggle survey status:', error);
+      alert('Failed to update survey status. Please try again.');
     }
   };
 
@@ -132,9 +158,13 @@ export function Surveys() {
       const response = await surveyApi.createSurvey(duplicateData);
       if (response.success && response.data) {
         setSurveys([...surveys, response.data]);
+        alert('Survey duplicated successfully!');
+      } else {
+        alert(`Failed to duplicate survey: ${response.message}`);
       }
     } catch (error) {
       console.error('Failed to duplicate survey:', error);
+      alert('Failed to duplicate survey. Please try again.');
     }
   };
 

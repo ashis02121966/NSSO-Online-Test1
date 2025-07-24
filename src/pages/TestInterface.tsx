@@ -29,6 +29,7 @@ export function TestInterface() {
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saving' | 'saved' | 'error' | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [pausedTimeRemaining, setPausedTimeRemaining] = useState<number | null>(null);
+  const [sectionInfo, setSectionInfo] = useState<Record<string, { title: string; order: number }>>({});
 
   // Auto-save interval
   const AUTO_SAVE_INTERVAL = 30000; // 30 seconds
@@ -163,10 +164,33 @@ export function TestInterface() {
       setIsLoading(true);
       console.log('Loading questions for session:', sessionId);
       
-      const questionsResponse = await testApi.getQuestionsForSession(sessionId!);
+      // Get survey ID from session
+      const sessionResponse = await testApi.getSession(sessionId!);
+      if (!sessionResponse.success || !sessionResponse.data) {
+        throw new Error('Session not found');
+      }
+      
+      const surveyId = sessionResponse.data.surveyId;
+      console.log('Loading questions for survey:', surveyId);
+      
+      const questionsResponse = await testApi.getQuestionsForSurvey(surveyId);
       if (questionsResponse.success && questionsResponse.data) {
         console.log('Questions loaded successfully:', questionsResponse.data.length);
         setQuestions(questionsResponse.data);
+        
+        // Extract section information for display
+        const sections: Record<string, { title: string; order: number }> = {};
+        questionsResponse.data.forEach(question => {
+          if (!sections[question.sectionId]) {
+            // Extract section info from question order (section_order * 1000 + question_order)
+            const sectionOrder = Math.floor(question.order / 1000);
+            sections[question.sectionId] = {
+              title: `Section ${sectionOrder}`,
+              order: sectionOrder
+            };
+          }
+        });
+        setSectionInfo(sections);
       } else {
         throw new Error('Failed to load questions');
       }
@@ -490,24 +514,44 @@ export function TestInterface() {
             </div>
           </div>
           
-          <div className="grid grid-cols-5 gap-2">
-            {questions.map((_, index) => {
-              const status = getQuestionStatus(index);
-              return (
-                <button
-                  key={index}
-                  onClick={() => handleQuestionNavigation(index)}
-                  disabled={isPaused}
-                  className={`w-10 h-10 rounded text-sm font-medium transition-colors ${
-                    index === currentQuestionIndex
-                      ? 'ring-2 ring-blue-500 ring-offset-2'
-                      : ''
-                  } ${getStatusColor(status)} ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  {index + 1}
-                </button>
-              );
-            })}
+          {/* Section-wise question navigation */}
+          <div className="space-y-4">
+            {Object.entries(
+              questions.reduce((acc, question, index) => {
+                const sectionOrder = Math.floor(question.order / 1000);
+                const sectionTitle = `Section ${sectionOrder}`;
+                if (!acc[sectionTitle]) {
+                  acc[sectionTitle] = [];
+                }
+                acc[sectionTitle].push({ question, index });
+                return acc;
+              }, {} as Record<string, Array<{ question: Question; index: number }>>)
+            )
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([sectionTitle, sectionQuestions]) => (
+                <div key={sectionTitle} className="mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">{sectionTitle}</h4>
+                  <div className="grid grid-cols-5 gap-2">
+                    {sectionQuestions.map(({ question, index }) => {
+                      const status = getQuestionStatus(index);
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => handleQuestionNavigation(index)}
+                          disabled={isPaused}
+                          className={`w-10 h-10 rounded text-sm font-medium transition-colors ${
+                            index === currentQuestionIndex
+                              ? 'ring-2 ring-blue-500 ring-offset-2'
+                              : ''
+                          } ${getStatusColor(status)} ${isPaused ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {index + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
           </div>
           
           <div className="mt-6 space-y-2 text-xs">
@@ -579,6 +623,9 @@ export function TestInterface() {
               <>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-2">
+                    <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs font-medium rounded-full">
+                      Section {Math.floor(currentQuestion.order / 1000)}
+                    </span>
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
                       Question {currentQuestionIndex + 1}
                     </span>
