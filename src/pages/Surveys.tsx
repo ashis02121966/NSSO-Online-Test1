@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout/Layout';
+import { useAuth } from '../contexts/AuthContext';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
@@ -10,6 +11,7 @@ import { Plus, Search, Edit, Trash2, Calendar, Clock, Users, Target, Eye, Copy, 
 import { formatDate, formatDuration } from '../utils';
 
 export function Surveys() {
+  const { user } = useAuth();
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,7 +54,8 @@ export function Surveys() {
     try {
       const response = await surveyApi.createSurvey({
         ...formData,
-        targetDate: new Date(formData.targetDate)
+        targetDate: new Date(formData.targetDate),
+        createdBy: user?.id || '550e8400-e29b-41d4-a716-446655440001'
       });
       if (response.success && response.data) {
         setSurveys([...surveys, response.data]);
@@ -152,7 +155,8 @@ export function Surveys() {
         duration: survey.duration,
         totalQuestions: survey.totalQuestions,
         passingScore: survey.passingScore,
-        maxAttempts: survey.maxAttempts
+        maxAttempts: survey.maxAttempts,
+        createdBy: user?.id || '550e8400-e29b-41d4-a716-446655440001'
       };
       
       const response = await surveyApi.createSurvey(duplicateData);
