@@ -107,15 +107,16 @@ const mockSurveys: Survey[] = [
 export const authApi = {
   login: async (email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
     // Check if Supabase is configured
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    if (!import.meta.env.VITE_SUPABASE_URL || 
+        !import.meta.env.VITE_SUPABASE_ANON_KEY ||
+        import.meta.env.VITE_SUPABASE_URL.includes('your_supabase_project_url') ||
+        import.meta.env.VITE_SUPABASE_ANON_KEY.includes('your_supabase_anon_key')) {
       // Fallback to mock authentication for demo
+      console.log('Using mock authentication - Supabase not configured');
       return mockAuthLogin(email, password);
     }
     
     try {
-      // Initialize database if needed
-      await DataInitializer.initializeDatabase();
-      
       return await AuthService.login(email, password);
     } catch (error) {
       console.error('Supabase auth failed, falling back to mock:', error);

@@ -19,7 +19,10 @@ export function Login() {
   }
 
   const handleInitializeDatabase = async () => {
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    if (!import.meta.env.VITE_SUPABASE_URL || 
+        !import.meta.env.VITE_SUPABASE_ANON_KEY ||
+        import.meta.env.VITE_SUPABASE_URL.includes('your_supabase_project_url') ||
+        import.meta.env.VITE_SUPABASE_ANON_KEY.includes('your_supabase_anon_key')) {
       setError('Supabase configuration is required for database initialization');
       return;
     }
