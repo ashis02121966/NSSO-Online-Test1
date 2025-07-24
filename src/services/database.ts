@@ -2,14 +2,28 @@ import { supabase } from '../lib/supabase';
 import { User, Role, Survey, Section, Question, TestSession, TestResult, Certificate, SystemSettings } from '../types';
 import bcrypt from 'bcryptjs';
 
+import { supabase } from '../lib/supabase';
+import { User, Role, Survey, Section, Question, TestSession, TestResult, Certificate, SystemSettings } from '../types';
+import bcrypt from 'bcryptjs';
+
+// Helper function to check if Supabase is available
+function checkSupabaseConnection() {
+  if (!supabase) {
+    throw new Error('Supabase is not configured. Please set up your environment variables.');
+  }
+  return supabase;
+}
+
 // Auth Service
 export class AuthService {
   static async login(email: string, password: string) {
     try {
       console.log('AuthService: Attempting login for:', email);
       
+      const supabaseClient = checkSupabaseConnection();
+      
       // Get user with role information
-      const { data: userData, error: userError } = await supabase
+      const { data: userData, error: userError } = await supabaseClient
         .from('users')
         .select(`
           *,
@@ -51,7 +65,7 @@ export class AuthService {
       }
 
       // Reset failed attempts and update last login
-      await supabase
+      await supabaseClient
         .from('users')
         .update({ 
           failed_login_attempts: 0,
@@ -61,7 +75,7 @@ export class AuthService {
         .eq('id', userData.id);
 
       // Log activity
-      await supabase
+      await supabaseClient
         .from('activity_logs')
         .insert({
           user_id: userData.id,
@@ -120,7 +134,9 @@ export class UserService {
     try {
       console.log('UserService: Fetching users from database');
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('users')
         .select(`
           *,
@@ -166,9 +182,11 @@ export class UserService {
     try {
       console.log('UserService: Creating user:', userData);
       
+      const supabaseClient = checkSupabaseConnection();
+      
       const passwordHash = await bcrypt.hash('password123', 10);
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('users')
         .insert({
           email: userData.email,
@@ -218,7 +236,9 @@ export class UserService {
     try {
       console.log('UserService: Deleting user:', id);
       
-      const { error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { error } = await supabaseClient
         .from('users')
         .delete()
         .eq('id', id);
@@ -243,7 +263,9 @@ export class RoleService {
     try {
       console.log('RoleService: Fetching roles from database');
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('roles')
         .select('*')
         .order('level', { ascending: true });
@@ -258,7 +280,7 @@ export class RoleService {
       // Get user count for each role
       const rolesWithCounts = await Promise.all(
         data.map(async (role) => {
-          const { count } = await supabase
+          const { count } = await supabaseClient
             .from('users')
             .select('*', { count: 'exact', head: true })
             .eq('role_id', role.id)
@@ -293,7 +315,9 @@ export class RoleService {
     try {
       console.log('RoleService: Creating role:', roleData);
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('roles')
         .insert({
           name: roleData.name,
@@ -336,7 +360,9 @@ export class RoleService {
     try {
       console.log('RoleService: Updating role:', roleId, roleData);
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('roles')
         .update({
           name: roleData.name,
@@ -379,7 +405,9 @@ export class RoleService {
     try {
       console.log('RoleService: Deleting role:', roleId);
       
-      const { error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { error } = await supabaseClient
         .from('roles')
         .delete()
         .eq('id', roleId);
@@ -401,7 +429,9 @@ export class RoleService {
     try {
       console.log('RoleService: Updating menu access for role:', roleId, menuAccess);
       
-      const { error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { error } = await supabaseClient
         .from('roles')
         .update({ 
           menu_access: menuAccess,
@@ -429,7 +459,9 @@ export class SurveyService {
     try {
       console.log('SurveyService: Fetching surveys from database');
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('surveys')
         .select(`
           *,
@@ -473,11 +505,13 @@ export class SurveyService {
     try {
       console.log('SurveyService: Creating survey:', surveyData);
       
+      const supabaseClient = checkSupabaseConnection();
+      
       // Get current user from localStorage for created_by
       const userData = localStorage.getItem('userData');
       const currentUserId = userData ? JSON.parse(userData).id : '550e8400-e29b-41d4-a716-446655440010';
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('surveys')
         .insert({
           title: surveyData.title,
@@ -528,7 +562,9 @@ export class SurveyService {
     try {
       console.log('SurveyService: Updating survey:', surveyId, surveyData);
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('surveys')
         .update({
           title: surveyData.title,
@@ -581,7 +617,9 @@ export class SurveyService {
     try {
       console.log('SurveyService: Deleting survey:', surveyId);
       
-      const { error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { error } = await supabaseClient
         .from('surveys')
         .delete()
         .eq('id', surveyId);
@@ -603,7 +641,9 @@ export class SurveyService {
     try {
       console.log('SurveyService: Fetching sections for survey:', surveyId);
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('survey_sections')
         .select('*')
         .eq('survey_id', surveyId)
@@ -639,7 +679,9 @@ export class SurveyService {
     try {
       console.log('SurveyService: Creating section for survey:', surveyId, sectionData);
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('survey_sections')
         .insert({
           survey_id: surveyId,
@@ -684,7 +726,9 @@ export class QuestionService {
     try {
       console.log('QuestionService: Fetching questions for section:', sectionId);
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('questions')
         .select(`
           *,
@@ -736,8 +780,10 @@ export class QuestionService {
     try {
       console.log('QuestionService: Creating question with data:', questionData);
       
+      const supabaseClient = checkSupabaseConnection();
+      
       // First create the question
-      const { data: question, error: questionError } = await supabase
+      const { data: question, error: questionError } = await supabaseClient
         .from('questions')
         .insert({
           section_id: questionData.sectionId,
@@ -768,7 +814,7 @@ export class QuestionService {
 
       console.log('QuestionService: Creating options with data:', optionsData);
 
-      const { data: options, error: optionsError } = await supabase
+      const { data: options, error: optionsError } = await supabaseClient
         .from('question_options')
         .insert(optionsData)
         .select('*');
@@ -776,7 +822,7 @@ export class QuestionService {
       if (optionsError) {
         console.error('QuestionService: Options creation error:', optionsError);
         // Rollback question creation if options fail
-        await supabase.from('questions').delete().eq('id', question.id);
+        await supabaseClient.from('questions').delete().eq('id', question.id);
         throw optionsError;
       }
 
@@ -817,6 +863,8 @@ export class QuestionService {
   static async uploadQuestions(csvContent: string) {
     try {
       console.log('QuestionService: Starting bulk question upload');
+      
+      const supabaseClient = checkSupabaseConnection();
       
       const lines = csvContent.split('\n').filter(line => line.trim());
       if (lines.length < 2) {
@@ -874,7 +922,7 @@ export class QuestionService {
           }
 
           // Create question
-          const { data: question, error: questionError } = await supabase
+          const { data: question, error: questionError } = await supabaseClient
             .from('questions')
             .insert({
               section_id: rowData.section_id,
@@ -912,14 +960,14 @@ export class QuestionService {
             option_order: index + 1
           }));
 
-          const { error: optionsError } = await supabase
+          const { error: optionsError } = await supabaseClient
             .from('question_options')
             .insert(optionsData);
 
           if (optionsError) {
             console.error('QuestionService: Options creation error for row', i + 1, ':', optionsError);
             // Rollback question creation
-            await supabase.from('questions').delete().eq('id', question.id);
+            await supabaseClient.from('questions').delete().eq('id', question.id);
             errors.push(`Row ${i + 1}: Failed to create options - ${optionsError.message}`);
             questionsSkipped++;
             continue;
@@ -966,7 +1014,7 @@ export class TestService {
         .eq('user_id', userId)
         .eq('survey_id', surveyId);
 
-      const { data: survey } = await supabase
+      const { data: survey } = await supabaseClient
         .from('surveys')
         .select('max_attempts, duration')
         .eq('id', surveyId)
@@ -980,7 +1028,7 @@ export class TestService {
         return { success: false, message: 'Maximum attempts exceeded' };
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('test_sessions')
         .insert({
           user_id: userId,
@@ -1023,8 +1071,10 @@ export class TestService {
     try {
       console.log('TestService: Submitting test for session:', sessionId);
       
+      const supabaseClient = checkSupabaseConnection();
+      
       // Get session data
-      const { data: session, error: sessionError } = await supabase
+      const { data: session, error: sessionError } = await supabaseClient
         .from('test_sessions')
         .select(`
           *,
@@ -1040,7 +1090,7 @@ export class TestService {
       }
 
       // Get answers
-      const { data: answers } = await supabase
+      const { data: answers } = await supabaseClient
         .from('test_answers')
         .select('*')
         .eq('session_id', sessionId);
@@ -1052,7 +1102,7 @@ export class TestService {
       const isPassed = score >= session.survey.passing_score;
 
       // Create test result
-      const { data: result, error: resultError } = await supabase
+      const { data: result, error: resultError } = await supabaseClient
         .from('test_results')
         .insert({
           user_id: session.user_id,
@@ -1079,7 +1129,7 @@ export class TestService {
       if (isPassed) {
         const certificateNumber = `CERT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         
-        const { data: certificate } = await supabase
+        const { data: certificate } = await supabaseClient
           .from('certificates')
           .insert({
             user_id: session.user_id,
@@ -1094,7 +1144,7 @@ export class TestService {
           certificateId = certificate.id;
           
           // Update result with certificate ID
-          await supabase
+          await supabaseClient
             .from('test_results')
             .update({ certificate_id: certificateId })
             .eq('id', result.id);
@@ -1102,7 +1152,7 @@ export class TestService {
       }
 
       // Update session status
-      await supabase
+      await supabaseClient
         .from('test_sessions')
         .update({
           session_status: 'completed',
@@ -1137,8 +1187,10 @@ export class TestService {
     try {
       console.log('TestService: Saving answer for session:', sessionId, 'question:', questionId);
       
+      const supabaseClient = checkSupabaseConnection();
+      
       // Get correct answers for the question
-      const { data: correctOptions } = await supabase
+      const { data: correctOptions } = await supabaseClient
         .from('question_options')
         .select('id')
         .eq('question_id', questionId)
@@ -1149,7 +1201,7 @@ export class TestService {
                        selectedOptions.every(id => correctOptionIds.includes(id));
 
       // Upsert the answer
-      const { error } = await supabase
+      const { error } = await supabaseClient
         .from('test_answers')
         .upsert({
           session_id: sessionId,
@@ -1176,7 +1228,9 @@ export class TestService {
     try {
       console.log('TestService: Updating session:', sessionId);
       
-      const { error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { error } = await supabaseClient
         .from('test_sessions')
         .update({
           current_question_index: sessionData.currentQuestionIndex,
@@ -1211,7 +1265,9 @@ export class SettingsService {
     try {
       console.log('SettingsService: Fetching settings from database');
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('system_settings')
         .select('*')
         .order('category', { ascending: true });
@@ -1249,7 +1305,9 @@ export class SettingsService {
     try {
       console.log('SettingsService: Updating setting:', id, 'with value:', value);
       
-      const { error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { error } = await supabaseClient
         .from('system_settings')
         .update({
           setting_value: value,
@@ -1278,15 +1336,17 @@ export class DashboardService {
     try {
       console.log('DashboardService: Fetching dashboard data');
       
+      const supabaseClient = checkSupabaseConnection();
+      
       // Get basic counts
       const [usersResult, surveysResult, attemptsResult] = await Promise.all([
-        supabase.from('users').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('surveys').select('*', { count: 'exact', head: true }).eq('is_active', true),
-        supabase.from('test_results').select('*', { count: 'exact', head: true })
+        supabaseClient.from('users').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabaseClient.from('surveys').select('*', { count: 'exact', head: true }).eq('is_active', true),
+        supabaseClient.from('test_results').select('*', { count: 'exact', head: true })
       ]);
 
       // Get pass rate and average score
-      const { data: results } = await supabase
+      const { data: results } = await supabaseClient
         .from('test_results')
         .select('score, is_passed');
 
@@ -1298,7 +1358,7 @@ export class DashboardService {
         : 0;
 
       // Get recent activity
-      const { data: activities } = await supabase
+      const { data: activities } = await supabaseClient
         .from('activity_logs')
         .select(`
           *,
@@ -1346,7 +1406,9 @@ export class CertificateService {
     try {
       console.log('CertificateService: Fetching certificates from database');
       
-      const { data, error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { data, error } = await supabaseClient
         .from('certificates')
         .select(`
           *,
@@ -1398,11 +1460,13 @@ export class CertificateService {
     try {
       console.log('CertificateService: Downloading certificate:', certificateId);
       
+      const supabaseClient = checkSupabaseConnection();
+      
       // Update download count
-      await supabase
+      await supabaseClient
         .from('certificates')
         .update({ 
-          download_count: supabase.sql`download_count + 1`
+          download_count: supabaseClient.sql`download_count + 1`
         })
         .eq('id', certificateId);
 
@@ -1476,7 +1540,9 @@ startxref
     try {
       console.log('CertificateService: Revoking certificate:', certificateId);
       
-      const { error } = await supabase
+      const supabaseClient = checkSupabaseConnection();
+      
+      const { error } = await supabaseClient
         .from('certificates')
         .update({
           certificate_status: 'revoked',
