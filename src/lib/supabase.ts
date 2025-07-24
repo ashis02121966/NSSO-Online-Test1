@@ -6,11 +6,15 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 // Check if Supabase is configured
 const isSupabaseConfigured = supabaseUrl && 
   supabaseAnonKey && 
-  !supabaseUrl.includes('your_supabase_project_url') && 
-  !supabaseAnonKey.includes('your_supabase_anon_key');
+  supabaseUrl !== 'your_supabase_project_url' && 
+  supabaseAnonKey !== 'your_supabase_anon_key' &&
+  supabaseUrl.startsWith('https://') &&
+  supabaseAnonKey.length > 20;
 
 if (!isSupabaseConfigured) {
-  console.warn('Supabase not configured - using demo mode');
+  console.warn('Supabase not configured properly. Please check your environment variables.');
+  console.warn('VITE_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
+  console.warn('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'Missing');
 }
 
 // Create Supabase client (with fallback for demo mode)

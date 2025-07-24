@@ -9,7 +9,9 @@ import {
 class BaseService {
   protected checkSupabaseConnection() {
     if (!supabase) {
-      throw new Error('Supabase is not configured. Please check your environment variables.');
+      console.error('Supabase client is null. Environment variables may be missing or invalid.');
+      console.error('Please ensure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are set correctly.');
+      throw new Error('Database connection not available. Please check your Supabase configuration in the .env file.');
     }
     return supabase;
   }
