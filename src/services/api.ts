@@ -301,18 +301,25 @@ export const testApi = {
           )
         `)
         .eq('section.survey_id', surveyId)
-        .order('section_order', { foreignTable: 'section', ascending: true })
+        .order('section_order', { referencedTable: 'survey_sections', ascending: true })
         .order('question_order', { ascending: true });
 
       if (error) {
         console.error('testApi: Database error:', error);
-        console.log('testApi: Falling back to demo questions');
-        return this.getDemoQuestions();
+        return {
+          success: false,
+          message: `Failed to load questions: ${error.message}`,
+          data: []
+        };
       }
 
       if (!questions || questions.length === 0) {
-        console.log('testApi: No questions found in database, using demo questions');
-        return this.getDemoQuestions();
+        console.log('testApi: No questions found for survey:', surveyId);
+        return {
+          success: false,
+          message: `No questions found for survey ${surveyId}. Please ensure the survey has questions added.`,
+          data: []
+        };
       }
 
       console.log('testApi: Successfully fetched', questions.length, 'questions from database');
@@ -348,8 +355,11 @@ export const testApi = {
       };
     } catch (error) {
       console.error('testApi: Error in getQuestionsForSurvey:', error);
-      console.log('testApi: Error occurred, falling back to demo questions');
-      return this.getDemoQuestions();
+      return {
+        success: false,
+        message: `Error loading questions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data: []
+      };
     }
   },
 

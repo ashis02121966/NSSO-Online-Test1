@@ -172,7 +172,7 @@ export function TestInterface() {
       console.log('Loading questions for survey:', surveyId);
       
       const questionsResponse = await testApi.getQuestionsForSurvey(surveyId);
-      if (questionsResponse.success && questionsResponse.data) {
+      if (questionsResponse.success && questionsResponse.data && questionsResponse.data.length > 0) {
         console.log('Questions loaded successfully:', questionsResponse.data.length);
         setQuestions(questionsResponse.data);
         
@@ -190,11 +190,16 @@ export function TestInterface() {
         });
         setSectionInfo(sections);
       } else {
-        throw new Error('Failed to load questions');
+        const errorMessage = questionsResponse.message || 'Failed to load questions';
+        console.error('Failed to load questions:', errorMessage);
+        alert(`Error: ${errorMessage}\n\nPlease contact your administrator to ensure questions are properly configured for this survey.`);
+        navigate('/available-tests');
+        return;
       }
     } catch (error) {
       console.error('Failed to load questions:', error);
-      alert('Failed to load test questions. Please try again.');
+      alert(`Failed to load test questions: ${error instanceof Error ? error.message : 'Unknown error'}\n\nReturning to available tests.`);
+      navigate('/available-tests');
     } finally {
       setIsLoading(false);
     }
