@@ -64,7 +64,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
               localStorage.setItem('authToken', session.access_token);
               setIsLoading(false);
               return;
+            } else {
+              // User data fetch failed, clear authentication state
+              setUser(null);
+              localStorage.removeItem('authToken');
+              localStorage.removeItem('userData');
+              setIsLoading(false);
+              return;
             }
+          } else {
+            // No valid Supabase session, clear authentication state
+            setUser(null);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            setIsLoading(false);
+            return;
           }
         }
         
@@ -78,13 +92,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } catch (error) {
         console.error('Auth initialization error:', error);
         
-        // Fallback to localStorage on error
-        const token = localStorage.getItem('authToken');
-        const userData = localStorage.getItem('userData');
-        
-        if (token && userData) {
-          setUser(JSON.parse(userData));
-        }
+        // Clear authentication state on error
+        setUser(null);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
       }
       
       setIsLoading(false);
