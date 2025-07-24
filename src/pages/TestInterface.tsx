@@ -126,9 +126,10 @@ export function TestInterface() {
       // Check if we have session data from navigation state
       if (location.state?.sessionData) {
         console.log('Using session data from navigation state');
-        setSession(location.state.sessionData);
-        setTimeRemaining(location.state.sessionData.timeRemaining);
-        loadQuestionsForSession();
+        const sessionData = location.state.sessionData;
+        setSession(sessionData);
+        setTimeRemaining(sessionData.timeRemaining);
+        loadQuestionsForSurvey(sessionData.surveyId);
       } else {
         console.log('Loading session from API');
         loadTestSession();
@@ -159,16 +160,15 @@ export function TestInterface() {
     }
   }, [timeRemaining, showTimeWarning, isPaused, isOnline]);
 
-  const loadQuestionsForSession = async () => {
+  const loadQuestionsForSurvey = async (surveyId: string) => {
     try {
       setIsLoading(true);
-      console.log('Loading questions for survey:', session?.surveyId);
+      console.log('Loading questions for survey:', surveyId);
       
-      if (!session?.surveyId) {
-        throw new Error('Survey ID not available');
+      if (!surveyId) {
+        throw new Error('Survey ID not provided');
       }
       
-      const surveyId = session.surveyId;
       console.log('Loading questions for survey:', surveyId);
       
       const questionsResponse = await testApi.getQuestionsForSurvey(surveyId);
@@ -227,7 +227,7 @@ export function TestInterface() {
         setTimeRemaining(newSession.timeRemaining);
         
         // Load questions after session is set
-        await loadQuestionsForSession();
+        loadQuestionsForSurvey(surveyId);
       } else {
         // Try to load session from API
         console.log('Loading session from API');
@@ -235,8 +235,7 @@ export function TestInterface() {
         if (sessionResponse.success && sessionResponse.data) {
           setSession(sessionResponse.data);
           setTimeRemaining(sessionResponse.data.timeRemaining);
-          setSession(sessionResponse.data);
-          await loadQuestionsForSession();
+          loadQuestionsForSurvey(sessionResponse.data.surveyId);
         } else {
           throw new Error('No session data available');
         }

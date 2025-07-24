@@ -549,17 +549,29 @@ export const testApi = {
     try {
       console.log('testApi: Fetching questions for session:', sessionId);
       
-      // Get session to find survey ID
-      const sessionResponse = await this.getSession(sessionId);
-      if (!sessionResponse.success || !sessionResponse.data) {
-        return { success: false, message: 'Session not found' };
+      // For demo sessions, extract survey ID from session storage or use default
+      const userData = localStorage.getItem('userData');
+      const defaultSurveyId = '550e8400-e29b-41d4-a716-446655440020';
+      
+      // Try to get survey ID from session storage first
+      const sessionData = localStorage.getItem(`session_${sessionId}`);
+      let surveyId = defaultSurveyId;
+      
+      if (sessionData) {
+        try {
+          const parsed = JSON.parse(sessionData);
+          surveyId = parsed.surveyId || defaultSurveyId;
+        } catch (e) {
+          console.log('testApi: Could not parse session data, using default survey');
+        }
       }
-
-      // Use the survey ID to get questions
-      return await this.getQuestionsForSurvey(sessionResponse.data.surveyId);
+      
+      console.log('testApi: Using survey ID for questions:', surveyId);
+      return await this.getQuestionsForSurvey(surveyId);
     } catch (error) {
       console.error('testApi: Error in getQuestionsForSession:', error);
-      return { success: false, message: 'Failed to load questions' };
+      // Fallback to demo questions
+      return this.getDemoQuestions();
     }
   },
 
