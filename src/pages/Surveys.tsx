@@ -113,7 +113,6 @@ export function Surveys() {
         console.error('Failed to delete survey:', error);
         alert('Failed to delete survey. Please try again.');
       }
-        }
     }
   };
 
@@ -188,6 +187,7 @@ export function Surveys() {
     });
     setIsEditModalOpen(true);
   };
+  
   const resetForm = () => {
     setFormData({
       title: '',
