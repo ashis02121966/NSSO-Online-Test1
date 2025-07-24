@@ -41,7 +41,7 @@ export class DataInitializer {
     
     const roles = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440001',
+        id: '550e8400-e29b-41d4-a716-446655440010',
         name: 'Admin',
         description: 'System Administrator with full access',
         level: 1,
@@ -53,7 +53,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440002',
+        id: '550e8400-e29b-41d4-a716-446655440011',
         name: 'ZO User',
         description: 'Zonal Office User',
         level: 2,
@@ -63,7 +63,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440003',
+        id: '550e8400-e29b-41d4-a716-446655440012',
         name: 'RO User',
         description: 'Regional Office User',
         level: 3,
@@ -73,7 +73,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440004',
+        id: '550e8400-e29b-41d4-a716-446655440013',
         name: 'Supervisor',
         description: 'Field Supervisor',
         level: 4,
@@ -84,7 +84,7 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440005',
+        id: '550e8400-e29b-41d4-a716-446655440014',
         name: 'Enumerator',
         description: 'Field Enumerator',
         level: 5,
@@ -111,11 +111,11 @@ export class DataInitializer {
     
     const users = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440006',
+        id: '550e8400-e29b-41d4-a716-446655440001',
         email: 'admin@esigma.com',
         password_hash: passwordHash,
         name: 'System Administrator',
-        role_id: '550e8400-e29b-41d4-a716-446655440001',
+        role_id: '550e8400-e29b-41d4-a716-446655440010',
         is_active: true,
         jurisdiction: 'National',
         zone: null,
@@ -125,11 +125,11 @@ export class DataInitializer {
         phone_number: '+91-9876543210'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440007',
+        id: '550e8400-e29b-41d4-a716-446655440002',
         email: 'zo@esigma.com',
         password_hash: passwordHash,
         name: 'Zonal Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440002',
+        role_id: '550e8400-e29b-41d4-a716-446655440011',
         is_active: true,
         jurisdiction: 'North Zone',
         zone: 'North Zone',
@@ -139,11 +139,11 @@ export class DataInitializer {
         phone_number: '+91-9876543211'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440008',
+        id: '550e8400-e29b-41d4-a716-446655440003',
         email: 'ro@esigma.com',
         password_hash: passwordHash,
         name: 'Regional Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440003',
+        role_id: '550e8400-e29b-41d4-a716-446655440012',
         is_active: true,
         jurisdiction: 'Delhi Region',
         zone: 'North Zone',
@@ -153,11 +153,11 @@ export class DataInitializer {
         phone_number: '+91-9876543212'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440009',
+        id: '550e8400-e29b-41d4-a716-446655440004',
         email: 'supervisor@esigma.com',
         password_hash: passwordHash,
         name: 'Field Supervisor',
-        role_id: '550e8400-e29b-41d4-a716-446655440004',
+        role_id: '550e8400-e29b-41d4-a716-446655440013',
         is_active: true,
         jurisdiction: 'Central Delhi District',
         zone: 'North Zone',
@@ -165,14 +165,14 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'SUP001',
         phone_number: '+91-9876543213',
-        parent_id: '550e8400-e29b-41d4-a716-446655440008'
+        parent_id: '550e8400-e29b-41d4-a716-446655440003'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440010',
+        id: '550e8400-e29b-41d4-a716-446655440005',
         email: 'enumerator@esigma.com',
         password_hash: passwordHash,
         name: 'Field Enumerator',
-        role_id: '550e8400-e29b-41d4-a716-446655440005',
+        role_id: '550e8400-e29b-41d4-a716-446655440014',
         is_active: true,
         jurisdiction: 'Block A, Central Delhi',
         zone: 'North Zone',
@@ -180,7 +180,7 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'ENU001',
         phone_number: '+91-9876543214',
-        parent_id: '550e8400-e29b-41d4-a716-446655440009'
+        parent_id: '550e8400-e29b-41d4-a716-446655440004'
       }
     ];
 
@@ -197,7 +197,7 @@ export class DataInitializer {
     
     const surveys = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440011',
+        id: '550e8400-e29b-41d4-a716-446655440020',
         title: 'Digital Literacy Assessment',
         description: 'Comprehensive assessment of digital skills and computer literacy for field staff',
         target_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -208,10 +208,10 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone', 'South Zone'],
         assigned_regions: ['Delhi Region', 'Mumbai Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440006'
+        created_by: '550e8400-e29b-41d4-a716-446655440001'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440012',
+        id: '550e8400-e29b-41d4-a716-446655440021',
         title: 'Data Collection Procedures',
         description: 'Assessment of field data collection methods and procedures',
         target_date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -222,10 +222,10 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone'],
         assigned_regions: ['Delhi Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440006'
+        created_by: '550e8400-e29b-41d4-a716-446655440001'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440013',
+        id: '550e8400-e29b-41d4-a716-446655440022',
         title: 'Survey Methodology Training',
         description: 'Training assessment on survey methodology and best practices',
         target_date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -236,7 +236,7 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone', 'South Zone', 'East Zone'],
         assigned_regions: ['Delhi Region', 'Mumbai Region', 'Kolkata Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440006'
+        created_by: '550e8400-e29b-41d4-a716-446655440001'
       }
     ];
 
@@ -254,24 +254,24 @@ export class DataInitializer {
     const sections = [
       // Digital Literacy Assessment sections
       {
-        id: '550e8400-e29b-41d4-a716-446655440014',
-        survey_id: '550e8400-e29b-41d4-a716-446655440011',
+        id: '550e8400-e29b-41d4-a716-446655440030',
+        survey_id: '550e8400-e29b-41d4-a716-446655440020',
         title: 'Basic Computer Skills',
         description: 'Fundamental computer operations and software usage',
         questions_count: 10,
         section_order: 1
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440015',
-        survey_id: '550e8400-e29b-41d4-a716-446655440011',
+        id: '550e8400-e29b-41d4-a716-446655440031',
+        survey_id: '550e8400-e29b-41d4-a716-446655440020',
         title: 'Internet and Digital Communication',
         description: 'Web browsing, email, and online communication tools',
         questions_count: 10,
         section_order: 2
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440016',
-        survey_id: '550e8400-e29b-41d4-a716-446655440011',
+        id: '550e8400-e29b-41d4-a716-446655440032',
+        survey_id: '550e8400-e29b-41d4-a716-446655440020',
         title: 'Digital Security and Privacy',
         description: 'Online safety, password management, and privacy protection',
         questions_count: 10,
@@ -279,16 +279,16 @@ export class DataInitializer {
       },
       // Data Collection Procedures sections
       {
-        id: '550e8400-e29b-41d4-a716-446655440017',
-        survey_id: '550e8400-e29b-41d4-a716-446655440012',
+        id: '550e8400-e29b-41d4-a716-446655440033',
+        survey_id: '550e8400-e29b-41d4-a716-446655440021',
         title: 'Field Data Collection',
         description: 'Methods and procedures for collecting data in the field',
         questions_count: 15,
         section_order: 1
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440018',
-        survey_id: '550e8400-e29b-41d4-a716-446655440012',
+        id: '550e8400-e29b-41d4-a716-446655440034',
+        survey_id: '550e8400-e29b-41d4-a716-446655440021',
         title: 'Data Quality Assurance',
         description: 'Ensuring accuracy and completeness of collected data',
         questions_count: 10,
@@ -309,8 +309,8 @@ export class DataInitializer {
     
     const questions = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440019',
-        section_id: '550e8400-e29b-41d4-a716-446655440014',
+        id: '550e8400-e29b-41d4-a716-446655440040',
+        section_id: '550e8400-e29b-41d4-a716-446655440030',
         text: 'What is the primary function of an operating system?',
         question_type: 'single_choice',
         complexity: 'easy',
@@ -319,8 +319,8 @@ export class DataInitializer {
         question_order: 1
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440020',
-        section_id: '550e8400-e29b-41d4-a716-446655440014',
+        id: '550e8400-e29b-41d4-a716-446655440041',
+        section_id: '550e8400-e29b-41d4-a716-446655440030',
         text: 'Which of the following are input devices? (Select all that apply)',
         question_type: 'multiple_choice',
         complexity: 'medium',
@@ -329,8 +329,8 @@ export class DataInitializer {
         question_order: 2
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440021',
-        section_id: '550e8400-e29b-41d4-a716-446655440015',
+        id: '550e8400-e29b-41d4-a716-446655440042',
+        section_id: '550e8400-e29b-41d4-a716-446655440031',
         text: 'What does URL stand for?',
         question_type: 'single_choice',
         complexity: 'easy',
@@ -339,8 +339,8 @@ export class DataInitializer {
         question_order: 1
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440022',
-        section_id: '550e8400-e29b-41d4-a716-446655440016',
+        id: '550e8400-e29b-41d4-a716-446655440043',
+        section_id: '550e8400-e29b-41d4-a716-446655440032',
         text: 'Which of the following are good password practices?',
         question_type: 'multiple_choice',
         complexity: 'medium',
@@ -359,28 +359,28 @@ export class DataInitializer {
     // Create question options
     const options = [
       // Question 1 options
-      { id: '550e8400-e29b-41d4-a716-446655440023', question_id: '550e8400-e29b-41d4-a716-446655440019', text: 'To manage hardware and software resources', is_correct: true, option_order: 1 },
-      { id: '550e8400-e29b-41d4-a716-446655440024', question_id: '550e8400-e29b-41d4-a716-446655440019', text: 'To create documents', is_correct: false, option_order: 2 },
-      { id: '550e8400-e29b-41d4-a716-446655440025', question_id: '550e8400-e29b-41d4-a716-446655440019', text: 'To browse the internet', is_correct: false, option_order: 3 },
-      { id: '550e8400-e29b-41d4-a716-446655440026', question_id: '550e8400-e29b-41d4-a716-446655440019', text: 'To play games', is_correct: false, option_order: 4 },
+      { id: '550e8400-e29b-41d4-a716-446655440050', question_id: '550e8400-e29b-41d4-a716-446655440040', text: 'To manage hardware and software resources', is_correct: true, option_order: 1 },
+      { id: '550e8400-e29b-41d4-a716-446655440051', question_id: '550e8400-e29b-41d4-a716-446655440040', text: 'To create documents', is_correct: false, option_order: 2 },
+      { id: '550e8400-e29b-41d4-a716-446655440052', question_id: '550e8400-e29b-41d4-a716-446655440040', text: 'To browse the internet', is_correct: false, option_order: 3 },
+      { id: '550e8400-e29b-41d4-a716-446655440053', question_id: '550e8400-e29b-41d4-a716-446655440040', text: 'To play games', is_correct: false, option_order: 4 },
       
       // Question 2 options
-      { id: '550e8400-e29b-41d4-a716-446655440027', question_id: '550e8400-e29b-41d4-a716-446655440020', text: 'Keyboard', is_correct: true, option_order: 1 },
-      { id: '550e8400-e29b-41d4-a716-446655440028', question_id: '550e8400-e29b-41d4-a716-446655440020', text: 'Mouse', is_correct: true, option_order: 2 },
-      { id: '550e8400-e29b-41d4-a716-446655440029', question_id: '550e8400-e29b-41d4-a716-446655440020', text: 'Monitor', is_correct: false, option_order: 3 },
-      { id: '550e8400-e29b-41d4-a716-446655440030', question_id: '550e8400-e29b-41d4-a716-446655440020', text: 'Microphone', is_correct: true, option_order: 4 },
+      { id: '550e8400-e29b-41d4-a716-446655440054', question_id: '550e8400-e29b-41d4-a716-446655440041', text: 'Keyboard', is_correct: true, option_order: 1 },
+      { id: '550e8400-e29b-41d4-a716-446655440055', question_id: '550e8400-e29b-41d4-a716-446655440041', text: 'Mouse', is_correct: true, option_order: 2 },
+      { id: '550e8400-e29b-41d4-a716-446655440056', question_id: '550e8400-e29b-41d4-a716-446655440041', text: 'Monitor', is_correct: false, option_order: 3 },
+      { id: '550e8400-e29b-41d4-a716-446655440057', question_id: '550e8400-e29b-41d4-a716-446655440041', text: 'Microphone', is_correct: true, option_order: 4 },
       
       // Question 3 options
-      { id: '550e8400-e29b-41d4-a716-446655440031', question_id: '550e8400-e29b-41d4-a716-446655440021', text: 'Uniform Resource Locator', is_correct: true, option_order: 1 },
-      { id: '550e8400-e29b-41d4-a716-446655440032', question_id: '550e8400-e29b-41d4-a716-446655440021', text: 'Universal Resource Link', is_correct: false, option_order: 2 },
-      { id: '550e8400-e29b-41d4-a716-446655440033', question_id: '550e8400-e29b-41d4-a716-446655440021', text: 'Unified Resource Location', is_correct: false, option_order: 3 },
-      { id: '550e8400-e29b-41d4-a716-446655440034', question_id: '550e8400-e29b-41d4-a716-446655440021', text: 'Universal Reference Locator', is_correct: false, option_order: 4 },
+      { id: '550e8400-e29b-41d4-a716-446655440058', question_id: '550e8400-e29b-41d4-a716-446655440042', text: 'Uniform Resource Locator', is_correct: true, option_order: 1 },
+      { id: '550e8400-e29b-41d4-a716-446655440059', question_id: '550e8400-e29b-41d4-a716-446655440042', text: 'Universal Resource Link', is_correct: false, option_order: 2 },
+      { id: '550e8400-e29b-41d4-a716-446655440060', question_id: '550e8400-e29b-41d4-a716-446655440042', text: 'Unified Resource Location', is_correct: false, option_order: 3 },
+      { id: '550e8400-e29b-41d4-a716-446655440061', question_id: '550e8400-e29b-41d4-a716-446655440042', text: 'Universal Reference Locator', is_correct: false, option_order: 4 },
       
       // Question 4 options
-      { id: '550e8400-e29b-41d4-a716-446655440035', question_id: '550e8400-e29b-41d4-a716-446655440022', text: 'Use at least 8 characters', is_correct: true, option_order: 1 },
-      { id: '550e8400-e29b-41d4-a716-446655440036', question_id: '550e8400-e29b-41d4-a716-446655440022', text: 'Include uppercase and lowercase letters', is_correct: true, option_order: 2 },
-      { id: '550e8400-e29b-41d4-a716-446655440037', question_id: '550e8400-e29b-41d4-a716-446655440022', text: 'Share passwords with colleagues', is_correct: false, option_order: 3 },
-      { id: '550e8400-e29b-41d4-a716-446655440038', question_id: '550e8400-e29b-41d4-a716-446655440022', text: 'Use unique passwords for each account', is_correct: true, option_order: 4 }
+      { id: '550e8400-e29b-41d4-a716-446655440062', question_id: '550e8400-e29b-41d4-a716-446655440043', text: 'Use at least 8 characters', is_correct: true, option_order: 1 },
+      { id: '550e8400-e29b-41d4-a716-446655440063', question_id: '550e8400-e29b-41d4-a716-446655440043', text: 'Include uppercase and lowercase letters', is_correct: true, option_order: 2 },
+      { id: '550e8400-e29b-41d4-a716-446655440064', question_id: '550e8400-e29b-41d4-a716-446655440043', text: 'Share passwords with colleagues', is_correct: false, option_order: 3 },
+      { id: '550e8400-e29b-41d4-a716-446655440065', question_id: '550e8400-e29b-41d4-a716-446655440043', text: 'Use unique passwords for each account', is_correct: true, option_order: 4 }
     ];
 
     const { error: optionsError } = await supabaseClient

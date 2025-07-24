@@ -60,11 +60,11 @@ export function Login() {
   };
 
   const demoCredentials = [
-    { role: 'Admin', email: 'admin@esigma.com', icon: Users, color: 'bg-red-100 text-red-700', password: 'password123' },
-    { role: 'ZO User', email: 'zo@esigma.com', icon: Building, color: 'bg-purple-100 text-purple-700', password: 'password123' },
-    { role: 'RO User', email: 'ro@esigma.com', icon: Building, color: 'bg-indigo-100 text-indigo-700', password: 'password123' },
-    { role: 'Supervisor', email: 'supervisor@esigma.com', icon: UserCheck, color: 'bg-green-100 text-green-700', password: 'password123' },
-    { role: 'Enumerator', email: 'enumerator@esigma.com', icon: User, color: 'bg-blue-100 text-blue-700', password: 'password123' }
+    { role: 'Admin', email: 'admin@esigma.com', icon: Users, color: 'bg-red-100 text-red-700', password: 'password123', roleId: '550e8400-e29b-41d4-a716-446655440010' },
+    { role: 'ZO User', email: 'zo@esigma.com', icon: Building, color: 'bg-purple-100 text-purple-700', password: 'password123', roleId: '550e8400-e29b-41d4-a716-446655440011' },
+    { role: 'RO User', email: 'ro@esigma.com', icon: Building, color: 'bg-indigo-100 text-indigo-700', password: 'password123', roleId: '550e8400-e29b-41d4-a716-446655440012' },
+    { role: 'Supervisor', email: 'supervisor@esigma.com', icon: UserCheck, color: 'bg-green-100 text-green-700', password: 'password123', roleId: '550e8400-e29b-41d4-a716-446655440013' },
+    { role: 'Enumerator', email: 'enumerator@esigma.com', icon: User, color: 'bg-blue-100 text-blue-700', password: 'password123', roleId: '550e8400-e29b-41d4-a716-446655440014' }
   ];
 
   const handleDemoLogin = (demoEmail: string) => {
