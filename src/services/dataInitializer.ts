@@ -111,7 +111,7 @@ export class DataInitializer {
     
     const users = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440010',
+        id: '550e8400-e29b-41d4-a716-446655440015',
         email: 'admin@esigma.com',
         password_hash: passwordHash,
         name: 'System Administrator',
@@ -125,7 +125,7 @@ export class DataInitializer {
         phone_number: '+91-9876543210'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440011',
+        id: '550e8400-e29b-41d4-a716-446655440016',
         email: 'zo@esigma.com',
         password_hash: passwordHash,
         name: 'Zonal Officer',
@@ -139,7 +139,7 @@ export class DataInitializer {
         phone_number: '+91-9876543211'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440012',
+        id: '550e8400-e29b-41d4-a716-446655440017',
         email: 'ro@esigma.com',
         password_hash: passwordHash,
         name: 'Regional Officer',
@@ -153,7 +153,7 @@ export class DataInitializer {
         phone_number: '+91-9876543212'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440013',
+        id: '550e8400-e29b-41d4-a716-446655440018',
         email: 'supervisor@esigma.com',
         password_hash: passwordHash,
         name: 'Field Supervisor',
@@ -165,10 +165,10 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'SUP001',
         phone_number: '+91-9876543213',
-        parent_id: '550e8400-e29b-41d4-a716-446655440012'
+        parent_id: '550e8400-e29b-41d4-a716-446655440017'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440014',
+        id: '550e8400-e29b-41d4-a716-446655440019',
         email: 'enumerator@esigma.com',
         password_hash: passwordHash,
         name: 'Field Enumerator',
@@ -180,7 +180,7 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'ENU001',
         phone_number: '+91-9876543214',
-        parent_id: '550e8400-e29b-41d4-a716-446655440013'
+        parent_id: '550e8400-e29b-41d4-a716-446655440018'
       }
     ];
 
