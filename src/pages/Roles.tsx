@@ -28,12 +28,14 @@ export function Roles() {
   }, []);
 
   const fetchRoles = async () => {
-    try {
+        setRoles(response.data || []);
       setIsLoading(true);
       const response = await roleApi.getRoles();
+        setRoles([]);
       setRoles(response.data);
     } catch (error) {
       console.error('Failed to fetch roles:', error);
+      setRoles([]);
     } finally {
       setIsLoading(false);
     }
