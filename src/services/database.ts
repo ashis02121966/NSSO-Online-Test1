@@ -568,3 +568,248 @@ export class SettingsService {
     }
   }
 }
+
+// Question Service
+export class QuestionService {
+  static async createQuestion(questionData: any) {
+    try {
+      // First create the question
+      const { data: question, error: questionError } = await supabase
+        .from('questions')
+        .insert({
+          section_id: questionData.sectionId,
+          text: questionData.text,
+          question_type: questionData.type,
+          complexity: questionData.complexity,
+          points: questionData.points,
+          explanation: questionData.explanation,
+          question_order: questionData.order
+        })
+        .select('*')
+        .single();
+
+      if (questionError) throw questionError;
+
+      // Then create the options
+      const optionsData = questionData.options.map((option: any, index: number) => ({
+        question_id: question.id,
+        text: option.text,
+        is_correct: option.isCorrect,
+        option_order: index + 1
+      }));
+
+      const { data: options, error: optionsError } = await supabase
+        .from('question_options')
+        .insert(optionsData)
+        .select('*');
+
+      if (optionsError) {
+        // Rollback question creation if options fail
+        await supabase.from('questions').delete().eq('id', question.id);
+        throw optionsError;
+      }
+
+      return {
+        success: true,
+        data: {
+          id: question.id,
+          sectionId: question.section_id,
+          text: question.text,
+          type: question.question_type,
+          complexity: question.complexity,
+          points: question.points,
+          explanation: question.explanation,
+          order: question.question_order,
+          options: options.map(opt => ({
+            id: opt.id,
+            text: opt.text,
+            isCorrect: opt.is_correct
+          })),
+          correctAnswers: options.filter(opt => opt.is_correct).map(opt => opt.id),
+          createdAt: new Date(question.created_at),
+          updatedAt: new Date(question.updated_at)
+        },
+        message: 'Question created successfully'
+      };
+    } catch (error) {
+      console.error('Error creating question:', error);
+      return { success: false, message: 'Failed to create question' };
+    }
+  }
+
+  static async uploadQuestions(csvContent: string) {
+    try {
+      const lines = csvContent.split('\n').filter(line => line.trim());
+      if (lines.length < 2) {
+        return { success: false, message: 'CSV file is empty or invalid' };
+      }
+
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const requiredColumns = [
+        'survey_id', 'section_id', 'question_text', 'question_type', 
+        'complexity', 'points', 'question_order', 'option_a', 'option_b', 
+        'option_c', 'option_d', 'correct_options'
+      ];
+
+      // Validate headers
+      const missingColumns = requiredColumns.filter(col => !headers.includes(col));
+      if (missingColumns.length > 0) {
+        return {
+          success: false,
+          message: `Missing required columns: ${missingColumns.join(', ')}`
+        };
+      }
+
+      let questionsAdded = 0;
+      let questionsSkipped = 0;
+      const errors: string[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        try {
+          const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+          const rowData: any = {};
+          
+          headers.forEach((header, index) => {
+            rowData[header] = values[index] || '';
+          });
+
+          // Validate required fields
+          if (!rowData.survey_id || !rowData.section_id || !rowData.question_text) {
+            errors.push(`Row ${i + 1}: Missing required fields`);
+            questionsSkipped++;
+            continue;
+          }
+
+          // Validate question type
+          if (!['single_choice', 'multiple_choice'].includes(rowData.question_type)) {
+            errors.push(`Row ${i + 1}: Invalid question type '${rowData.question_type}'`);
+            questionsSkipped++;
+            continue;
+          }
+
+          // Validate complexity
+          if (!['easy', 'medium', 'hard'].includes(rowData.complexity)) {
+            errors.push(`Row ${i + 1}: Invalid complexity '${rowData.complexity}'`);
+            questionsSkipped++;
+            continue;
+          }
+
+          // Create question
+          const { data: question, error: questionError } = await supabase
+            .from('questions')
+            .insert({
+              section_id: rowData.section_id,
+              text: rowData.question_text,
+              question_type: rowData.question_type,
+              complexity: rowData.complexity,
+              points: parseInt(rowData.points) || 1,
+              explanation: rowData.explanation || '',
+              question_order: parseInt(rowData.question_order) || (i)
+            })
+            .select('*')
+            .single();
+
+          if (questionError) {
+            errors.push(`Row ${i + 1}: Failed to create question - ${questionError.message}`);
+            questionsSkipped++;
+            continue;
+          }
+
+          // Parse correct options
+          const correctOptions = rowData.correct_options.split(',').map((opt: string) => opt.trim().toUpperCase());
+          const options = [
+            { text: rowData.option_a, isCorrect: correctOptions.includes('A') },
+            { text: rowData.option_b, isCorrect: correctOptions.includes('B') },
+            { text: rowData.option_c, isCorrect: correctOptions.includes('C') },
+            { text: rowData.option_d, isCorrect: correctOptions.includes('D') }
+          ].filter(opt => opt.text.trim() !== '');
+
+          // Create options
+          const optionsData = options.map((option, index) => ({
+            question_id: question.id,
+            text: option.text,
+            is_correct: option.isCorrect,
+            option_order: index + 1
+          }));
+
+          const { error: optionsError } = await supabase
+            .from('question_options')
+            .insert(optionsData);
+
+          if (optionsError) {
+            // Rollback question creation
+            await supabase.from('questions').delete().eq('id', question.id);
+            errors.push(`Row ${i + 1}: Failed to create options - ${optionsError.message}`);
+            questionsSkipped++;
+            continue;
+          }
+
+          questionsAdded++;
+        } catch (error) {
+          errors.push(`Row ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+          questionsSkipped++;
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          fileName: 'uploaded_questions.csv',
+          questionsAdded,
+          questionsSkipped,
+          errors,
+          success: questionsAdded > 0
+        },
+        message: `Upload completed: ${questionsAdded} questions added, ${questionsSkipped} skipped`
+      };
+    } catch (error) {
+      console.error('Error uploading questions:', error);
+      return { success: false, message: 'Failed to upload questions' };
+    }
+  }
+
+  static async getQuestions(surveyId: string, sectionId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select(`
+          *,
+          options:question_options(*)
+        `)
+        .eq('section_id', sectionId)
+        .order('question_order', { ascending: true });
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: data.map(question => ({
+          id: question.id,
+          sectionId: question.section_id,
+          text: question.text,
+          type: question.question_type,
+          complexity: question.complexity,
+          points: question.points,
+          explanation: question.explanation,
+          order: question.question_order,
+          options: question.options
+            .sort((a: any, b: any) => a.option_order - b.option_order)
+            .map((opt: any) => ({
+              id: opt.id,
+              text: opt.text,
+              isCorrect: opt.is_correct
+            })),
+          correctAnswers: question.options
+            .filter((opt: any) => opt.is_correct)
+            .map((opt: any) => opt.id),
+          createdAt: new Date(question.created_at),
+          updatedAt: new Date(question.updated_at)
+        })),
+        message: 'Questions fetched successfully'
+      };
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      return { success: false, message: 'Failed to fetch questions' };
+    }
+  }
+}

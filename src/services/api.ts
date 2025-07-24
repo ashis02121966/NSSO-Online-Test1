@@ -10,7 +10,8 @@ import {
   RoleService, 
   SurveyService, 
   TestService, 
-  SettingsService 
+  SettingsService,
+  QuestionService
 } from './database';
 import { isDemoMode } from '../lib/supabase';
 import { DataInitializer } from './dataInitializer';
@@ -492,42 +493,88 @@ export const surveyApi = {
 // Question API
 export const questionApi = {
   getQuestions: async (surveyId: string, sectionId: string): Promise<ApiResponse<Question[]>> => {
-    await delay(600);
-    return {
-      success: true,
-      data: [],
-      message: 'Questions fetched successfully'
-    };
+    try {
+      if (isDemoMode) {
+        await delay(600);
+        return {
+          success: true,
+          data: [],
+          message: 'Questions fetched successfully (demo mode)'
+        };
+      }
+      return await QuestionService.getQuestions(surveyId, sectionId);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      await delay(600);
+      return {
+        success: true,
+        data: [],
+        message: 'Questions fetched successfully (demo mode)'
+      };
+    }
   },
 
   createQuestion: async (questionData: any): Promise<ApiResponse<Question>> => {
-    await delay(800);
-    const newQuestion: Question = {
-      id: Date.now().toString(),
-      ...questionData,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    return {
-      success: true,
-      data: newQuestion,
-      message: 'Question created successfully'
-    };
+    try {
+      if (isDemoMode) {
+        await delay(800);
+        const newQuestion: Question = {
+          id: Date.now().toString(),
+          sectionId: questionData.sectionId,
+          text: questionData.text,
+          type: questionData.type,
+          complexity: questionData.complexity,
+          points: questionData.points,
+          explanation: questionData.explanation,
+          order: questionData.order,
+          options: questionData.options.map((opt: any, index: number) => ({
+            id: `opt_${Date.now()}_${index}`,
+            text: opt.text,
+            isCorrect: opt.isCorrect
+          })),
+          correctAnswers: questionData.options
+            .map((opt: any, index: number) => opt.isCorrect ? `opt_${Date.now()}_${index}` : null)
+            .filter((id: string | null) => id !== null),
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        return {
+          success: true,
+          data: newQuestion,
+          message: 'Question created successfully (demo mode)'
+        };
+      }
+      return await QuestionService.createQuestion(questionData);
+    } catch (error) {
+      console.error('Error creating question:', error);
+      return { success: false, message: 'Failed to create question' };
+    }
   },
 
   uploadQuestions: async (surveyId: string, file: File): Promise<ApiResponse<FileUploadResult>> => {
-    await delay(2000);
-    return {
-      success: true,
-      data: {
-        fileName: file.name,
-        questionsAdded: 25,
-        questionsSkipped: 5,
-        errors: ['Row 3: Invalid question type', 'Row 8: Missing correct answer'],
-        success: true
-      },
-      message: 'Questions uploaded successfully'
-    };
+    try {
+      if (isDemoMode) {
+        await delay(2000);
+        return {
+          success: true,
+          data: {
+            fileName: file.name,
+            questionsAdded: 25,
+            questionsSkipped: 5,
+            errors: ['Row 3: Invalid question type', 'Row 8: Missing correct answer'],
+            success: true
+          },
+          message: 'Questions uploaded successfully (demo mode)'
+        };
+      }
+
+      // Read file content
+      const csvContent = await file.text();
+      return await QuestionService.uploadQuestions(csvContent);
+    } catch (error) {
+      console.error('Error uploading questions:', error);
+      return { success: false, message: 'Failed to upload questions' };
+    }
   },
 
   downloadTemplate: async (): Promise<Blob> => {
