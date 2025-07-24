@@ -348,7 +348,7 @@ export const testApi = {
           )
         `)
         .eq('section.survey_id', surveyId)
-        .order('section.section_order', { ascending: true })
+        .order('section_order', { foreignTable: 'section', ascending: true })
         .order('question_order', { ascending: true });
 
       if (error) {
