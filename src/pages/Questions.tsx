@@ -263,10 +263,6 @@ export function Questions() {
       alert('Failed to create question. Please try again.');
     }
   };
-    } catch (error) {
-      console.error('Failed to create question:', error);
-    }
-  };
 
   const handleUpdateQuestion = async () => {
     if (!selectedQuestion) return;
