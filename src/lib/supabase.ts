@@ -45,6 +45,10 @@ if (!hasValidSupabaseConfig) {
 }
 
 export { supabase };
+
+// Export demo mode flag for API services to use
+export const isDemoMode = !hasValidSupabaseConfig;
+
 // Database types
 export interface Database {
   public: {

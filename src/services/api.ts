@@ -12,6 +12,7 @@ import {
   TestService, 
   SettingsService 
 } from './database';
+import { isDemoMode } from '../lib/supabase';
 import { DataInitializer } from './dataInitializer';
 
 // Mock API responses for development
@@ -352,7 +353,7 @@ export const roleApi = {
 export const surveyApi = {
   getSurveys: async (): Promise<ApiResponse<Survey[]>> => {
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL) {
+      if (isDemoMode) {
         await delay(600);
         return { success: true, data: mockSurveys, message: 'Surveys fetched successfully (demo mode)' };
       }

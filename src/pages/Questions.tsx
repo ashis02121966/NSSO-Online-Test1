@@ -72,9 +72,10 @@ export function Questions() {
     try {
       setIsLoading(true);
       const response = await surveyApi.getSurveys();
-      setSurveys(response.data);
+      setSurveys(response.data || []);
     } catch (error) {
       console.error('Failed to fetch surveys:', error);
+      setSurveys([]);
     } finally {
       setIsLoading(false);
     }
@@ -310,6 +311,7 @@ export function Questions() {
   };
 
   const filteredSurveys = surveys.filter(survey =>
+  const filteredSurveys = (surveys || []).filter(survey =>
     survey.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
