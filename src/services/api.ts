@@ -97,43 +97,11 @@ export const roleApi = {
 // Survey API
 export const surveyApi = {
   async getSurveys(): Promise<ApiResponse<Survey[]>> {
-    if (isDemoMode) {
-      console.log('surveyApi: Returning empty surveys (Demo Mode)');
-      return {
-        success: true,
-        data: [],
-        message: 'Surveys fetched successfully (Demo Mode)'
-      };
-    }
-    
     console.log('surveyApi: Fetching surveys');
     return await SurveyService.getSurveys();
   },
 
   async createSurvey(surveyData: any): Promise<ApiResponse<Survey>> {
-    if (isDemoMode) {
-      console.log('surveyApi: Creating survey in demo mode:', surveyData.title);
-      // Return mock survey data in demo mode
-      const mockSurvey: Survey = {
-        id: `demo-survey-${Date.now()}`,
-        title: surveyData.title,
-        description: surveyData.description || '',
-        targetDate: new Date(surveyData.targetDate || Date.now() + 7 * 24 * 60 * 60 * 1000),
-        duration: surveyData.duration || 60,
-        totalQuestions: 0,
-        passingScore: surveyData.passingScore || 70,
-        maxAttempts: surveyData.maxAttempts || 3,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      return {
-        success: true,
-        data: mockSurvey,
-        message: 'Survey created successfully (Demo Mode)'
-      };
-    }
-    
     console.log('surveyApi: Creating survey:', surveyData.title);
     return await SurveyService.createSurvey(surveyData);
   },
@@ -149,15 +117,6 @@ export const surveyApi = {
   },
 
   async getSurveySections(surveyId: string): Promise<ApiResponse<Section[]>> {
-    if (isDemoMode) {
-      console.log('surveyApi: Returning empty sections (Demo Mode)');
-      return {
-        success: true,
-        data: [],
-        message: 'Survey sections fetched successfully (Demo Mode)'
-      };
-    }
-    
     console.log('surveyApi: Fetching sections for survey:', surveyId);
     return await SurveyService.getSurveySections(surveyId);
   },
