@@ -1000,7 +1000,7 @@ startxref
 export const settingsApi = {
   getSettings: async (): Promise<ApiResponse<SystemSettings[]>> => {
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL) {
+      if (isDemoMode) {
         await delay(600);
         const mockSettings: SystemSettings[] = [
           // Security Settings
@@ -1034,13 +1034,39 @@ export const settingsApi = {
     } catch (error) {
       console.error('Error fetching settings:', error);
       await delay(600);
-      return { success: true, data: [], message: 'Failed to fetch settings' };
+      const mockSettings: SystemSettings[] = [
+        // Security Settings
+        { id: '1', category: 'security', key: 'max_login_attempts', value: '5', description: 'Maximum failed login attempts before account lockout', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '2', category: 'security', key: 'lockout_duration', value: '30', description: 'Account lockout duration in minutes', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '3', category: 'security', key: 'session_timeout', value: '120', description: 'User session timeout in minutes', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '4', category: 'security', key: 'password_min_length', value: '8', description: 'Minimum password length requirement', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '5', category: 'security', key: 'password_complexity', value: 'true', description: 'Require complex passwords (uppercase, lowercase, numbers)', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '6', category: 'security', key: 'force_password_change', value: '90', description: 'Force password change every X days', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        
+        // Test Settings
+        { id: '7', category: 'test', key: 'auto_save_interval', value: '30', description: 'Auto-save test progress every X seconds', type: 'number', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '8', category: 'test', key: 'enable_auto_save', value: 'true', description: 'Enable automatic saving of test progress', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '9', category: 'test', key: 'auto_submit_on_timeout', value: 'true', description: 'Automatically submit test when time expires', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '10', category: 'test', key: 'show_time_warning', value: 'true', description: 'Show warning when 5 minutes remaining', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '11', category: 'test', key: 'allow_question_navigation', value: 'true', description: 'Allow users to navigate between questions', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '12', category: 'test', key: 'enable_question_flagging', value: 'true', description: 'Allow users to flag questions for review', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '13', category: 'test', key: 'network_pause_enabled', value: 'true', description: 'Auto-pause test when network is unavailable', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        
+        // General Settings
+        { id: '14', category: 'general', key: 'site_name', value: 'eSigma Survey Platform', description: 'Application name displayed to users', type: 'string', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '15', category: 'general', key: 'site_description', value: 'Online MCQ Test Management System', description: 'Application description', type: 'string', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '16', category: 'general', key: 'support_email', value: 'support@esigma.com', description: 'Support contact email address', type: 'email', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '17', category: 'general', key: 'maintenance_mode', value: 'false', description: 'Enable maintenance mode to restrict access', type: 'boolean', isEditable: true, updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '18', category: 'general', key: 'default_timezone', value: 'Asia/Kolkata', description: 'Default system timezone', type: 'select', isEditable: true, options: ['Asia/Kolkata', 'UTC', 'America/New_York', 'Europe/London'], updatedAt: new Date(), updatedBy: 'admin' },
+        { id: '19', category: 'general', key: 'date_format', value: 'DD/MM/YYYY', description: 'Date display format', type: 'select', isEditable: true, options: ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'], updatedAt: new Date(), updatedBy: 'admin' }
+      ];
+      return { success: true, data: mockSettings, message: 'Settings fetched successfully (demo mode)' };
     }
   },
 
   updateSetting: async (id: string, value: string): Promise<ApiResponse<void>> => {
     try {
-      if (!import.meta.env.VITE_SUPABASE_URL) {
+      if (isDemoMode) {
         await delay(800);
         return { success: true, message: 'Setting updated successfully (demo mode)' };
       }
