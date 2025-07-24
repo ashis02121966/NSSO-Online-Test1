@@ -458,7 +458,7 @@ export const testApi = {
         .select('id')
         .eq('session_id', sessionId)
         .eq('question_id', questionId)
-        .single();
+        .maybeSingle();
       
       if (existingAnswer) {
         // Update existing answer
