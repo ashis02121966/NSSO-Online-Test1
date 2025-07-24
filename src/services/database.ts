@@ -599,9 +599,9 @@ export class SurveyService {
 
   static async createSurvey(surveyData: any) {
     try {
-      console.log('SurveyService: Creating survey:', surveyData);
-      
       const supabaseClient = checkSupabaseConnection();
+      
+      console.log('SurveyService: Creating survey:', surveyData);
       
       // Get current user from localStorage for created_by
       const userData = localStorage.getItem('userData');
@@ -656,9 +656,9 @@ export class SurveyService {
 
   static async updateSurvey(surveyId: string, surveyData: any) {
     try {
-      console.log('SurveyService: Updating survey:', surveyId, surveyData);
-      
       const supabaseClient = checkSupabaseConnection();
+      
+      console.log('SurveyService: Updating survey:', surveyId, surveyData);
       
       const { data, error } = await supabaseClient
         .from('surveys')
@@ -711,9 +711,9 @@ export class SurveyService {
 
   static async deleteSurvey(surveyId: string) {
     try {
-      console.log('SurveyService: Deleting survey:', surveyId);
-      
       const supabaseClient = checkSupabaseConnection();
+      
+      console.log('SurveyService: Deleting survey:', surveyId);
       
       const { error } = await supabaseClient
         .from('surveys')
@@ -773,9 +773,9 @@ export class SurveyService {
 
   static async createSection(surveyId: string, sectionData: any) {
     try {
-      console.log('SurveyService: Creating section for survey:', surveyId, sectionData);
-      
       const supabaseClient = checkSupabaseConnection();
+      
+      console.log('SurveyService: Creating section for survey:', surveyId, sectionData);
       
       const { data, error } = await supabaseClient
         .from('survey_sections')
