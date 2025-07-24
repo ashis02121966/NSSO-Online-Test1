@@ -9,7 +9,8 @@ import bcrypt from 'bcryptjs';
 // Helper function to check if Supabase is available
 function checkSupabaseConnection() {
   if (!supabase) {
-    throw new Error('Supabase is not configured. Please set up your environment variables.');
+    console.warn('Supabase is not configured. Using fallback data.');
+    return null;
   }
   return supabase;
 }
@@ -21,6 +22,40 @@ export class AuthService {
       console.log('AuthService: Attempting login for:', email);
       
       const supabaseClient = checkSupabaseConnection();
+      
+      if (!supabaseClient) {
+        // Fallback authentication for demo mode
+        const demoUsers = [
+          { email: 'admin@esigma.com', password: 'password123', name: 'System Administrator', role: { id: '1', name: 'Admin', level: 1 } },
+          { email: 'zo@esigma.com', password: 'password123', name: 'Zonal Officer', role: { id: '2', name: 'ZO User', level: 2 } },
+          { email: 'ro@esigma.com', password: 'password123', name: 'Regional Officer', role: { id: '3', name: 'RO User', level: 3 } },
+          { email: 'supervisor@esigma.com', password: 'password123', name: 'Field Supervisor', role: { id: '4', name: 'Supervisor', level: 4 } },
+          { email: 'enumerator@esigma.com', password: 'password123', name: 'Field Enumerator', role: { id: '5', name: 'Enumerator', level: 5 } }
+        ];
+        
+        const user = demoUsers.find(u => u.email === email && u.password === password);
+        if (!user) {
+          return { success: false, message: 'Invalid credentials' };
+        }
+        
+        return {
+          success: true,
+          data: {
+            user: {
+              id: user.role.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+              jurisdiction: 'Demo Mode',
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            },
+            token: `demo_token_${user.role.id}`
+          },
+          message: 'Login successful (Demo Mode)'
+        };
+      }
       
       // Get user with role information
       const { data: userData, error: userError } = await supabaseClient
@@ -135,6 +170,27 @@ export class UserService {
       console.log('UserService: Fetching users from database');
       
       const supabaseClient = checkSupabaseConnection();
+      
+      if (!supabaseClient) {
+        // Return fallback users for demo mode
+        return {
+          success: true,
+          data: [
+            {
+              id: '1',
+              email: 'admin@esigma.com',
+              name: 'System Administrator',
+              roleId: '1',
+              role: { id: '1', name: 'Admin', level: 1 },
+              jurisdiction: 'National',
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            }
+          ],
+          message: 'Users fetched successfully (Demo Mode)'
+        };
+      }
       
       const { data, error } = await supabaseClient
         .from('users')
@@ -264,6 +320,21 @@ export class RoleService {
       console.log('RoleService: Fetching roles from database');
       
       const supabaseClient = checkSupabaseConnection();
+      
+      if (!supabaseClient) {
+        // Return fallback roles for demo mode
+        return {
+          success: true,
+          data: [
+            { id: '1', name: 'Admin', description: 'System Administrator', level: 1, isActive: true, menuAccess: [], userCount: 1, createdAt: new Date(), updatedAt: new Date() },
+            { id: '2', name: 'ZO User', description: 'Zonal Office User', level: 2, isActive: true, menuAccess: [], userCount: 0, createdAt: new Date(), updatedAt: new Date() },
+            { id: '3', name: 'RO User', description: 'Regional Office User', level: 3, isActive: true, menuAccess: [], userCount: 0, createdAt: new Date(), updatedAt: new Date() },
+            { id: '4', name: 'Supervisor', description: 'Field Supervisor', level: 4, isActive: true, menuAccess: [], userCount: 0, createdAt: new Date(), updatedAt: new Date() },
+            { id: '5', name: 'Enumerator', description: 'Field Enumerator', level: 5, isActive: true, menuAccess: [], userCount: 0, createdAt: new Date(), updatedAt: new Date() }
+          ],
+          message: 'Roles fetched successfully (Demo Mode)'
+        };
+      }
       
       const { data, error } = await supabaseClient
         .from('roles')
@@ -460,6 +531,31 @@ export class SurveyService {
       console.log('SurveyService: Fetching surveys from database');
       
       const supabaseClient = checkSupabaseConnection();
+      
+      if (!supabaseClient) {
+        // Return fallback surveys for demo mode
+        return {
+          success: true,
+          data: [
+            {
+              id: '1',
+              title: 'Digital Literacy Assessment',
+              description: 'Comprehensive assessment of digital skills',
+              targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              duration: 35,
+              totalQuestions: 30,
+              passingScore: 70,
+              maxAttempts: 3,
+              isActive: true,
+              sections: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              createdBy: '1'
+            }
+          ],
+          message: 'Surveys fetched successfully (Demo Mode)'
+        };
+      }
       
       const { data, error } = await supabaseClient
         .from('surveys')
@@ -1267,6 +1363,19 @@ export class SettingsService {
       
       const supabaseClient = checkSupabaseConnection();
       
+      if (!supabaseClient) {
+        // Return fallback settings for demo mode
+        return {
+          success: true,
+          data: [
+            { id: '1', category: 'general', key: 'site_name', value: 'eSigma Survey Platform', description: 'Application name', type: 'string', isEditable: true, updatedAt: new Date() },
+            { id: '2', category: 'test', key: 'default_duration', value: '35', description: 'Default test duration in minutes', type: 'number', isEditable: true, updatedAt: new Date() },
+            { id: '3', category: 'security', key: 'session_timeout', value: '120', description: 'Session timeout in minutes', type: 'number', isEditable: true, updatedAt: new Date() }
+          ],
+          message: 'Settings fetched successfully (Demo Mode)'
+        };
+      }
+      
       const { data, error } = await supabaseClient
         .from('system_settings')
         .select('*')
@@ -1338,6 +1447,48 @@ export class DashboardService {
       
       const supabaseClient = checkSupabaseConnection();
       
+      if (!supabaseClient) {
+        // Return fallback dashboard data for demo mode
+        return {
+          success: true,
+          data: {
+            totalUsers: 25,
+            totalSurveys: 3,
+            totalAttempts: 150,
+            averageScore: 78.5,
+            passRate: 82.3,
+            recentActivity: [
+              {
+                id: '1',
+                type: 'test_completed' as const,
+                description: 'John Doe completed Digital Literacy Assessment',
+                userId: '1',
+                userName: 'John Doe',
+                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000)
+              },
+              {
+                id: '2',
+                type: 'user_created' as const,
+                description: 'New enumerator Sarah Smith was added',
+                userId: '2',
+                userName: 'Admin',
+                timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000)
+              }
+            ],
+            performanceByRole: [
+              { name: 'Enumerator', value: 45, total: 50, percentage: 90 },
+              { name: 'Supervisor', value: 8, total: 10, percentage: 80 }
+            ],
+            performanceBySurvey: [
+              { name: 'Digital Literacy', value: 35, total: 40, percentage: 87.5 },
+              { name: 'Data Collection', value: 18, total: 25, percentage: 72 }
+            ],
+            monthlyTrends: []
+          },
+          message: 'Dashboard data fetched successfully (Demo Mode)'
+        };
+      }
+      
       // Get basic counts
       const [usersResult, surveysResult, attemptsResult] = await Promise.all([
         supabaseClient.from('users').select('*', { count: 'exact', head: true }).eq('is_active', true),
@@ -1407,6 +1558,15 @@ export class CertificateService {
       console.log('CertificateService: Fetching certificates from database');
       
       const supabaseClient = checkSupabaseConnection();
+      
+      if (!supabaseClient) {
+        // Return fallback certificates for demo mode
+        return {
+          success: true,
+          data: [],
+          message: 'Certificates fetched successfully (Demo Mode)'
+        };
+      }
       
       const { data, error } = await supabaseClient
         .from('certificates')
