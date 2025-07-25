@@ -59,8 +59,8 @@ export class DataInitializer {
     const roles = [
       {
         id: '550e8400-e29b-41d4-a716-446655440001',
-        name: 'Admin',
-        description: 'System Administrator with full access',
+        name: 'Administrator',
+        description: 'System Administrator with full access to all features',
         level: 1,
         is_active: true,
         menu_access: [
@@ -71,29 +71,39 @@ export class DataInitializer {
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440002',
-        name: 'ZO User',
-        description: 'Zonal Office User',
+        name: 'CPG User',
+        description: 'Central Planning Group User with national oversight',
         level: 2,
+        is_active: true,
+        menu_access: [
+          '/cpg-dashboard', '/results', '/enumerator-status', '/certificates'
+        ]
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440003',
+        name: 'ZO User',
+        description: 'Zonal Office User with zone-level management access',
+        level: 3,
         is_active: true,
         menu_access: [
           '/zo-dashboard', '/results', '/enumerator-status', '/certificates'
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440003',
+        id: '550e8400-e29b-41d4-a716-446655440004',
         name: 'RO User',
-        description: 'Regional Office User',
-        level: 3,
+        description: 'Regional Office User with regional management access',
+        level: 4,
         is_active: true,
         menu_access: [
           '/ro-dashboard', '/results', '/enumerator-status', '/certificates'
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440004',
+        id: '550e8400-e29b-41d4-a716-446655440005',
         name: 'Supervisor',
-        description: 'Field Supervisor',
-        level: 4,
+        description: 'Field Supervisor with team management capabilities',
+        level: 5,
         is_active: true,
         menu_access: [
           '/supervisor-dashboard', '/team-results', '/my-enumerators', 
@@ -101,10 +111,10 @@ export class DataInitializer {
         ]
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440005',
+        id: '550e8400-e29b-41d4-a716-446655440006',
         name: 'Enumerator',
-        description: 'Field Enumerator',
-        level: 5,
+        description: 'Field Enumerator with test-taking access (Lowest Level)',
+        level: 6,
         is_active: true,
         menu_access: [
           '/enumerator-dashboard', '/available-tests', '/my-results', 
@@ -143,61 +153,106 @@ export class DataInitializer {
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440011',
+        email: 'cpg@esigma.com',
+        password_hash: passwordHash,
+        name: 'CPG Officer',
+        role_id: '550e8400-e29b-41d4-a716-446655440002',
+        is_active: true,
+        jurisdiction: 'Central Planning Group',
+        zone: null,
+        region: null,
+        district: null,
+        employee_id: 'CPG001',
+        phone_number: '+91-9876543211'
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440012',
         email: 'zo@esigma.com',
         password_hash: passwordHash,
         name: 'Zonal Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440002',
+        role_id: '550e8400-e29b-41d4-a716-446655440003',
         is_active: true,
         jurisdiction: 'North Zone',
         zone: 'North Zone',
         region: null,
         district: null,
         employee_id: 'ZO001',
-        phone_number: '+91-9876543211'
+        phone_number: '+91-9876543212'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440012',
+        id: '550e8400-e29b-41d4-a716-446655440013',
         email: 'ro@esigma.com',
         password_hash: passwordHash,
         name: 'Regional Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440003',
+        role_id: '550e8400-e29b-41d4-a716-446655440004',
         is_active: true,
         jurisdiction: 'Delhi Region',
         zone: 'North Zone',
         region: 'Delhi Region',
         district: null,
         employee_id: 'RO001',
-        phone_number: '+91-9876543212'
+        phone_number: '+91-9876543213',
+        parent_id: '550e8400-e29b-41d4-a716-446655440012'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440013',
+        id: '550e8400-e29b-41d4-a716-446655440014',
         email: 'supervisor@esigma.com',
         password_hash: passwordHash,
         name: 'Field Supervisor',
-        role_id: '550e8400-e29b-41d4-a716-446655440004',
+        role_id: '550e8400-e29b-41d4-a716-446655440005',
         is_active: true,
         jurisdiction: 'Central Delhi District',
         zone: 'North Zone',
         region: 'Delhi Region',
         district: 'Central Delhi',
         employee_id: 'SUP001',
-        phone_number: '+91-9876543213',
-        parent_id: '550e8400-e29b-41d4-a716-446655440012'
+        phone_number: '+91-9876543214',
+        parent_id: '550e8400-e29b-41d4-a716-446655440013'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440014',
+        id: '550e8400-e29b-41d4-a716-446655440015',
         email: 'enumerator@esigma.com',
         password_hash: passwordHash,
         name: 'Field Enumerator',
-        role_id: '550e8400-e29b-41d4-a716-446655440005',
+        role_id: '550e8400-e29b-41d4-a716-446655440006',
         is_active: true,
         jurisdiction: 'Block A, Central Delhi',
         zone: 'North Zone',
         region: 'Delhi Region',
         district: 'Central Delhi',
         employee_id: 'ENU001',
-        phone_number: '+91-9876543214',
-        parent_id: '550e8400-e29b-41d4-a716-446655440013'
+        phone_number: '+91-9876543215',
+        parent_id: '550e8400-e29b-41d4-a716-446655440014'
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440016',
+        email: 'enumerator2@esigma.com',
+        password_hash: passwordHash,
+        name: 'Field Enumerator 2',
+        role_id: '550e8400-e29b-41d4-a716-446655440006',
+        is_active: true,
+        jurisdiction: 'Block B, Central Delhi',
+        zone: 'North Zone',
+        region: 'Delhi Region',
+        district: 'Central Delhi',
+        employee_id: 'ENU002',
+        phone_number: '+91-9876543216',
+        parent_id: '550e8400-e29b-41d4-a716-446655440014'
+      },
+      {
+        id: '550e8400-e29b-41d4-a716-446655440017',
+        email: 'enumerator3@esigma.com',
+        password_hash: passwordHash,
+        name: 'Field Enumerator 3',
+        role_id: '550e8400-e29b-41d4-a716-446655440006',
+        is_active: true,
+        jurisdiction: 'Block C, Central Delhi',
+        zone: 'North Zone',
+        region: 'Delhi Region',
+        district: 'Central Delhi',
+        employee_id: 'ENU003',
+        phone_number: '+91-9876543217',
+        parent_id: '550e8400-e29b-41d4-a716-446655440014'
       }
     ];
 
