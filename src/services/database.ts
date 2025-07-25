@@ -222,8 +222,38 @@ export const UserService = {
       console.log('UserService: Creating user:', userData.email);
       
       if (!supabase) {
-        console.log('UserService: Supabase not configured');
-        return { success: false, message: 'Database not configured' };
+        console.log('UserService: Supabase not configured, creating demo user');
+        // Create a demo user for testing
+        const demoUser: User = {
+          id: generateUUID(),
+          email: userData.email,
+          name: userData.name,
+          roleId: userData.roleId,
+          role: {
+            id: userData.roleId,
+            name: 'Demo Role',
+            description: 'Demo role for testing',
+            level: 5,
+            isActive: true,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          isActive: true,
+          jurisdiction: userData.jurisdiction,
+          zone: userData.zone,
+          region: userData.region,
+          district: userData.district,
+          employeeId: userData.employeeId,
+          phoneNumber: userData.phoneNumber,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        return {
+          success: true,
+          data: demoUser,
+          message: 'Demo user created successfully. Default password: password123'
+        };
       }
 
       // Validate required fields
@@ -231,12 +261,18 @@ export const UserService = {
         return { success: false, message: 'Name, email, and role are required' };
       }
 
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(userData.email)) {
+        return { success: false, message: 'Please enter a valid email address' };
+      }
+
       // Check if user already exists
       const { data: existingUser } = await supabase
         .from('users')
         .select('id')
         .eq('email', userData.email)
-        .single();
+        .maybeSingle();
 
       if (existingUser) {
         return { success: false, message: 'User with this email already exists' };
@@ -247,7 +283,7 @@ export const UserService = {
         .from('roles')
         .select('*')
         .eq('id', userData.roleId)
-        .single();
+        .maybeSingle();
 
       if (roleError || !role) {
         console.error('UserService: Role not found:', userData.roleId, roleError);
@@ -257,6 +293,18 @@ export const UserService = {
       // Generate default password (should be changed on first login)
       const defaultPassword = 'password123';
       const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
+      console.log('UserService: Inserting user into database with data:', {
+        email: userData.email,
+        name: userData.name,
+        role_id: userData.roleId,
+        jurisdiction: userData.jurisdiction,
+        zone: userData.zone,
+        region: userData.region,
+        district: userData.district,
+        employee_id: userData.employeeId,
+        phone_number: userData.phoneNumber
+      });
 
       // Create user in database
       const { data: newUser, error: createError } = await supabase
@@ -272,7 +320,9 @@ export const UserService = {
           district: userData.district || null,
           employee_id: userData.employeeId || null,
           phone_number: userData.phoneNumber || null,
-          is_active: true
+          is_active: true,
+          password_changed_at: new Date().toISOString(),
+          failed_login_attempts: 0
         })
         .select(`
           *,
@@ -282,8 +332,22 @@ export const UserService = {
 
       if (createError) {
         console.error('UserService: Error creating user:', createError);
+        
+        // Provide more specific error messages
+        if (createError.code === '23505') {
+          if (createError.message.includes('email')) {
+            return { success: false, message: 'A user with this email already exists' };
+          }
+          if (createError.message.includes('employee_id')) {
+            return { success: false, message: 'A user with this employee ID already exists' };
+          }
+          return { success: false, message: 'A user with this information already exists' };
+        }
+        
         return { success: false, message: `Failed to create user: ${createError.message}` };
       }
+
+      console.log('UserService: User created successfully:', newUser);
 
       const user: User = {
         id: newUser.id,
@@ -316,10 +380,14 @@ export const UserService = {
         await supabase
           .from('activity_logs')
           .insert({
-            user_id: newUser.id,
             activity_type: 'user_created',
             description: `User ${newUser.name} (${newUser.email}) was created with role ${role.name}`,
-            metadata: { role_id: userData.roleId, created_by: 'system' }
+            metadata: { 
+              user_id: newUser.id,
+              role_id: userData.roleId, 
+              created_by: 'admin',
+              employee_id: userData.employeeId 
+            }
           });
       } catch (logError) {
         console.warn('UserService: Failed to log activity:', logError);

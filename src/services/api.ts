@@ -49,7 +49,17 @@ export const userApi = {
     return await UserService.getUsers();
   },
 
-  async createUser(userData: any): Promise<ApiResponse<User>> {
+  async createUser(userData: {
+    name: string;
+    email: string;
+    roleId: string;
+    jurisdiction?: string;
+    zone?: string;
+    region?: string;
+    district?: string;
+    employeeId?: string;
+    phoneNumber?: string;
+  }): Promise<ApiResponse<User>> {
     console.log('userApi: Creating user:', userData.email);
     return await UserService.createUser(userData);
   },

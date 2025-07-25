@@ -4,26 +4,35 @@ import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Input } from '../components/UI/Input';
 import { Modal } from '../components/UI/Modal';
-import { userApi } from '../services/api';
+import { userApi, roleApi } from '../services/api';
 import { User } from '../types';
 import { Plus, Search, Edit, Trash2, UserCheck, UserX } from 'lucide-react';
 import { formatDateTime } from '../utils';
 
 export function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     roleId: '',
-    jurisdiction: ''
+    jurisdiction: '',
+    zone: '',
+    region: '',
+    district: '',
+    employeeId: '',
+    phoneNumber: ''
   });
 
   useEffect(() => {
     fetchUsers();
+    fetchRoles();
   }, []);
 
   const fetchUsers = async () => {
@@ -39,16 +48,58 @@ export function Users() {
     }
   };
 
-  const handleCreateUser = async () => {
+  const fetchRoles = async () => {
     try {
+      const response = await roleApi.getRoles();
+      setRoles(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch roles:', error);
+      setRoles([]);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    setError('');
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    
+    if (!formData.email.trim()) {
+      setError('Email is required');
+      return;
+    }
+    
+    if (!formData.roleId) {
+      setError('Role is required');
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+    
+    try {
+      setIsCreating(true);
       const response = await userApi.createUser(formData);
       if (response.success && response.data) {
         setUsers([...users, response.data]);
         setIsCreateModalOpen(false);
         resetForm();
+        alert(response.message); // Show success message with default password
+      } else {
+        setError(response.message);
       }
     } catch (error) {
       console.error('Failed to create user:', error);
+      setError('Failed to create user. Please try again.');
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -70,8 +121,25 @@ export function Users() {
       name: '',
       email: '',
       roleId: '',
-      jurisdiction: ''
+      jurisdiction: '',
+      zone: '',
+      region: '',
+      district: '',
+      employeeId: '',
+      phoneNumber: ''
+      zone: '',
+      region: '',
+        alert('User created successfully! Default password: password123');
+      } else {
+        console.error('Failed to create user:', response.message);
+        alert(`Failed to create user: ${response.message}`);
+      district: '',
+      employeeId: '',
     });
+    setFormErrors({});
+      alert(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsCreating(false);
     setSelectedUser(null);
   };
 
@@ -184,42 +252,119 @@ export function Users() {
             resetForm();
           }}
           title="Create New User"
+          size="lg"
         >
           <div className="space-y-4">
-            <Input
-              label="Name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter user name"
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="Enter email address"
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-              <select
-                value={formData.roleId}
-                onChange={(e) => setFormData({ ...formData, roleId: e.target.value })}
-                className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select role</option>
-                <option value="550e8400-e29b-41d4-a716-446655440010">Admin</option>
-                <option value="550e8400-e29b-41d4-a716-446655440011">ZO User</option>
-                <option value="550e8400-e29b-41d4-a716-446655440012">RO User</option>
-                <option value="550e8400-e29b-41d4-a716-446655440013">Supervisor</option>
-                <option value="550e8400-e29b-41d4-a716-446655440014">Enumerator</option>
-              </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Full Name *"
+                value={formData.name}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (formErrors.name) {
+                    setFormErrors({ ...formErrors, name: '' });
+                  }
+                }}
+                placeholder="Enter full name"
+                error={formErrors.name}
+              />
+              <Input
+                label="Email Address *"
+                type="email"
+                value={formData.email}
+                onChange={(e) => {
+                  setFormData({ ...formData, email: e.target.value });
+                  if (formErrors.email) {
+                    setFormErrors({ ...formErrors, email: '' });
+                  }
+                }}
+                placeholder="Enter email address"
+                error={formErrors.email}
+              />
             </div>
-            <Input
-              label="Jurisdiction"
-              value={formData.jurisdiction}
-              onChange={(e) => setFormData({ ...formData, jurisdiction: e.target.value })}
-              placeholder="Enter jurisdiction (optional)"
-            />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Role *
+                </label>
+                <select
+                  value={formData.roleId}
+                  onChange={(e) => {
+                    setFormData({ ...formData, roleId: e.target.value });
+                    if (formErrors.roleId) {
+                      setFormErrors({ ...formErrors, roleId: '' });
+                    }
+                  }}
+                  className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    formErrors.roleId ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Select role</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.name} (Level {role.level})
+                    </option>
+                  ))}
+                </select>
+                {formErrors.roleId && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors.roleId}</p>
+                )}
+              </div>
+              <Input
+                label="Employee ID"
+                value={formData.employeeId}
+                onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                placeholder="Enter employee ID"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Input
+                label="Phone Number"
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                placeholder="Enter phone number"
+              />
+              <Input
+                label="Jurisdiction"
+                value={formData.jurisdiction}
+                onChange={(e) => setFormData({ ...formData, jurisdiction: e.target.value })}
+                placeholder="Enter jurisdiction"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Input
+                label="Zone"
+                value={formData.zone}
+                onChange={(e) => setFormData({ ...formData, zone: e.target.value })}
+                placeholder="Enter zone"
+              />
+              <Input
+                label="Region"
+                value={formData.region}
+                onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                placeholder="Enter region"
+              />
+              <Input
+                label="District"
+                value={formData.district}
+                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                placeholder="Enter district"
+              />
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="font-medium text-blue-900 mb-2">Default Login Credentials</h4>
+              <p className="text-sm text-blue-800">
+                <strong>Password:</strong> password123 (user should change on first login)
+              </p>
+              <p className="text-xs text-blue-700 mt-1">
+                The user will receive their login credentials and should change the password immediately.
+              </p>
+            </div>
+            
             <div className="flex justify-end space-x-3 pt-4">
               <Button
                 variant="secondary"
@@ -227,11 +372,16 @@ export function Users() {
                   setIsCreateModalOpen(false);
                   resetForm();
                 }}
+                disabled={isCreating}
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreateUser}>
-                Create User
+              <Button 
+                onClick={handleCreateUser}
+                loading={isCreating}
+                disabled={isCreating}
+              >
+                {isCreating ? 'Creating User...' : 'Create User'}
               </Button>
             </div>
           </div>
