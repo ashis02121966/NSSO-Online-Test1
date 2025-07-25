@@ -160,21 +160,68 @@ export function TestInterface() {
         throw new Error('Survey ID not provided');
       }
       
-      const questionsResponse = await testApi.getQuestionsForSurvey(surveyId);
-      if (questionsResponse.success && questionsResponse.data && questionsResponse.data.length > 0) {
-        console.log('Questions loaded successfully:', questionsResponse.data.length);
-        setQuestions(questionsResponse.data);
-        
-        // Set current question index from session if available
-        if (session && session.currentQuestionIndex) {
-          setCurrentQuestionIndex(session.currentQuestionIndex);
-        }
-      } else {
-        const errorMessage = questionsResponse.message || 'Failed to load questions';
-        console.error('Failed to load questions:', errorMessage);
-        alert(`Error loading test questions: ${errorMessage}`);
-        navigate('/available-tests');
-        return;
+      if (!supabase) {
+        throw new Error('Database not configured');
+      }
+      
+      // Load questions directly from Supabase with proper joins
+      const { data: questionsData, error: questionsError } = await supabase
+        .from('questions')
+        .select(`
+          *,
+          question_options(*),
+          survey_sections!inner(
+            id,
+            title,
+            section_order,
+            survey_id
+          )
+        `)
+        .eq('survey_sections.survey_id', surveyId)
+        .order('question_order', { ascending: true });
+
+      if (questionsError) {
+        console.error('Database error loading questions:', questionsError);
+        throw new Error(`Database error: ${questionsError.message}`);
+      }
+
+      if (!questionsData || questionsData.length === 0) {
+        console.log('No questions found for survey:', surveyId);
+        throw new Error('No questions found for this survey. Please ensure questions have been added to this survey in the Question Bank.');
+      }
+
+      console.log('Raw questions data from database:', questionsData);
+
+      // Transform database questions to match our Question interface
+      const transformedQuestions = questionsData.map((question) => ({
+        id: question.id,
+        sectionId: question.section_id,
+        text: question.text,
+        type: question.question_type as 'single_choice' | 'multiple_choice',
+        complexity: question.complexity as 'easy' | 'medium' | 'hard',
+        points: question.points,
+        explanation: question.explanation,
+        order: (question.survey_sections.section_order * 1000) + question.question_order,
+        options: question.question_options
+          .sort((a: any, b: any) => a.option_order - b.option_order)
+          .map((opt: any) => ({
+            id: opt.id,
+            text: opt.text,
+            isCorrect: opt.is_correct
+          })),
+        correctAnswers: question.question_options
+          .filter((opt: any) => opt.is_correct)
+          .map((opt: any) => opt.id),
+        createdAt: new Date(question.created_at),
+        updatedAt: new Date(question.updated_at)
+      }));
+
+      console.log('Transformed questions:', transformedQuestions);
+      setQuestions(transformedQuestions);
+      
+      // Set current question index from session if available
+      if (session && session.currentQuestionIndex) {
+        setCurrentQuestionIndex(session.currentQuestionIndex);
       }
     } catch (error) {
       console.error('Failed to load questions:', error);
@@ -206,6 +253,8 @@ export function TestInterface() {
         throw new Error('Session not found or expired');
       }
 
+      console.log('Session data loaded:', sessionData);
+
       const session: TestSession = {
         id: sessionData.id,
         userId: sessionData.user_id,
@@ -229,6 +278,7 @@ export function TestInterface() {
         .eq('session_id', sessionId!);
 
       if (existingAnswers) {
+        console.log('Existing answers loaded:', existingAnswers);
         const answersMap: Record<string, string[]> = {};
         existingAnswers.forEach(answer => {
           answersMap[answer.question_id] = answer.selected_options || [];
@@ -237,13 +287,12 @@ export function TestInterface() {
       }
 
       // Load questions for the survey
+      console.log('Loading questions for survey:', session.surveyId);
       await loadQuestionsForSurvey(session.surveyId);
     } catch (error) {
       console.error('Failed to load test session:', error);
       alert(`Failed to load test session: ${error instanceof Error ? error.message : 'Unknown error'}`);
       navigate('/available-tests');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -392,7 +441,10 @@ export function TestInterface() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading test...</p>
+          <p className="text-gray-600">Loading test session and questions...</p>
+          {session && (
+            <p className="text-sm text-gray-500 mt-2">Session ID: {session.id}</p>
+          )}
         </div>
       </div>
     );
@@ -683,6 +735,14 @@ export function TestInterface() {
                     <p className="text-sm text-gray-500 mt-3">
                       <strong>Note:</strong> This is a multiple choice question. You can select more than one answer.
                     </p>
+                  )}
+                  
+                  {currentQuestion.explanation && (
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Hint:</strong> {currentQuestion.explanation}
+                      </p>
+                    </div>
                   )}
                 </div>
 
