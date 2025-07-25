@@ -43,10 +43,21 @@ export function Users() {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
+      console.log('Users page: Fetching users...');
       const response = await userApi.getUsers();
+      console.log('Users page: API response:', response);
       setUsers(response.data || []);
+      
+      // Show message if no users found
+      if (!response.data || response.data.length === 0) {
+        console.log('Users page: No users found');
+        if (!response.success) {
+          setError(response.message);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setError('Failed to load users. Please try again.');
       setUsers([]); // Ensure users is always an array
     } finally {
       setIsLoading(false);
@@ -161,6 +172,11 @@ export function Users() {
 
         <Card>
           <div className="mb-6">
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            )}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -176,6 +192,33 @@ export function Users() {
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
               <p className="text-gray-500 mt-2">Loading users...</p>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Users Found</h3>
+              <p className="text-gray-500 mb-4">
+                {users.length === 0 
+                  ? 'No users exist in the system yet. Get started by creating your first user or initializing the database.'
+                  : 'No users match your search criteria.'
+                }
+              </p>
+              {users.length === 0 && (
+                <div className="space-y-2">
+                  <Button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Create First User</span>
+                  </Button>
+                  <p className="text-sm text-gray-500">
+                    Or go to the <a href="/login" className="text-blue-600 hover:text-blue-700">login page</a> to initialize the database
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="overflow-x-auto">

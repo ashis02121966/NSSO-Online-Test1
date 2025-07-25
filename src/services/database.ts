@@ -150,13 +150,64 @@ export const UserService = {
       
       if (!supabase) {
         console.log('UserService: Supabase not configured, returning demo data');
+        // Return demo users when Supabase is not configured
+        const demoUsers: User[] = [
+          {
+            id: '550e8400-e29b-41d4-a716-446655440010',
+            email: 'admin@esigma.com',
+            name: 'System Administrator',
+            roleId: '550e8400-e29b-41d4-a716-446655440001',
+            role: {
+              id: '550e8400-e29b-41d4-a716-446655440001',
+              name: 'Admin',
+              description: 'System Administrator',
+              level: 1,
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            },
+            isActive: true,
+            jurisdiction: 'National',
+            employeeId: 'ADM001',
+            phoneNumber: '+91-9876543210',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440014',
+            email: 'enumerator@esigma.com',
+            name: 'Field Enumerator',
+            roleId: '550e8400-e29b-41d4-a716-446655440005',
+            role: {
+              id: '550e8400-e29b-41d4-a716-446655440005',
+              name: 'Enumerator',
+              description: 'Field Enumerator',
+              level: 5,
+              isActive: true,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            },
+            isActive: true,
+            jurisdiction: 'Block A, Central Delhi',
+            zone: 'North Zone',
+            region: 'Delhi Region',
+            district: 'Central Delhi',
+            employeeId: 'ENU001',
+            phoneNumber: '+91-9876543214',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        ];
+        
         return {
           success: true,
-          data: [],
-          message: 'Demo mode - no users available'
+          data: demoUsers,
+          message: 'Demo users loaded (Supabase not configured)'
         };
       }
 
+      console.log('UserService: Attempting to fetch users from Supabase');
+      
       const { data, error } = await supabase
         .from('users')
         .select(`
@@ -167,9 +218,28 @@ export const UserService = {
 
       if (error) {
         console.error('UserService: Error fetching users:', error);
-        return { success: false, message: `Failed to fetch users: ${error.message}`, data: [] };
+        
+        // If there's a database error, provide helpful guidance
+        let errorMessage = `Database error: ${error.message}`;
+        if (error.message.includes('relation') && error.message.includes('does not exist')) {
+          errorMessage = 'Database tables not found. Please initialize the database first.';
+        } else if (error.message.includes('permission denied') || error.message.includes('RLS')) {
+          errorMessage = 'Permission denied. Please check your database policies or initialize the database.';
+        }
+        
+        return { success: false, message: errorMessage, data: [] };
       }
 
+      console.log('UserService: Raw data from Supabase:', data);
+      
+      if (!data || data.length === 0) {
+        console.log('UserService: No users found in database');
+        return {
+          success: true,
+          data: [],
+          message: 'No users found. Please initialize the database or create users.'
+        };
+      }
       const users: User[] = data.map(user => ({
         id: user.id,
         email: user.email,
@@ -196,10 +266,12 @@ export const UserService = {
         updatedAt: new Date(user.updated_at)
       }));
 
+      console.log('UserService: Processed users:', users.length);
+      
       return {
         success: true,
         data: users,
-        message: 'Users fetched successfully'
+        message: `${users.length} users fetched successfully`
       };
     } catch (error) {
       console.error('UserService: Error in getUsers:', error);
