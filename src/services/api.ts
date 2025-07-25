@@ -681,26 +681,49 @@ export const testApi = {
       if (isPassed) {
         const certificateNumber = `CERT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
         
-        const { data: certificate, error: certError } = await supabase
-          .from('certificates')
-          .insert({
+        try {
+          console.log('Creating certificate for passed test:', {
             user_id: session.user_id,
             survey_id: session.survey_id,
             result_id: result.id,
-            certificate_number: certificateNumber,
-            certificate_status: 'active'
-          })
-          .select()
-          .single();
-        
-        if (!certError && certificate) {
-          certificateId = certificate.id;
+            certificate_number: certificateNumber
+          });
           
-          // Update result with certificate ID
-          await supabase
-            .from('test_results')
-            .update({ certificate_id: certificateId })
-            .eq('id', result.id);
+          const { data: certificate, error: certError } = await supabase
+            .from('certificates')
+            .insert({
+              user_id: session.user_id,
+              survey_id: session.survey_id,
+              result_id: result.id,
+              certificate_number: certificateNumber,
+              certificate_status: 'active',
+              download_count: 0
+            })
+            .select()
+            .single();
+          
+          if (certError) {
+            console.error('Error creating certificate:', certError);
+            // Don't fail the test submission if certificate creation fails
+          } else if (certificate) {
+            console.log('Certificate created successfully:', certificate);
+            certificateId = certificate.id;
+            
+            // Update result with certificate ID
+            const { error: updateError } = await supabase
+              .from('test_results')
+              .update({ certificate_id: certificateId })
+              .eq('id', result.id);
+            
+            if (updateError) {
+              console.error('Error updating result with certificate ID:', updateError);
+            } else {
+              console.log('Test result updated with certificate ID:', certificateId);
+            }
+          }
+        } catch (certError) {
+          console.error('Exception during certificate creation:', certError);
+          // Continue without failing the test submission
         }
       }
       
