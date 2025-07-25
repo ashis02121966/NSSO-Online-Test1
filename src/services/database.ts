@@ -1374,12 +1374,12 @@ export class DashboardService {
   static async getDashboardData(): Promise<ApiResponse<Dashboard>> {
     try {
       console.log('DashboardService: Fetching dashboard data');
-        const sessionId = demoSessionId || `demo_session_${Date.now()}`;
+      
       if (!supabase) {
         return {
           success: true,
           data: {
-            id: sessionId,
+            id: 'demo-session-2',
             totalSurveys: 0,
             totalAttempts: 0,
             averageScore: 0,
