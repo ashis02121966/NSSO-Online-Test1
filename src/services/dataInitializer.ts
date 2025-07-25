@@ -6,14 +6,31 @@ export class DataInitializer {
     try {
       console.log('Starting database initialization...');
       
+      // Check if Supabase is configured
+      if (!supabase) {
+        console.error('Supabase client is not configured');
+        return { 
+          success: false, 
+          message: 'Supabase is not configured. Please set up your environment variables in .env file.' 
+        };
+      }
+      
       // Use the existing supabase client
       const supabaseAdmin = supabase;
       
       // Check if data already exists
-      const { data: existingRoles } = await supabaseAdmin
+      const { data: existingRoles, error: checkError } = await supabaseAdmin
         .from('roles')
         .select('id')
         .limit(1);
+      
+      if (checkError) {
+        console.error('Database connection failed:', checkError);
+        return { 
+          success: false, 
+          message: 'Failed to connect to database. Please check your Supabase configuration.' 
+        };
+      }
       
       if (existingRoles && existingRoles.length > 0) {
         console.log('Database already initialized');
