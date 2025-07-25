@@ -127,19 +127,7 @@ export function Users() {
       district: '',
       employeeId: '',
       phoneNumber: ''
-      zone: '',
-      region: '',
-        alert('User created successfully! Default password: password123');
-      } else {
-        console.error('Failed to create user:', response.message);
-        alert(`Failed to create user: ${response.message}`);
-      district: '',
-      employeeId: '',
     });
-    setFormErrors({});
-      alert(`Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsCreating(false);
     setSelectedUser(null);
   };
 
