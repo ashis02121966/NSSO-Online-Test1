@@ -159,8 +159,8 @@ export const UserService = {
             roleId: '550e8400-e29b-41d4-a716-446655440001',
             role: {
               id: '550e8400-e29b-41d4-a716-446655440001',
-              name: 'Admin',
-              description: 'System Administrator',
+              name: 'Administrator',
+              description: 'System Administrator with full access',
               level: 1,
               isActive: true,
               createdAt: new Date(),
@@ -174,15 +174,99 @@ export const UserService = {
             updatedAt: new Date()
           },
           {
+            id: '550e8400-e29b-41d4-a716-446655440011',
+            email: 'cpg@esigma.com',
+            name: 'CPG Officer',
+            roleId: '550e8400-e29b-41d4-a716-446655440002',
+            role: { 
+              id: '550e8400-e29b-41d4-a716-446655440002', 
+              name: 'CPG User', 
+              description: 'Central Planning Group User', 
+              level: 2, 
+              isActive: true, 
+              createdAt: new Date(), 
+              updatedAt: new Date() 
+            },
+            isActive: true,
+            jurisdiction: 'Central Planning Group',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440012',
+            email: 'zo@esigma.com',
+            name: 'Zonal Officer',
+            roleId: '550e8400-e29b-41d4-a716-446655440003',
+            role: { 
+              id: '550e8400-e29b-41d4-a716-446655440003', 
+              name: 'ZO User', 
+              description: 'Zonal Office User', 
+              level: 3, 
+              isActive: true, 
+              createdAt: new Date(), 
+              updatedAt: new Date() 
+            },
+            isActive: true,
+            jurisdiction: 'North Zone',
+            zone: 'North Zone',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440013',
+            email: 'ro@esigma.com',
+            name: 'Regional Officer',
+            roleId: '550e8400-e29b-41d4-a716-446655440004',
+            role: { 
+              id: '550e8400-e29b-41d4-a716-446655440004', 
+              name: 'RO User', 
+              description: 'Regional Office User', 
+              level: 4, 
+              isActive: true, 
+              createdAt: new Date(), 
+              updatedAt: new Date() 
+            },
+            isActive: true,
+            jurisdiction: 'Delhi Region',
+            zone: 'North Zone',
+            region: 'Delhi Region',
+            parentId: '550e8400-e29b-41d4-a716-446655440012',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
             id: '550e8400-e29b-41d4-a716-446655440014',
+            email: 'supervisor@esigma.com',
+            name: 'Field Supervisor',
+            roleId: '550e8400-e29b-41d4-a716-446655440005',
+            role: { 
+              id: '550e8400-e29b-41d4-a716-446655440005', 
+              name: 'Supervisor', 
+              description: 'Field Supervisor', 
+              level: 5, 
+              isActive: true, 
+              createdAt: new Date(), 
+              updatedAt: new Date() 
+            },
+            isActive: true,
+            jurisdiction: 'Central Delhi District',
+            zone: 'North Zone',
+            region: 'Delhi Region',
+            district: 'Central Delhi',
+            parentId: '550e8400-e29b-41d4-a716-446655440013',
+            createdAt: new Date(),
+            updatedAt: new Date()
+          },
+          {
+            id: '550e8400-e29b-41d4-a716-446655440015',
             email: 'enumerator@esigma.com',
             name: 'Field Enumerator',
-            roleId: '550e8400-e29b-41d4-a716-446655440005',
+            roleId: '550e8400-e29b-41d4-a716-446655440006',
             role: {
-              id: '550e8400-e29b-41d4-a716-446655440005',
+              id: '550e8400-e29b-41d4-a716-446655440006',
               name: 'Enumerator',
-              description: 'Field Enumerator',
-              level: 5,
+              description: 'Field Enumerator (Lowest Level)',
+              level: 6,
               isActive: true,
               createdAt: new Date(),
               updatedAt: new Date()
@@ -192,6 +276,7 @@ export const UserService = {
             zone: 'North Zone',
             region: 'Delhi Region',
             district: 'Central Delhi',
+            parentId: '550e8400-e29b-41d4-a716-446655440014',
             employeeId: 'ENU001',
             phoneNumber: '+91-9876543214',
             createdAt: new Date(),

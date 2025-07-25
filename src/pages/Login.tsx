@@ -174,14 +174,16 @@ export function Login() {
                     <p className="text-xs text-gray-600">{cred.email}</p>
                     <p className="text-xs text-gray-500">Level {
                       cred.role === 'Admin' ? '1' :
-                      cred.role === 'ZO User' ? '2' :
-                      cred.role === 'RO User' ? '3' :
-                      cred.role === 'Supervisor' ? '4' : '5'
+                      cred.role === 'CPG User' ? '2' :
+                      cred.role === 'ZO User' ? '3' :
+                      cred.role === 'RO User' ? '4' :
+                      cred.role === 'Supervisor' ? '5' : '6'
                     } • {
                       cred.role === 'Admin' ? 'Full System Access' :
+                      cred.role === 'CPG User' ? 'Central Planning' :
                       cred.role === 'ZO User' ? 'Zone Management' :
                       cred.role === 'RO User' ? 'Regional Management' :
-                      cred.role === 'Supervisor' ? 'Team Management' : 'Test Taking'
+                      cred.role === 'Supervisor' ? 'Team Management' : 'Test Taking (Lowest Level)'
                     }</p>
                   </div>
                   <div className="text-xs text-gray-400">
@@ -195,18 +197,19 @@ export function Login() {
               <h5 className="text-sm font-semibold text-yellow-900 mb-2">🔑 Login Credentials</h5>
               <div className="text-xs text-yellow-800 space-y-1">
                 <p><strong>Password for all accounts:</strong> <span className="font-mono bg-yellow-100 px-1 rounded">password123</span></p>
-                <p><strong>Employee IDs:</strong> ADM001, ZO001, RO001, SUP001, ENU001</p>
-                <p><strong>Phone Numbers:</strong> +91-9876543210 to +91-9876543214</p>
+                <p><strong>Employee IDs:</strong> ADM001, CPG001, ZO001, RO001, SUP001, ENU001-003</p>
+                <p><strong>Phone Numbers:</strong> +91-9876543210 to +91-9876543217</p>
               </div>
             </div>
             
             <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
               <h5 className="text-sm font-semibold text-purple-900 mb-2">🏢 Organizational Structure</h5>
               <div className="text-xs text-purple-800 space-y-1">
-                <p><strong>Zone:</strong> North Zone (ZO, RO, Supervisor, Enumerator)</p>
+                <p><strong>Hierarchy:</strong> Administrator → CPG User → ZO User → RO User → Supervisor → Enumerator</p>
+                <p><strong>Zone:</strong> North Zone (ZO, RO, Supervisor, Enumerators)</p>
                 <p><strong>Region:</strong> Delhi Region (RO, Supervisor, Enumerator)</p>
-                <p><strong>District:</strong> Central Delhi (Supervisor, Enumerator)</p>
-                <p><strong>Hierarchy:</strong> Admin manages all → ZO manages zones → RO manages regions → Supervisors manage teams</p>
+                <p><strong>District:</strong> Central Delhi (Supervisor, Enumerators)</p>
+                <p><strong>Team Structure:</strong> 1 Supervisor manages 3 Enumerators</p>
               </div>
             </div>
           </div>
