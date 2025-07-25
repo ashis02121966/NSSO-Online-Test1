@@ -45,26 +45,21 @@ export function AvailableTests() {
       // First check if user is eligible for this test
       const selectedTest = availableTests.find(test => test.surveyId === surveyId);
       if (!selectedTest || !selectedTest.isEligible || selectedTest.attemptsLeft === 0) {
-        alert('You are not eligible to take this test or have no attempts remaining.');
+        alert(`You are not eligible to take this test or have no attempts remaining. Attempts left: ${selectedTest?.attemptsLeft || 0}`);
         return;
       }
 
       // Create test session via API
       const sessionResponse = await testApi.createTestSession(surveyId);
       if (!sessionResponse.success || !sessionResponse.data) {
-        throw new Error(sessionResponse.message || 'Failed to create test session');
+        alert(`Failed to start test: ${sessionResponse.message}`);
+        return;
       }
 
       const sessionId = sessionResponse.data.id;
       
       // Navigate to test interface with the session ID
-      navigate(`/test/${sessionId}`, { 
-        state: { 
-          surveyId: surveyId,
-          startTime: sessionResponse.data.startTime,
-          sessionData: sessionResponse.data
-        }
-      });
+      navigate(`/test/${sessionId}`);
     } catch (error) {
       console.error('Failed to start test:', error);
       alert(`Failed to start test: ${error instanceof Error ? error.message : 'Please try again.'}`);

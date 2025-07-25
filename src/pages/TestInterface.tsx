@@ -123,17 +123,7 @@ export function TestInterface() {
   useEffect(() => {
     if (sessionId) {
       console.log('Loading test session with ID:', sessionId);
-      // Check if we have session data from navigation state
-      if (location.state?.sessionData) {
-        console.log('Using session data from navigation state');
-        const sessionData = location.state.sessionData;
-        setSession(sessionData);
-        setTimeRemaining(sessionData.timeRemaining);
-        loadQuestionsForSurvey(sessionData.surveyId);
-      } else {
-        console.log('Loading session from API');
-        loadTestSession();
-      }
+      loadTestSession();
     }
   }, [sessionId]);
 
@@ -169,33 +159,25 @@ export function TestInterface() {
         throw new Error('Survey ID not provided');
       }
       
-      console.log('Loading questions for survey:', surveyId);
-      
       const questionsResponse = await testApi.getQuestionsForSurvey(surveyId);
       if (questionsResponse.success && questionsResponse.data && questionsResponse.data.length > 0) {
         console.log('Questions loaded successfully:', questionsResponse.data.length);
         setQuestions(questionsResponse.data);
         
-        // Extract section information from the loaded questions
-        const sections: Record<string, { title: string; order: number }> = {};
-        questionsResponse.data.forEach(question => {
-          const sectionOrder = Math.floor(question.order / 1000);
-          sections[question.sectionId] = {
-            title: `Section ${sectionOrder}`,
-            order: sectionOrder
-          };
-        });
-        setSectionInfo(sections);
+        // Set current question index from session if available
+        if (session && session.currentQuestionIndex) {
+          setCurrentQuestionIndex(session.currentQuestionIndex);
+        }
       } else {
         const errorMessage = questionsResponse.message || 'Failed to load questions';
         console.error('Failed to load questions:', errorMessage);
-        alert(`Error loading test questions:\n\n${errorMessage}\n\nPossible solutions:\n1. Check your internet connection\n2. Verify Supabase configuration in .env file\n3. Ensure questions exist for this survey\n4. Contact your administrator if the problem persists`);
+        alert(`Error loading test questions: ${errorMessage}`);
         navigate('/available-tests');
         return;
       }
     } catch (error) {
       console.error('Failed to load questions:', error);
-      alert(`Network error loading test questions:\n\n${error instanceof Error ? error.message : 'Unknown error'}\n\nThis usually indicates:\n• Internet connection issues\n• Supabase configuration problems\n• Server connectivity issues\n\nPlease check your connection and try again.`);
+      alert(`Failed to load questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
       navigate('/available-tests');
     } finally {
       setIsLoading(false);
@@ -207,44 +189,57 @@ export function TestInterface() {
       setIsLoading(true);
       console.log('Loading test session for ID:', sessionId);
       
-      // If no session data in navigation state, try to load from API
-      if (location.state?.surveyId) {
-        // Use session data from navigation state
-        const surveyId = location.state.surveyId;
-        const startTime = location.state.startTime || new Date().toISOString();
-        
-        const newSession: TestSession = {
-          id: sessionId!,
-          userId: '5',
-          surveyId: surveyId,
-          startTime: new Date(startTime),
-          timeRemaining: 35 * 60, // 35 minutes
-          currentQuestionIndex: 0,
-          answers: [],
-          status: 'in_progress',
-          attemptNumber: 1
-        };
-        
-        setSession(newSession);
-        setTimeRemaining(newSession.timeRemaining);
-        
-        // Load questions after session is set
-        loadQuestionsForSurvey(surveyId);
-      } else {
-        // Try to load session from API
-        console.log('Loading session from API');
-        const sessionResponse = await testApi.getSession(sessionId!);
-        if (sessionResponse.success && sessionResponse.data) {
-          setSession(sessionResponse.data);
-          setTimeRemaining(sessionResponse.data.timeRemaining);
-          loadQuestionsForSurvey(sessionResponse.data.surveyId);
-        } else {
-          throw new Error('No session data available');
-        }
+      if (!supabase) {
+        throw new Error('Database not configured');
       }
+
+      // Load session from database
+      const { data: sessionData, error: sessionError } = await supabase
+        .from('test_sessions')
+        .select('*')
+        .eq('id', sessionId!)
+        .single();
+
+      if (sessionError || !sessionData) {
+        console.error('Failed to load session:', sessionError);
+        throw new Error('Session not found or expired');
+      }
+
+      const session: TestSession = {
+        id: sessionData.id,
+        userId: sessionData.user_id,
+        surveyId: sessionData.survey_id,
+        startTime: new Date(sessionData.start_time),
+        timeRemaining: sessionData.time_remaining,
+        currentQuestionIndex: sessionData.current_question_index,
+        answers: [],
+        status: sessionData.session_status as any,
+        attemptNumber: sessionData.attempt_number
+      };
+
+      setSession(session);
+      setTimeRemaining(session.timeRemaining);
+      setCurrentQuestionIndex(session.currentQuestionIndex);
+
+      // Load existing answers
+      const { data: existingAnswers } = await supabase
+        .from('test_answers')
+        .select('*')
+        .eq('session_id', sessionId!);
+
+      if (existingAnswers) {
+        const answersMap: Record<string, string[]> = {};
+        existingAnswers.forEach(answer => {
+          answersMap[answer.question_id] = answer.selected_options || [];
+        });
+        setAnswers(answersMap);
+      }
+
+      // Load questions for the survey
+      await loadQuestionsForSurvey(session.surveyId);
     } catch (error) {
       console.error('Failed to load test session:', error);
-      alert('Failed to load test session. Redirecting to available tests.');
+      alert(`Failed to load test session: ${error instanceof Error ? error.message : 'Unknown error'}`);
       navigate('/available-tests');
     } finally {
       setIsLoading(false);

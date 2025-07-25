@@ -178,43 +178,17 @@ export const testApi = {
   async createTestSession(surveyId: string): Promise<ApiResponse<TestSession>> {
     console.log('testApi: Creating test session for survey:', surveyId);
     
-    if (isDemoMode || !supabase) {
-      // Generate UUID-formatted session ID for demo mode
-      const demoSessionId = generateUUID();
-      console.log('testApi: Creating demo session with UUID:', demoSessionId);
-      
-      const userData = localStorage.getItem('userData');
-      const currentUser = userData ? JSON.parse(userData) : null;
-      const fallbackUserId = currentUser?.id || '550e8400-e29b-41d4-a716-446655440014';
-      
-      // Create demo test session directly since TestService may not be available
-      const demoSession: TestSession = {
-        id: demoSessionId,
-        userId: fallbackUserId,
-        surveyId: surveyId,
-        startTime: new Date(),
-        timeRemaining: 35 * 60, // 35 minutes in seconds
-        currentQuestionIndex: 0,
-        answers: [],
-        status: 'in_progress',
-        attemptNumber: 1
-      };
-      
+    if (!supabase) {
       return {
-        success: true,
-        data: demoSession,
-        message: 'Demo test session created successfully'
+        success: false,
+        message: 'Database not configured. Please check your Supabase configuration.'
       };
     }
     
-    // For production mode with Supabase
     const userData = localStorage.getItem('userData');
     const currentUser = userData ? JSON.parse(userData) : null;
     
-    console.log('testApi: Using user ID for session creation:', currentUser?.id);
-    
     if (!currentUser) {
-      console.log('testApi: No authenticated user found in localStorage');
       return {
         success: false,
         message: 'User not authenticated. Please log in to start the test.'
@@ -222,6 +196,49 @@ export const testApi = {
     }
     
     try {
+      // Check how many attempts the user has made for this survey
+      const { data: existingAttempts, error: attemptsError } = await supabase
+        .from('test_sessions')
+        .select('attempt_number')
+        .eq('user_id', currentUser.id)
+        .eq('survey_id', surveyId)
+        .order('attempt_number', { ascending: false })
+        .limit(1);
+      
+      if (attemptsError) {
+        console.error('testApi: Error checking existing attempts:', attemptsError);
+        return {
+          success: false,
+          message: `Failed to check existing attempts: ${attemptsError.message}`
+        };
+      }
+      
+      // Get survey details to check max attempts
+      const { data: survey, error: surveyError } = await supabase
+        .from('surveys')
+        .select('max_attempts, duration')
+        .eq('id', surveyId)
+        .single();
+      
+      if (surveyError) {
+        console.error('testApi: Error fetching survey:', surveyError);
+        return {
+          success: false,
+          message: `Failed to fetch survey details: ${surveyError.message}`
+        };
+      }
+      
+      const nextAttemptNumber = existingAttempts && existingAttempts.length > 0 
+        ? existingAttempts[0].attempt_number + 1 
+        : 1;
+      
+      // Check if user has exceeded max attempts
+      if (nextAttemptNumber > survey.max_attempts) {
+        return {
+          success: false,
+          message: `You have exceeded the maximum number of attempts (${survey.max_attempts}) for this test.`
+        };
+      }
       
       // Create test session in Supabase
       const { data: sessionData, error: sessionError } = await supabase!
@@ -229,10 +246,10 @@ export const testApi = {
         .insert({
           user_id: currentUser.id,
           survey_id: surveyId,
-          time_remaining: 35 * 60,
+          time_remaining: survey.duration * 60,
           current_question_index: 0,
           session_status: 'in_progress',
-          attempt_number: 1
+          attempt_number: nextAttemptNumber
         })
         .select()
         .single();
@@ -289,63 +306,29 @@ export const testApi = {
         };
       }
       
-      // Test Supabase connection first
-      try {
-        const { error: connectionError } = await supabase.from('roles').select('count', { count: 'exact', head: true });
-        if (connectionError) {
-          console.error('testApi: Supabase connection test failed:', connectionError);
-          return {
-            success: false,
-            message: `Database connection failed: ${connectionError.message}. Please check your Supabase configuration and network connection.`,
-            data: []
-          };
-        }
-      } catch (networkError) {
-        console.error('testApi: Network error connecting to Supabase:', networkError);
-        return {
-          success: false,
-          message: 'Network error: Cannot connect to database. Please check your internet connection and Supabase configuration.',
-          data: []
-        };
-      }
-      
       console.log('testApi: Fetching all questions for survey from database');
       
       // Get all questions for the survey with their sections and options
-      let questions, error;
-      try {
-        const result = await supabase
-          .from('questions')
-          .select(`
-            *,
-            options:question_options(*),
-            section:survey_sections!inner(
-              id,
-              title,
-              section_order,
-              survey_id
-            )
-          `)
-          .eq('section.survey_id', surveyId)
-          .order('section_order', { foreignTable: 'survey_sections', ascending: true })
-          .order('question_order', { ascending: true });
-        
-        questions = result.data;
-        error = result.error;
-      } catch (fetchError) {
-        console.error('testApi: Network fetch error:', fetchError);
-        return {
-          success: false,
-          message: 'Network error: Failed to fetch questions from database. Please check your internet connection.',
-          data: []
-        };
-      }
+      const { data: questions, error } = await supabase
+        .from('questions')
+        .select(`
+          *,
+          question_options(*),
+          survey_sections!inner(
+            id,
+            title,
+            section_order,
+            survey_id
+          )
+        `)
+        .eq('survey_sections.survey_id', surveyId)
+        .order('question_order', { ascending: true });
 
       if (error) {
         console.error('testApi: Database error:', error);
         return {
           success: false,
-          message: `Database error: ${error.message}. Please check your Supabase configuration and RLS policies.`,
+          message: `Database error: ${error.message}`,
           data: []
         };
       }
@@ -354,7 +337,7 @@ export const testApi = {
         console.log('testApi: No questions found for survey:', surveyId);
         return {
           success: false,
-          message: `No questions found for survey. Please ensure questions have been added to this survey in the Question Bank.`,
+          message: 'No questions found for this survey. Please ensure questions have been added to this survey in the Question Bank.',
           data: []
         };
       }
@@ -370,15 +353,15 @@ export const testApi = {
         complexity: question.complexity,
         points: question.points,
         explanation: question.explanation,
-        order: (question.section.section_order * 1000) + question.question_order,
-        options: question.options
+        order: (question.survey_sections.section_order * 1000) + question.question_order,
+        options: question.question_options
           .sort((a: any, b: any) => a.option_order - b.option_order)
           .map((opt: any) => ({
             id: opt.id,
             text: opt.text,
             isCorrect: opt.is_correct
           })),
-        correctAnswers: question.options
+        correctAnswers: question.question_options
           .filter((opt: any) => opt.is_correct)
           .map((opt: any) => opt.id),
         createdAt: new Date(question.created_at),
@@ -388,13 +371,13 @@ export const testApi = {
       return {
         success: true,
         data: transformedQuestions,
-        message: `Loaded ${transformedQuestions.length} questions from ${new Set(questions.map(q => q.section.id)).size} sections`
+        message: `Loaded ${transformedQuestions.length} questions successfully`
       };
     } catch (error) {
       console.error('testApi: Error in getQuestionsForSurvey:', error);
       return {
         success: false,
-        message: `Network or configuration error: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your Supabase configuration and internet connection.`,
+        message: `Error loading questions: ${error instanceof Error ? error.message : 'Unknown error'}`,
         data: []
       };
     }
@@ -834,66 +817,7 @@ export const enumeratorDashboardApi = {
       console.log('enumeratorDashboardApi: Fetching enumerator dashboard data');
       
       if (!supabase) {
-        console.log('enumeratorDashboardApi: Supabase not configured, returning demo data');
-        return {
-          success: true,
-          data: {
-            availableTests: [
-              {
-                surveyId: '550e8400-e29b-41d4-a716-446655440020',
-                title: 'Digital Literacy Assessment',
-                description: 'Comprehensive assessment of digital skills and computer literacy for field staff',
-                targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                duration: 35,
-                totalQuestions: 30,
-                passingScore: 70,
-                attemptsLeft: 3,
-                maxAttempts: 3,
-                isEligible: true
-              },
-              {
-                surveyId: '550e8400-e29b-41d4-a716-446655440021',
-                title: 'Data Collection Procedures',
-                description: 'Assessment of field data collection methods and procedures',
-                targetDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000),
-                duration: 40,
-                totalQuestions: 25,
-                passingScore: 75,
-                attemptsLeft: 2,
-                maxAttempts: 2,
-                isEligible: true
-              },
-              {
-                surveyId: '550e8400-e29b-41d4-a716-446655440022',
-                title: 'Survey Methodology Training',
-                description: 'Training assessment on survey methodology and best practices',
-                targetDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-                duration: 30,
-                totalQuestions: 20,
-                passingScore: 80,
-                attemptsLeft: 3,
-                maxAttempts: 3,
-                isEligible: true
-              }
-            ],
-            completedTests: [],
-            upcomingTests: [
-              {
-                surveyId: '550e8400-e29b-41d4-a716-446655440020',
-                title: 'Digital Literacy Assessment',
-                targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-                daysLeft: 30,
-                isOverdue: false
-              }
-            ],
-            certificates: [],
-            overallProgress: 0,
-            averageScore: 0,
-            totalAttempts: 0,
-            passedTests: 0
-          },
-          message: 'Enumerator Dashboard data fetched successfully (Demo Mode)'
-        };
+        return { success: false, message: 'Database not configured' };
       }
 
       // Get current user
@@ -915,18 +839,39 @@ export const enumeratorDashboardApi = {
         throw surveysError;
       }
 
-      const availableTests = surveys?.map(survey => ({
-        surveyId: survey.id,
-        title: survey.title,
-        description: survey.description,
-        targetDate: new Date(survey.target_date),
-        duration: survey.duration,
-        totalQuestions: survey.total_questions,
-        passingScore: survey.passing_score,
-        attemptsLeft: survey.max_attempts,
-        maxAttempts: survey.max_attempts,
-        isEligible: true
-      })) || [];
+      // Get user's attempt counts for each survey
+      const { data: userAttempts, error: attemptsError } = await supabase
+        .from('test_sessions')
+        .select('survey_id, attempt_number')
+        .eq('user_id', currentUser.id);
+
+      if (attemptsError) {
+        console.error('enumeratorDashboardApi: Error fetching user attempts:', attemptsError);
+      }
+
+      // Calculate attempts left for each survey
+      const attemptCounts = userAttempts?.reduce((acc, session) => {
+        acc[session.survey_id] = Math.max(acc[session.survey_id] || 0, session.attempt_number);
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const availableTests = surveys?.map(survey => {
+        const attemptsUsed = attemptCounts[survey.id] || 0;
+        const attemptsLeft = survey.max_attempts - attemptsUsed;
+        
+        return {
+          surveyId: survey.id,
+          title: survey.title,
+          description: survey.description,
+          targetDate: new Date(survey.target_date),
+          duration: survey.duration,
+          totalQuestions: survey.total_questions,
+          passingScore: survey.passing_score,
+          attemptsLeft: Math.max(0, attemptsLeft),
+          maxAttempts: survey.max_attempts,
+          isEligible: attemptsLeft > 0
+        };
+      }).filter(test => test.isEligible) || [];
 
       // Get completed tests
       const { data: results, error: resultsError } = await supabase
@@ -940,7 +885,6 @@ export const enumeratorDashboardApi = {
 
       if (resultsError) {
         console.error('enumeratorDashboardApi: Error fetching results:', resultsError);
-        // Continue without results
       }
 
       const completedTests = results?.map(result => ({
@@ -965,7 +909,6 @@ export const enumeratorDashboardApi = {
 
       if (certificatesError) {
         console.error('enumeratorDashboardApi: Error fetching certificates:', certificatesError);
-        // Continue without certificates
       }
 
       const userCertificates = certificates?.map(cert => ({
@@ -1009,33 +952,9 @@ export const enumeratorDashboardApi = {
       };
     } catch (error) {
       console.error('enumeratorDashboardApi: Error fetching dashboard data:', error);
-      // Return demo data as fallback
       return {
-        success: true,
-        data: {
-          availableTests: [
-            {
-              surveyId: '550e8400-e29b-41d4-a716-446655440020',
-              title: 'Digital Literacy Assessment',
-              description: 'Comprehensive assessment of digital skills and computer literacy for field staff',
-              targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-              duration: 35,
-              totalQuestions: 30,
-              passingScore: 70,
-              attemptsLeft: 3,
-              maxAttempts: 3,
-              isEligible: true
-            }
-          ],
-          completedTests: [],
-          upcomingTests: [],
-          certificates: [],
-          overallProgress: 0,
-          averageScore: 0,
-          totalAttempts: 0,
-          passedTests: 0
-        },
-        message: 'Enumerator Dashboard data fetched successfully (demo mode fallback)'
+        success: false,
+        message: `Failed to fetch dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }
