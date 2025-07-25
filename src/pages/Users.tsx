@@ -18,6 +18,11 @@ export function Users() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [error, setError] = useState('');
+  const [formErrors, setFormErrors] = useState({
+    name: '',
+    email: '',
+    roleId: ''
+  });
   const [formData, setFormData] = useState({
     name: '',
     email: '',
