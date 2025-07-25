@@ -306,35 +306,57 @@ export const testApi = {
         };
       }
       
-      console.log('testApi: Fetching all questions for survey from database');
+      console.log('testApi: First, fetching sections for survey from database');
       
-      // Get all questions for the survey with their sections and options
-      const { data: questions, error } = await supabase
+      // Step 1: Get all section IDs for this survey
+      const { data: sections, error: sectionsError } = await supabase
+        .from('survey_sections')
+        .select('id, title, section_order')
+        .eq('survey_id', surveyId)
+        .order('section_order', { ascending: true });
+
+      if (sectionsError) {
+        console.error('testApi: Database error fetching sections:', sectionsError);
+        return {
+          success: false,
+          message: `Database error: ${sectionsError.message}`,
+          data: []
+        };
+      }
+
+      if (!sections || sections.length === 0) {
+        console.log('testApi: No sections found for survey:', surveyId);
+        return {
+          success: false,
+          message: 'No sections found for this survey. Please ensure sections have been created for this survey.',
+          data: []
+        };
+      }
+
+      const sectionIds = sections.map(section => section.id);
+      console.log('testApi: Found', sections.length, 'sections, now fetching questions for section IDs:', sectionIds);
+
+      // Step 2: Get all questions for these sections with their options
+      const { data: questions, error: questionsError } = await supabase
         .from('questions')
         .select(`
           *,
-          question_options(*),
-          survey_sections!inner(
-            id,
-            title,
-            section_order,
-            survey_id
-          )
+          question_options(*)
         `)
-        .eq('survey_sections.survey_id', surveyId)
+        .in('section_id', sectionIds)
         .order('question_order', { ascending: true });
 
-      if (error) {
-        console.error('testApi: Database error:', error);
+      if (questionsError) {
+        console.error('testApi: Database error fetching questions:', questionsError);
         return {
           success: false,
-          message: `Database error: ${error.message}`,
+          message: `Database error: ${questionsError.message}`,
           data: []
         };
       }
 
       if (!questions || questions.length === 0) {
-        console.log('testApi: No questions found for survey:', surveyId);
+        console.log('testApi: No questions found for sections:', sectionIds);
         return {
           success: false,
           message: 'No questions found for this survey. Please ensure questions have been added to this survey in the Question Bank.',
@@ -343,6 +365,12 @@ export const testApi = {
       }
 
       console.log('testApi: Successfully fetched', questions.length, 'questions from database');
+
+      // Create a map of sections for easy lookup
+      const sectionMap = sections.reduce((acc, section) => {
+        acc[section.id] = section;
+        return acc;
+      }, {} as Record<string, any>);
 
       // Transform database questions to match our Question interface
       const transformedQuestions = questions.map((question, globalIndex) => ({
@@ -353,7 +381,7 @@ export const testApi = {
         complexity: question.complexity,
         points: question.points,
         explanation: question.explanation,
-        order: (question.survey_sections.section_order * 1000) + question.question_order,
+        order: (sectionMap[question.section_id]?.section_order * 1000) + question.question_order,
         options: question.question_options
           .sort((a: any, b: any) => a.option_order - b.option_order)
           .map((opt: any) => ({
