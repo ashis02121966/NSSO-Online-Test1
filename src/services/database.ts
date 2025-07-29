@@ -164,6 +164,7 @@ export class UserService {
       console.log('UserService: Fetching users from database');
       
       if (!supabase || !supabaseAdmin) {
+        console.error('DashboardService: Supabase clients not configured');
         return { success: false, message: 'Database not configured', data: [] };
       }
 
@@ -896,45 +897,89 @@ export class TestService {
 export class DashboardService {
   static async getDashboardData(): Promise<ApiResponse<any>> {
     try {
-      if (!supabase || !supabaseAdmin) {
+          message: 'Database not configured. Please check your Supabase environment variables.',
+          data: {
+            totalUsers: 0,
+            totalSurveys: 0,
+            totalAttempts: 0,
+            averageScore: 0,
+            passRate: 0,
+            recentActivity: [],
+            performanceByRole: [],
+            performanceBySurvey: [],
+            monthlyTrends: []
+          }
         return { success: false, message: 'Database not configured' };
       }
 
+      console.log('DashboardService: Supabase clients available, fetching data...');
+
       // Get basic counts
-      const { count: usersCount } = await supabaseAdmin
+      console.log('DashboardService: Fetching user count...');
+      const { count: usersCount, error: usersError } = await supabaseAdmin
         .from('users')
         .select('*', { count: 'exact', head: true });
 
-      const { count: surveysCount } = await supabaseAdmin
+      if (usersError) {
+        console.error('DashboardService: Error fetching users count:', usersError);
+        throw new Error(`Failed to fetch users: ${usersError.message}`);
+      }
+
+      console.log('DashboardService: Fetching surveys count...');
+      const { count: surveysCount, error: surveysError } = await supabaseAdmin
         .from('surveys')
         .select('*', { count: 'exact', head: true });
 
-      const { count: attemptsCount } = await supabaseAdmin
+      if (surveysError) {
+        console.error('DashboardService: Error fetching surveys count:', surveysError);
+        throw new Error(`Failed to fetch surveys: ${surveysError.message}`);
+      }
+
+      console.log('DashboardService: Fetching test sessions count...');
+      const { count: attemptsCount, error: attemptsError } = await supabaseAdmin
         .from('test_sessions')
         .select('*', { count: 'exact', head: true });
 
+      if (attemptsError) {
+        console.error('DashboardService: Error fetching test sessions count:', attemptsError);
+        throw new Error(`Failed to fetch test sessions: ${attemptsError.message}`);
+      }
+
+      console.log('DashboardService: Basic counts fetched successfully');
+      console.log('Users:', usersCount, 'Surveys:', surveysCount, 'Attempts:', attemptsCount);
+
       // Get test results for calculations
+      console.log('DashboardService: Fetching test results...');
       const { data: testResults, error: resultsError } = await supabaseAdmin
         .from('test_results')
         .select('*');
 
       if (resultsError) {
         console.error('Dashboard: Error fetching test results:', resultsError);
+        // Don't throw here, continue with empty results
+        console.log('DashboardService: Continuing with empty test results');
       }
+
+      console.log('DashboardService: Test results count:', testResults?.length || 0);
 
       // Calculate average score and pass rate
       let averageScore = 0;
       let passRate = 0;
       
       if (testResults && testResults.length > 0) {
+        console.log('DashboardService: Calculating scores and pass rates...');
         const totalScore = testResults.reduce((sum, result) => sum + (result.score || 0), 0);
         averageScore = totalScore / testResults.length;
         
         const passedTests = testResults.filter(result => result.is_passed).length;
         passRate = (passedTests / testResults.length) * 100;
+        console.log('DashboardService: Average score:', averageScore, 'Pass rate:', passRate);
+      } else {
+        console.log('DashboardService: No test results found, using default values');
       }
 
       // Get performance by role
+      console.log('DashboardService: Fetching performance by role...');
       const { data: rolePerformance, error: roleError } = await supabaseAdmin
         .from('test_results')
         .select(`
@@ -946,7 +991,10 @@ export class DashboardService {
 
       if (roleError) {
         console.error('Dashboard: Error fetching role performance:', roleError);
+        // Continue with empty data
       }
+
+      console.log('DashboardService: Role performance data count:', rolePerformance?.length || 0);
 
       const performanceByRole = rolePerformance ? rolePerformance.reduce((acc: any[], result: any) => {
         const roleName = result.user?.role?.name || 'Unknown';
@@ -975,6 +1023,7 @@ export class DashboardService {
       })) : [];
 
       // Get performance by survey
+      console.log('DashboardService: Fetching performance by survey...');
       const { data: surveyPerformance, error: surveyError } = await supabaseAdmin
         .from('test_results')
         .select(`
@@ -984,7 +1033,10 @@ export class DashboardService {
 
       if (surveyError) {
         console.error('Dashboard: Error fetching survey performance:', surveyError);
+        // Continue with empty data
       }
+
+      console.log('DashboardService: Survey performance data count:', surveyPerformance?.length || 0);
 
       const performanceBySurvey = surveyPerformance ? surveyPerformance.reduce((acc: any[], result: any) => {
         const surveyTitle = result.survey?.title || 'Unknown Survey';
@@ -1013,6 +1065,7 @@ export class DashboardService {
       })) : [];
 
       // Get recent activity
+      console.log('DashboardService: Fetching recent activity...');
       const { data: recentActivity, error: activityError } = await supabaseAdmin
         .from('activity_logs')
         .select(`
@@ -1024,7 +1077,10 @@ export class DashboardService {
 
       if (activityError) {
         console.error('Dashboard: Error fetching recent activity:', activityError);
+        // Continue with empty data
       }
+
+      console.log('DashboardService: Recent activity count:', recentActivity?.length || 0);
 
       const formattedActivity = recentActivity ? recentActivity.map((activity: any) => ({
         id: activity.id,
@@ -1035,6 +1091,7 @@ export class DashboardService {
       })) : [];
 
       // Get monthly trends (last 6 months)
+      console.log('DashboardService: Fetching monthly trends...');
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
@@ -1045,7 +1102,10 @@ export class DashboardService {
 
       if (monthlyError) {
         console.error('Dashboard: Error fetching monthly trends:', monthlyError);
+        // Continue with empty data
       }
+
+      console.log('DashboardService: Monthly data count:', monthlyData?.length || 0);
 
       const monthlyTrends = monthlyData ? monthlyData.reduce((acc: any[], result: any) => {
         const month = new Date(result.completed_at).toLocaleString('default', { month: 'short', year: 'numeric' });
@@ -1080,10 +1140,27 @@ export class DashboardService {
         monthlyTrends
       };
 
+      console.log('DashboardService: Dashboard data compiled successfully');
       return { success: true, data: dashboardData, message: 'Dashboard data fetched successfully' };
     } catch (error) {
       console.error('DashboardService: Error:', error);
-      return { success: false, message: 'Failed to fetch dashboard data' };
+      
+      // Return fallback data instead of failing completely
+      return { 
+        success: false, 
+        message: `Failed to fetch dashboard data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        data: {
+          totalUsers: 0,
+          totalSurveys: 0,
+          totalAttempts: 0,
+          averageScore: 0,
+          passRate: 0,
+          recentActivity: [],
+          performanceByRole: [],
+          performanceBySurvey: [],
+          monthlyTrends: []
+        }
+      };
     }
   }
 }
