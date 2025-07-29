@@ -37,7 +37,7 @@ export class AuthService {
       try {
         const rpcResult = await supabase
           .rpc('get_user_with_role', { user_id: authData.user.id })
-          .maybeSingle();
+          .single();
         userData = rpcResult.data;
         userError = rpcResult.error;
       } catch (rpcError) {
@@ -51,8 +51,8 @@ export class AuthService {
               role:roles(*)
             `)
             .eq('id', authData.user.id)
-            .limit(1);
-          userData = directResult.data;
+            .maybeSingle();
+          userData = directResult.data ? [directResult.data] : null;
           userError = directResult.error;
         } catch (directError) {
           console.log('Direct query failed, user profile not found');
