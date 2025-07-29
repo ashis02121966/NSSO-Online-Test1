@@ -899,22 +899,22 @@ export class DashboardService {
       }
 
       // Get basic counts
-      const { data: usersCount } = await supabase
+      const { count: usersCount } = await supabase
         .from('users')
-        .select('id', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true });
 
-      const { data: surveysCount } = await supabase
+      const { count: surveysCount } = await supabase
         .from('surveys')
-        .select('id', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true });
 
-      const { data: attemptsCount } = await supabase
+      const { count: attemptsCount } = await supabase
         .from('test_sessions')
-        .select('id', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true });
 
       const dashboardData = {
-        totalUsers: usersCount?.length || 0,
-        totalSurveys: surveysCount?.length || 0,
-        totalAttempts: attemptsCount?.length || 0,
+        totalUsers: usersCount || 0,
+        totalSurveys: surveysCount || 0,
+        totalAttempts: attemptsCount || 0,
         averageScore: 75.5,
         passRate: 82.3,
         recentActivity: [],
