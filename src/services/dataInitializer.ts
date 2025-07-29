@@ -362,6 +362,9 @@ export class DataInitializer {
         
         console.log(`Created auth user for ${user.email} with ID: ${authData.user.id}`);
         
+        // Hash the password for the custom users table
+        const hashedPassword = bcrypt.hashSync(user.password, 10);
+        
         // Create user profile in custom users table
         console.log(`Creating profile for ${user.email}`);
         const { error: profileError } = await supabase
@@ -369,6 +372,7 @@ export class DataInitializer {
           .insert({
             id: authData.user.id,
             email: user.email,
+            password_hash: hashedPassword,
             name: user.name,
             role_id: user.role_id,
             is_active: user.is_active,
