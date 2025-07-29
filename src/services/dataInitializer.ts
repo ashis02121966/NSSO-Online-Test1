@@ -14,6 +14,8 @@ export class DataInitializer {
         };
       }
       
+      console.log('Checking database connection...');
+      
       // Check if data already exists
       const { data: existingRoles, error: checkError } = await supabase
         .from('roles')
@@ -24,28 +26,46 @@ export class DataInitializer {
         console.error('Database connection failed:', checkError);
         return { 
           success: false, 
-          message: 'Failed to connect to database. Please check your Supabase configuration.' 
+          message: `Failed to connect to database: ${checkError.message}. Please check your Supabase configuration.`,
+          error: checkError
         };
       }
       
       if (existingRoles && existingRoles.length > 0) {
         console.log('Database already initialized');
-        return { success: true, message: 'Database already contains data' };
+        return { success: true, message: 'Database already contains data. You can login with existing credentials.' };
       }
 
+      console.log('Database is empty, starting initialization...');
+      
       // Initialize in order: roles -> users -> surveys -> sections -> questions -> settings
       await this.createRoles(supabase);
+      console.log('Roles created successfully');
+      
       await this.createUsers(supabaseAdmin);
+      console.log('Users created successfully');
+      
       await this.createSurveys(supabase);
+      console.log('Surveys created successfully');
+      
       await this.createSurveySections(supabase);
+      console.log('Survey sections created successfully');
+      
       await this.createQuestions(supabase);
+      console.log('Questions created successfully');
+      
       await this.createSystemSettings(supabase);
+      console.log('System settings created successfully');
       
       console.log('Database initialization completed successfully');
-      return { success: true, message: 'Database initialized successfully' };
+      return { success: true, message: 'Database initialized successfully with demo users and sample data!' };
     } catch (error) {
       console.error('Database initialization failed:', error);
-      return { success: false, message: 'Failed to initialize database', error };
+      return { 
+        success: false, 
+        message: `Failed to initialize database: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error 
+      };
     }
   }
 
@@ -130,7 +150,7 @@ export class DataInitializer {
   static async createUsers(supabaseClient: any) {
     console.log('Creating users...');
     
-    console.log('Creating users in Supabase Auth and custom user profiles...');
+    console.log('Creating users in Supabase Auth and custom user profiles using admin client...');
     
     const users = [
       {
@@ -147,107 +167,68 @@ export class DataInitializer {
         phone_number: '+91-9876543210'
       },
       {
-        email: 'cpg@esigma.com',
-        password: 'password123',
-        name: 'CPG Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440002',
-        is_active: true,
-        jurisdiction: 'Central Planning Group',
-        zone: null,
-        region: null,
-        district: null,
-        employee_id: 'CPG001',
-        phone_number: '+91-9876543211'
-      },
-      {
         email: 'zo@esigma.com',
         password: 'password123',
         name: 'Zonal Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440003',
+        role_id: '550e8400-e29b-41d4-a716-446655440002',
         is_active: true,
         jurisdiction: 'North Zone',
         zone: 'North Zone',
         region: null,
         district: null,
         employee_id: 'ZO001',
-        phone_number: '+91-9876543212'
+        phone_number: '+91-9876543211'
       },
       {
         email: 'ro@esigma.com',
         password: 'password123',
         name: 'Regional Officer',
-        role_id: '550e8400-e29b-41d4-a716-446655440004',
+        role_id: '550e8400-e29b-41d4-a716-446655440003',
         is_active: true,
         jurisdiction: 'Delhi Region',
         zone: 'North Zone',
         region: 'Delhi Region',
         district: null,
         employee_id: 'RO001',
-        phone_number: '+91-9876543213',
+        phone_number: '+91-9876543212',
         parent_id: null
       },
       {
         email: 'supervisor@esigma.com',
         password: 'password123',
         name: 'Field Supervisor',
-        role_id: '550e8400-e29b-41d4-a716-446655440005',
+        role_id: '550e8400-e29b-41d4-a716-446655440004',
         is_active: true,
         jurisdiction: 'Central Delhi District',
         zone: 'North Zone',
         region: 'Delhi Region',
         district: 'Central Delhi',
         employee_id: 'SUP001',
-        phone_number: '+91-9876543214',
+        phone_number: '+91-9876543213',
         parent_id: null
       },
       {
         email: 'enumerator@esigma.com',
         password: 'password123',
         name: 'Field Enumerator',
-        role_id: '550e8400-e29b-41d4-a716-446655440006',
+        role_id: '550e8400-e29b-41d4-a716-446655440005',
         is_active: true,
         jurisdiction: 'Block A, Central Delhi',
         zone: 'North Zone',
         region: 'Delhi Region',
         district: 'Central Delhi',
         employee_id: 'ENU001',
-        phone_number: '+91-9876543215',
-        parent_id: null
-      },
-      {
-        email: 'enumerator2@esigma.com',
-        password: 'password123',
-        name: 'Field Enumerator 2',
-        role_id: '550e8400-e29b-41d4-a716-446655440006',
-        is_active: true,
-        jurisdiction: 'Block B, Central Delhi',
-        zone: 'North Zone',
-        region: 'Delhi Region',
-        district: 'Central Delhi',
-        employee_id: 'ENU002',
-        phone_number: '+91-9876543216',
-        parent_id: null
-      },
-      {
-        email: 'enumerator3@esigma.com',
-        password: 'password123',
-        name: 'Field Enumerator 3',
-        role_id: '550e8400-e29b-41d4-a716-446655440006',
-        is_active: true,
-        jurisdiction: 'Block C, Central Delhi',
-        zone: 'North Zone',
-        region: 'Delhi Region',
-        district: 'Central Delhi',
-        employee_id: 'ENU003',
-        phone_number: '+91-9876543217',
+        phone_number: '+91-9876543214',
         parent_id: null
       }
     ];
 
-    console.log('Creating', users.length, 'users in Supabase Auth and custom users table...');
+    console.log(`Creating ${users.length} users in Supabase Auth and custom users table...`);
     
     for (const user of users) {
       try {
+        console.log(`Creating user: ${user.email}`);
+        
         // Create user in Supabase Auth
         const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
           email: user.email,
@@ -260,13 +241,13 @@ export class DataInitializer {
         
         if (authError) {
           console.error(`Failed to create auth user ${user.email}:`, authError);
-          continue;
+          throw new Error(`Auth creation failed for ${user.email}: ${authError.message}`);
         }
         
         console.log(`Created auth user for ${user.email} with ID: ${authData.user.id}`);
         
         // Create user profile in custom users table
-        const { error: profileError } = await supabaseClient
+        const { error: profileError } = await supabase
           .from('users')
           .insert({
             id: authData.user.id,
@@ -285,11 +266,13 @@ export class DataInitializer {
         
         if (profileError) {
           console.error(`Failed to create user profile ${user.email}:`, profileError);
+          throw new Error(`Profile creation failed for ${user.email}: ${profileError.message}`);
         } else {
           console.log(`Successfully created user: ${user.email}`);
         }
       } catch (error) {
         console.error(`Error creating user ${user.email}:`, error);
+        throw error; // Re-throw to stop the initialization process
       }
     }
 

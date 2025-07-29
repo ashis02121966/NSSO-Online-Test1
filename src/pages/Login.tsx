@@ -23,15 +23,23 @@ export function Login() {
     setError('');
 
     try {
+      console.log('Starting database initialization...');
       const result = await DataInitializer.initializeDatabase();
+      console.log('Database initialization result:', result);
+      
       if (result.success) {
         setError(''); // Clear any previous errors
-        alert('Database initialized successfully! You can now login with the demo credentials.');
+        alert(`Database initialized successfully! ${result.message}\n\nYou can now login with the demo credentials:\n- admin@esigma.com / password123\n- enumerator@esigma.com / password123`);
       } else {
-        setError(result.message);
+        console.error('Database initialization failed:', result);
+        setError(`Database initialization failed: ${result.message}`);
+        if (result.error) {
+          console.error('Detailed error:', result.error);
+        }
       }
     } catch (error) {
-      setError('Failed to initialize database. Please check your Supabase configuration.');
+      console.error('Database initialization exception:', error);
+      setError(`Failed to initialize database: ${error instanceof Error ? error.message : 'Unknown error'}. Please check your Supabase configuration.`);
     } finally {
       setIsInitializing(false);
     }
