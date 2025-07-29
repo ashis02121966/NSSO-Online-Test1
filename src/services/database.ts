@@ -31,9 +31,24 @@ export class AuthService {
 
       console.log('AuthService: Supabase auth successful, fetching user profile...');
 
-      // Use RPC function to fetch user data and bypass RLS recursion
-      const { data: userData, error: userError } = await supabase
-        .rpc('get_user_with_role', { user_id: authData.user.id });
+      // Use service role client to bypass RLS policies and avoid recursion
+      if (!supabaseAdmin) {
+        console.error('AuthService: Service role client not available');
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          message: 'Service configuration error. Please check your Supabase service role key.'
+        };
+      }
+
+      const { data: userData, error: userError } = await supabaseAdmin
+        .from('users')
+        .select(`
+          *,
+          role:roles(*)
+        `)
+        .eq('id', authData.user.id)
+        .single();
 
       if (userError || !userData || userData.length === 0) {
         console.error('AuthService: User profile not found:', userError);
@@ -41,15 +56,14 @@ export class AuthService {
         await supabase.auth.signOut();
         return {
           success: false,
-          message: 'User profile not found. Please ensure the get_user_with_role function is deployed to your Supabase project.'
+          message: 'User profile not found. Please check your user account exists in the database.'
         };
       }
 
-      // Get the first result from RPC function
-      const userRecord = userData[0];
+      const userRecord = userData;
 
       // Update last login
-      await supabase
+      await supabaseAdmin
         .from('users')
         .update({ last_login: new Date().toISOString() })
         .eq('id', userRecord.id);
@@ -61,11 +75,11 @@ export class AuthService {
         roleId: userRecord.role_id,
         role: {
           id: userRecord.role_id,
-          name: userRecord.role_name,
-          description: userRecord.role_description,
-          level: userRecord.role_level,
-          isActive: userRecord.role_is_active,
-          menuAccess: userRecord.menu_access,
+          name: userRecord.role.name,
+          description: userRecord.role.description,
+          level: userRecord.role.level,
+          isActive: userRecord.role.is_active,
+          menuAccess: userRecord.role.menu_access,
           createdAt: new Date(),
           updatedAt: new Date()
         },
