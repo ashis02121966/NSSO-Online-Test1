@@ -19,6 +19,7 @@ const isSupabaseConfigured = Boolean(
   supabaseAnonKey !== 'your_supabase_anon_key' &&
   supabaseAnonKey !== 'your-supabase-anon-key' &&
   supabaseServiceRoleKey !== 'your_supabase_service_role_key' &&
+  supabaseServiceRoleKey !== 'your-supabase-service-role-key' &&
   supabaseUrl.includes('.supabase.co') &&
   supabaseAnonKey.length > 20 &&
   supabaseServiceRoleKey.length > 20

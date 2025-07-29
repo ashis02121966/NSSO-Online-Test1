@@ -10,7 +10,27 @@ export class DataInitializer {
         console.error('Supabase client is not configured');
         return { 
           success: false, 
-          message: 'Supabase is not configured. Please set up your environment variables (URL, anon key, and service role key) in .env file.' 
+          message: 'Supabase is not configured. Please set up your environment variables (URL, anon key, and service role key) in .env file. Make sure to restart the dev server after updating .env.' 
+        };
+      }
+      
+      // Test admin client first
+      console.log('Testing admin client...');
+      try {
+        const { data: testUsers, error: testError } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1 });
+        if (testError) {
+          console.error('Admin client test failed:', testError);
+          return {
+            success: false,
+            message: `Admin client authentication failed: ${testError.message}. Please check your VITE_SUPABASE_SERVICE_ROLE_KEY in .env file.`
+          };
+        }
+        console.log('Admin client test successful');
+      } catch (error) {
+        console.error('Admin client test error:', error);
+        return {
+          success: false,
+          message: 'Failed to authenticate with Supabase admin client. Please verify your service role key.'
         };
       }
       
@@ -75,20 +95,52 @@ export class DataInitializer {
     try {
       console.log('Cleaning up existing data...');
       
-      // Delete in reverse order of dependencies
-      await supabaseClient.from('system_settings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabaseClient.from('question_options').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabaseClient.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabaseClient.from('survey_sections').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabaseClient.from('surveys').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabaseClient.from('users').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabaseClient.from('roles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Delete in correct order of foreign key dependencies using admin client
+      console.log('Deleting test_answers...');
+      await supabaseAdminClient.from('test_answers').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting section_scores...');
+      await supabaseAdminClient.from('section_scores').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting certificates...');
+      await supabaseAdminClient.from('certificates').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting test_results...');
+      await supabaseAdminClient.from('test_results').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting test_sessions...');
+      await supabaseAdminClient.from('test_sessions').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting activity_logs...');
+      await supabaseAdminClient.from('activity_logs').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting question_options...');
+      await supabaseAdminClient.from('question_options').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting questions...');
+      await supabaseAdminClient.from('questions').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting survey_sections...');
+      await supabaseAdminClient.from('survey_sections').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting surveys...');
+      await supabaseAdminClient.from('surveys').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting system_settings...');
+      await supabaseAdminClient.from('system_settings').delete().gte('updated_at', '1900-01-01');
+      
+      console.log('Deleting users...');
+      await supabaseAdminClient.from('users').delete().gte('created_at', '1900-01-01');
+      
+      console.log('Deleting roles...');
+      await supabaseAdminClient.from('roles').delete().gte('created_at', '1900-01-01');
       
       // Clean up auth users
+      console.log('Cleaning up auth users...');
       const { data: authUsers } = await supabaseAdminClient.auth.admin.listUsers();
       if (authUsers && authUsers.users) {
         for (const user of authUsers.users) {
-          if (user.email && user.email.includes('@esigma.com')) {
+          if (user.email) {
             console.log(`Deleting auth user: ${user.email}`);
             await supabaseAdminClient.auth.admin.deleteUser(user.id);
           }
@@ -97,7 +149,8 @@ export class DataInitializer {
       
       console.log('Cleanup completed');
     } catch (error) {
-      console.log('Cleanup error (this is expected if tables are empty):', error);
+      console.error('Cleanup error:', error);
+      // Don't throw error here - continue with initialization even if cleanup fails
     }
   }
 
