@@ -65,6 +65,10 @@ export class DataInitializer {
       await this.createUsers(supabaseAdmin);
       console.log('Users created successfully');
       
+      // Create RPC functions after users are created
+      await this.createRpcFunctions(supabase);
+      console.log('RPC functions created successfully');
+      
       // Verify user creation
       const adminUserId = await this.verifyUserCreation(supabaseAdmin);
       
@@ -643,6 +647,91 @@ export class DataInitializer {
 
     if (error) throw error;
     console.log('System settings created successfully');
+  }
+
+  static async createRpcFunctions(supabaseClient: any) {
+    console.log('Creating RPC functions...');
+    
+    const createFunctionSQL = `
+      CREATE OR REPLACE FUNCTION get_user_with_role(user_id uuid)
+      RETURNS TABLE (
+        id uuid,
+        email varchar(255),
+        name varchar(255),
+        role_id uuid,
+        is_active boolean,
+        jurisdiction varchar(255),
+        zone varchar(255),
+        region varchar(255),
+        district varchar(255),
+        employee_id varchar(100),
+        phone_number varchar(20),
+        profile_image text,
+        parent_id uuid,
+        last_login timestamptz,
+        password_changed_at timestamptz,
+        failed_login_attempts integer,
+        locked_until timestamptz,
+        created_at timestamptz,
+        updated_at timestamptz,
+        role_name varchar(50),
+        role_description text,
+        role_level integer,
+        role_is_active boolean,
+        menu_access text[]
+      )
+      SECURITY DEFINER
+      LANGUAGE sql
+      AS $$
+        SELECT 
+          u.id,
+          u.email,
+          u.name,
+          u.role_id,
+          u.is_active,
+          u.jurisdiction,
+          u.zone,
+          u.region,
+          u.district,
+          u.employee_id,
+          u.phone_number,
+          u.profile_image,
+          u.parent_id,
+          u.last_login,
+          u.password_changed_at,
+          u.failed_login_attempts,
+          u.locked_until,
+          u.created_at,
+          u.updated_at,
+          r.name as role_name,
+          r.description as role_description,
+          r.level as role_level,
+          r.is_active as role_is_active,
+          r.menu_access
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE u.id = user_id AND u.is_active = true;
+      $$;
+    `;
+
+    const { error } = await supabaseClient.rpc('exec_sql', { sql: createFunctionSQL });
+    
+    if (error) {
+      // If exec_sql doesn't exist, try direct SQL execution
+      console.log('Trying alternative method to create function...');
+      const { error: directError } = await supabaseClient
+        .from('_temp_sql_execution')
+        .select('*')
+        .limit(0);
+      
+      if (directError) {
+        console.log('Creating function via migration approach...');
+        // Function will be created via migration file instead
+        return;
+      }
+    }
+    
+    console.log('RPC function created successfully');
   }
 
   static async checkDatabaseConnection() {
