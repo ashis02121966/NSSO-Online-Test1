@@ -98,7 +98,7 @@ export class DataInitializer {
       console.log('Database is empty, starting initialization...');
       
       // Initialize in order: roles -> users -> surveys -> sections -> questions -> settings
-      await this.createRoles(supabase);
+      await this.createRoles(supabaseAdmin);
       console.log('Roles created successfully');
       
       await this.createUsers(supabaseAdmin);
@@ -107,16 +107,16 @@ export class DataInitializer {
       // Verify user creation
       const adminUserId = await this.verifyUserCreation(supabaseAdmin);
       
-      await this.createSurveys(supabase, adminUserId);
+      await this.createSurveys(supabaseAdmin, adminUserId);
       console.log('Surveys created successfully');
       
-      await this.createSurveySections(supabase);
+      await this.createSurveySections(supabaseAdmin);
       console.log('Survey sections created successfully');
       
-      await this.createQuestions(supabase);
+      await this.createQuestions(supabaseAdmin);
       console.log('Questions created successfully');
       
-      await this.createSystemSettings(supabase);
+      await this.createSystemSettings(supabaseAdmin);
       console.log('System settings created successfully');
       
       // Re-enable RLS after initialization
@@ -238,7 +238,7 @@ export class DataInitializer {
     console.log('All users verified successfully');
     return adminUserId;
   }
-  static async createRoles(supabaseClient: any) {
+  static async createRoles(supabaseAdminClient: any) {
     console.log('Creating roles...');
     
     const roles = [
@@ -308,7 +308,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error } = await supabaseClient
+    const { error } = await supabaseAdminClient
       .from('roles')
       .insert(roles);
 
@@ -454,7 +454,7 @@ export class DataInitializer {
     console.log('Users created successfully');
   }
 
-  static async createSurveys(supabaseClient: any, adminUserId: string) {
+  static async createSurveys(supabaseAdminClient: any, adminUserId: string) {
     console.log('Creating surveys...');
     
     const surveys = [
@@ -502,7 +502,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error } = await supabaseClient
+    const { error } = await supabaseAdminClient
       .from('surveys')
       .insert(surveys);
 
@@ -510,7 +510,7 @@ export class DataInitializer {
     console.log('Surveys created successfully');
   }
 
-  static async createSurveySections(supabaseClient: any) {
+  static async createSurveySections(supabaseAdminClient: any) {
     console.log('Creating survey sections...');
     
     const sections = [
@@ -558,7 +558,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error } = await supabaseClient
+    const { error } = await supabaseAdminClient
       .from('survey_sections')
       .insert(sections);
 
@@ -566,7 +566,7 @@ export class DataInitializer {
     console.log('Survey sections created successfully');
   }
 
-  static async createQuestions(supabaseClient: any) {
+  static async createQuestions(supabaseAdminClient: any) {
     console.log('Creating sample questions...');
     
     const questions = [
@@ -612,7 +612,7 @@ export class DataInitializer {
       }
     ];
 
-    const { error: questionsError } = await supabaseClient
+    const { error: questionsError } = await supabaseAdminClient
       .from('questions')
       .insert(questions);
 
@@ -645,7 +645,7 @@ export class DataInitializer {
       { id: '550e8400-e29b-41d4-a716-446655440065', question_id: '550e8400-e29b-41d4-a716-446655440043', text: 'Use unique passwords for each account', is_correct: true, option_order: 4 }
     ];
 
-    const { error: optionsError } = await supabaseClient
+    const { error: optionsError } = await supabaseAdminClient
       .from('question_options')
       .insert(options);
 
@@ -653,7 +653,7 @@ export class DataInitializer {
     console.log('Questions and options created successfully');
   }
 
-  static async createSystemSettings(supabaseClient: any) {
+  static async createSystemSettings(supabaseAdminClient: any) {
     console.log('Creating system settings...');
     
     const settings = [
@@ -683,7 +683,7 @@ export class DataInitializer {
       { category: 'general', setting_key: 'date_format', setting_value: 'DD/MM/YYYY', description: 'Date display format', setting_type: 'select', is_editable: true, options: ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'] }
     ];
 
-    const { error } = await supabaseClient
+    const { error } = await supabaseAdminClient
       .from('system_settings')
       .insert(settings);
 
