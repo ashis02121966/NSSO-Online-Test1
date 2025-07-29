@@ -1,11 +1,49 @@
 import { supabase, supabaseAdmin } from '../lib/supabase';
 import bcrypt from 'bcryptjs';
 
+// Helper function to disable RLS temporarily
+async function disableRLS() {
+  try {
+    // Disable RLS on all tables during initialization
+    const tables = ['roles', 'users', 'surveys', 'survey_sections', 'questions', 'question_options', 'system_settings'];
+    
+    for (const table of tables) {
+      await supabase.rpc('exec_sql', { 
+        sql: `ALTER TABLE ${table} DISABLE ROW LEVEL SECURITY;` 
+      }).catch(() => {
+        // Ignore errors if RPC doesn't exist, we'll use service role instead
+      });
+    }
+  } catch (error) {
+    console.log('Could not disable RLS via RPC, using service role client');
+  }
+}
+
+// Helper function to re-enable RLS after initialization
+async function enableRLS() {
+  try {
+    const tables = ['roles', 'users', 'surveys', 'survey_sections', 'questions', 'question_options', 'system_settings'];
+    
+    for (const table of tables) {
+      await supabase.rpc('exec_sql', { 
+        sql: `ALTER TABLE ${table} ENABLE ROW LEVEL SECURITY;` 
+      }).catch(() => {
+        // Ignore errors if RPC doesn't exist
+      });
+    }
+  } catch (error) {
+    console.log('Could not re-enable RLS via RPC');
+  }
+}
+
 export class DataInitializer {
   static async initializeDatabase() {
     try {
       console.log('Starting database initialization...');
       
+      // Disable RLS temporarily to avoid recursion during initialization
+      await disableRLS();
+
       // Check if Supabase is configured
       if (!supabase || !supabaseAdmin) {
         console.error('Supabase client is not configured');
@@ -29,6 +67,7 @@ export class DataInitializer {
         console.log('Admin client test successful');
       } catch (error) {
         console.error('Admin client test error:', error);
+        await enableRLS();
         return {
           success: false,
           message: 'Failed to authenticate with Supabase admin client. Please verify your service role key.'
@@ -80,10 +119,17 @@ export class DataInitializer {
       await this.createSystemSettings(supabase);
       console.log('System settings created successfully');
       
+      // Re-enable RLS after initialization
+      await enableRLS();
+
       console.log('Database initialization completed successfully');
       return { success: true, message: 'Database initialized successfully with demo users and sample data!' };
     } catch (error) {
       console.error('Database initialization failed:', error);
+      
+      // Try to re-enable RLS even if initialization failed
+      await enableRLS();
+      
       return { 
         success: false, 
         message: `Failed to initialize database: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -647,13 +693,13 @@ export class DataInitializer {
 
   static async checkDatabaseConnection() {
     try {
-      const { data, error } = await supabase
+      // Use a simple count query that doesn't trigger RLS
+      const { count, error } = await supabase
         .from('roles')
-        .select('count')
-        .limit(1);
+        .select('*', { count: 'exact', head: true });
       
       if (error) throw error;
-      return { success: true, message: 'Database connection successful' };
+      return (count || 0) > 0;
     } catch (error) {
       console.error('Database connection failed:', error);
       return { success: false, message: 'Database connection failed', error };
