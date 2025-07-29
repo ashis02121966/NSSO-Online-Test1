@@ -133,11 +133,10 @@ export class DataInitializer {
   static async createUsers(supabaseClient: any) {
     console.log('Creating users...');
     
-    console.log('Creating Supabase Auth users and custom user profiles...');
+    console.log('Creating users in Supabase Auth and custom user profiles...');
     
     const users = [
       {
-        id: '550e8400-e29b-41d4-a716-446655440010',
         email: 'admin@esigma.com',
         password: 'password123',
         name: 'System Administrator',
@@ -151,7 +150,6 @@ export class DataInitializer {
         phone_number: '+91-9876543210'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440011',
         email: 'cpg@esigma.com',
         password: 'password123',
         name: 'CPG Officer',
@@ -165,7 +163,6 @@ export class DataInitializer {
         phone_number: '+91-9876543211'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440012',
         email: 'zo@esigma.com',
         password: 'password123',
         name: 'Zonal Officer',
@@ -179,7 +176,6 @@ export class DataInitializer {
         phone_number: '+91-9876543212'
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440013',
         email: 'ro@esigma.com',
         password: 'password123',
         name: 'Regional Officer',
@@ -191,10 +187,9 @@ export class DataInitializer {
         district: null,
         employee_id: 'RO001',
         phone_number: '+91-9876543213',
-        parent_id: '550e8400-e29b-41d4-a716-446655440012'
+        parent_id: null
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440014',
         email: 'supervisor@esigma.com',
         password: 'password123',
         name: 'Field Supervisor',
@@ -206,10 +201,9 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'SUP001',
         phone_number: '+91-9876543214',
-        parent_id: '550e8400-e29b-41d4-a716-446655440013'
+        parent_id: null
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440015',
         email: 'enumerator@esigma.com',
         password: 'password123',
         name: 'Field Enumerator',
@@ -221,10 +215,9 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'ENU001',
         phone_number: '+91-9876543215',
-        parent_id: '550e8400-e29b-41d4-a716-446655440014'
+        parent_id: null
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440016',
         email: 'enumerator2@esigma.com',
         password: 'password123',
         name: 'Field Enumerator 2',
@@ -236,10 +229,9 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'ENU002',
         phone_number: '+91-9876543216',
-        parent_id: '550e8400-e29b-41d4-a716-446655440014'
+        parent_id: null
       },
       {
-        id: '550e8400-e29b-41d4-a716-446655440017',
         email: 'enumerator3@esigma.com',
         password: 'password123',
         name: 'Field Enumerator 3',
@@ -251,7 +243,7 @@ export class DataInitializer {
         district: 'Central Delhi',
         employee_id: 'ENU003',
         phone_number: '+91-9876543217',
-        parent_id: '550e8400-e29b-41d4-a716-446655440014'
+        parent_id: null
       }
     ];
 
@@ -263,6 +255,7 @@ export class DataInitializer {
         const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
           email: user.email,
           password: user.password,
+          email_confirm: true,
           user_metadata: {
             name: user.name
           }
@@ -272,6 +265,8 @@ export class DataInitializer {
           console.error(`Failed to create auth user ${user.email}:`, authError);
           continue;
         }
+        
+        console.log(`Created auth user for ${user.email} with ID: ${authData.user.id}`);
         
         // Create user profile in custom users table
         const { error: profileError } = await supabaseClient
