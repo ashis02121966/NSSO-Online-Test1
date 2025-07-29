@@ -2,21 +2,26 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
 console.log('Environment check:');
 console.log('VITE_SUPABASE_URL:', supabaseUrl);
 console.log('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set (length: ' + supabaseAnonKey.length + ')' : 'Not set');
+console.log('VITE_SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceRoleKey ? 'Set (length: ' + supabaseServiceRoleKey.length + ')' : 'Not set');
 
 // Check if Supabase is configured
 const isSupabaseConfigured = Boolean(
   supabaseUrl && 
   supabaseAnonKey && 
+  supabaseServiceRoleKey &&
   supabaseUrl !== 'your_supabase_project_url' && 
   supabaseUrl !== 'https://your-project-id.supabase.co' &&
   supabaseAnonKey !== 'your_supabase_anon_key' &&
   supabaseAnonKey !== 'your-supabase-anon-key' &&
+  supabaseServiceRoleKey !== 'your_supabase_service_role_key' &&
   supabaseUrl.includes('.supabase.co') &&
-  supabaseAnonKey.length > 20
+  supabaseAnonKey.length > 20 &&
+  supabaseServiceRoleKey.length > 20
 );
 
 console.log('Supabase configuration status:', isSupabaseConfigured);
@@ -25,18 +30,19 @@ if (!isSupabaseConfigured) {
   console.error('=== SUPABASE CONFIGURATION REQUIRED ===');
   console.warn('Please update your .env file with your actual Supabase credentials:');
   console.warn('1. Go to https://supabase.com and create a project');
-  console.warn('2. Get your Project URL and anon key from Settings > API');
+  console.warn('2. Get your Project URL, anon key, and service role key from Settings > API');
   console.warn('3. Update .env file with your actual values');
   console.warn('4. Restart the development server');
   console.warn('5. Click "Initialize Database" on the login page');
   console.warn('Current values:');
   console.warn('  VITE_SUPABASE_URL:', supabaseUrl || 'Not set');
   console.warn('  VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set but may be placeholder' : 'Not set');
+  console.warn('  VITE_SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceRoleKey ? 'Set but may be placeholder' : 'Not set');
   
   // Show alert in browser
   if (typeof window !== 'undefined') {
     setTimeout(() => {
-      alert('⚠️ Supabase Configuration Required\n\nPlease:\n1. Set up your Supabase project\n2. Update .env file with your credentials\n3. Restart the dev server\n4. Initialize the database');
+      alert('⚠️ Supabase Configuration Required\n\nPlease:\n1. Set up your Supabase project\n2. Update .env file with URL, anon key, and service role key\n3. Restart the dev server\n4. Initialize the database');
     }, 2000);
   }
 }
@@ -52,6 +58,15 @@ export const supabase = isSupabaseConfigured
     })
   : null;
 
+// Create admin client for user management
+export const supabaseAdmin = isSupabaseConfigured 
+  ? createClient(supabaseUrl!, supabaseServiceRoleKey!, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
+  : null;
 // Export demo mode status
 export const isDemoMode = !isSupabaseConfigured;
 

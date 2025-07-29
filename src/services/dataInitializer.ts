@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, supabaseAdmin } from '../lib/supabase';
 
 export class DataInitializer {
   static async initializeDatabase() {
@@ -6,19 +6,16 @@ export class DataInitializer {
       console.log('Starting database initialization...');
       
       // Check if Supabase is configured
-      if (!supabase) {
+      if (!supabase || !supabaseAdmin) {
         console.error('Supabase client is not configured');
         return { 
           success: false, 
-          message: 'Supabase is not configured. Please set up your environment variables in .env file.' 
+          message: 'Supabase is not configured. Please set up your environment variables (URL, anon key, and service role key) in .env file.' 
         };
       }
       
-      // Use the existing supabase client
-      const supabaseAdmin = supabase;
-      
       // Check if data already exists
-      const { data: existingRoles, error: checkError } = await supabaseAdmin
+      const { data: existingRoles, error: checkError } = await supabase
         .from('roles')
         .select('id')
         .limit(1);
@@ -37,12 +34,12 @@ export class DataInitializer {
       }
 
       // Initialize in order: roles -> users -> surveys -> sections -> questions -> settings
-      await this.createRoles(supabaseAdmin);
+      await this.createRoles(supabase);
       await this.createUsers(supabaseAdmin);
-      await this.createSurveys(supabaseAdmin);
-      await this.createSurveySections(supabaseAdmin);
-      await this.createQuestions(supabaseAdmin);
-      await this.createSystemSettings(supabaseAdmin);
+      await this.createSurveys(supabase);
+      await this.createSurveySections(supabase);
+      await this.createQuestions(supabase);
+      await this.createSystemSettings(supabase);
       
       console.log('Database initialization completed successfully');
       return { success: true, message: 'Database initialized successfully' };
