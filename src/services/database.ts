@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import bcrypt from 'bcryptjs';
 import { User, Role, Survey, Section, Question, TestSession, TestResult, Certificate, SystemSettings, ApiResponse } from '../types';
 
 // Authentication Service
@@ -16,49 +15,40 @@ export class AuthService {
         };
       }
 
-      // First, check if database has been initialized
-      const { data: rolesCheck, error: rolesError } = await supabase
-        .from('roles')
-        .select('id')
-        .limit(1);
+      // Use Supabase Auth for authentication
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
 
-      if (rolesError || !rolesCheck || rolesCheck.length === 0) {
-        console.error('AuthService: Database not initialized');
-        return {
-          success: false,
-          message: 'Database not initialized. Please click "Initialize Database" first.'
-        };
-      }
-
-      // Get user from database
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select(`
-          *,
-          role:roles(*)
-        `)
-        .eq('email', email)
-        .eq('is_active', true)
-        .single();
-
-      if (userError || !userData) {
-        console.error('AuthService: User not found:', userError);
+      if (authError || !authData.user) {
+        console.error('AuthService: Authentication failed:', authError);
         return {
           success: false,
           message: 'Invalid email or password. Please check your credentials or initialize the database if this is your first time.'
         };
       }
 
-      console.log('AuthService: User found, verifying password...');
-      
-      // Verify password
-      const isValidPassword = await bcrypt.compare(password, userData.password_hash);
-      
-      if (!isValidPassword) {
-        console.error('AuthService: Invalid password for user:', email);
+      console.log('AuthService: Supabase auth successful, fetching user profile...');
+
+      // Get user profile from custom users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select(`
+          *,
+          role:roles(*)
+        `)
+        .eq('id', authData.user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (userError || !userData) {
+        console.error('AuthService: User profile not found:', userError);
+        // Sign out from Supabase auth since profile lookup failed
+        await supabase.auth.signOut();
         return {
           success: false,
-          message: 'Invalid email or password. Please check your credentials.'
+          message: 'User profile not found. Please contact administrator.'
         };
       }
 
@@ -101,7 +91,7 @@ export class AuthService {
         success: true,
         data: {
           user,
-          token: `demo-token-${userData.id}-${Date.now()}`
+          token: authData.session?.access_token || `demo-token-${userData.id}-${Date.now()}`
         },
         message: 'Login successful'
       };
@@ -115,7 +105,23 @@ export class AuthService {
   }
 
   static async logout(): Promise<ApiResponse<void>> {
-    return { success: true, message: 'Logged out successfully' };
+    try {
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('AuthService: Logout error:', error);
+        return { success: false, message: 'Failed to logout' };
+      }
+
+      return { success: true, message: 'Logged out successfully' };
+    } catch (error) {
+      console.error('AuthService: Logout error:', error);
+      return { success: false, message: 'Failed to logout' };
+    }
   }
 }
 
