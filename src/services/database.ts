@@ -31,58 +31,54 @@ export class AuthService {
 
       console.log('AuthService: Supabase auth successful, fetching user profile...');
 
-      // Fetch user profile with role information using service role to bypass RLS
+      // Use RPC function to fetch user data and bypass RLS recursion
       const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select(`
-          *,
-          role:roles(*)
-        `)
-        .eq('id', authData.user.id)
-        .eq('is_active', true)
-        .single();
+        .rpc('get_user_with_role', { user_id: authData.user.id });
 
-      if (userError || !userData) {
+      if (userError || !userData || userData.length === 0) {
         console.error('AuthService: User profile not found:', userError);
         // Sign out from Supabase auth since profile lookup failed
         await supabase.auth.signOut();
         return {
           success: false,
-          message: 'User profile not found. Please contact administrator.'
+          message: 'User profile not found. Please ensure the get_user_with_role function is deployed to your Supabase project.'
         };
       }
+
+      // Get the first result from RPC function
+      const userRecord = userData[0];
 
       // Update last login
       await supabase
         .from('users')
         .update({ last_login: new Date().toISOString() })
-        .eq('id', userData.id);
+        .eq('id', userRecord.id);
 
       const user: User = {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        roleId: userData.role_id,
+        id: userRecord.id,
+        email: userRecord.email,
+        name: userRecord.name,
+        roleId: userRecord.role_id,
         role: {
-          id: userData.role.id,
-          name: userData.role.name,
-          description: userData.role.description,
-          level: userData.role.level,
-          isActive: userData.role.is_active,
-          menuAccess: userData.role.menu_access,
-          createdAt: new Date(userData.role.created_at),
-          updatedAt: new Date(userData.role.updated_at)
+          id: userRecord.role_id,
+          name: userRecord.role_name,
+          description: userRecord.role_description,
+          level: userRecord.role_level,
+          isActive: userRecord.role_is_active,
+          menuAccess: userRecord.menu_access,
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
-        isActive: userData.is_active,
-        jurisdiction: userData.jurisdiction,
-        zone: userData.zone,
-        region: userData.region,
-        district: userData.district,
-        employeeId: userData.employee_id,
-        phoneNumber: userData.phone_number,
-        parentId: userData.parent_id,
-        createdAt: new Date(userData.created_at),
-        updatedAt: new Date(userData.updated_at)
+        isActive: userRecord.is_active,
+        jurisdiction: userRecord.jurisdiction,
+        zone: userRecord.zone,
+        region: userRecord.region,
+        district: userRecord.district,
+        employeeId: userRecord.employee_id,
+        phoneNumber: userRecord.phone_number,
+        parentId: userRecord.parent_id,
+        createdAt: new Date(userRecord.created_at),
+        updatedAt: new Date(userRecord.updated_at)
       };
 
       console.log('AuthService: Login successful for user:', user.name);
@@ -91,7 +87,7 @@ export class AuthService {
         success: true,
         data: {
           user,
-          token: authData.session?.access_token || `demo-token-${userData.id}-${Date.now()}`
+          token: authData.session?.access_token || `demo-token-${userRecord.id}-${Date.now()}`
         },
         message: 'Login successful'
       };
