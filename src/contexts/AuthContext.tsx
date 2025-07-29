@@ -45,7 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 role:roles(*)
               `)
               .eq('id', session.user.id)
-              .single();
+              .maybeSingle();
             
             if (userData && !userError) {
               const user = {
