@@ -31,9 +31,16 @@ export class AuthService {
 
       console.log('AuthService: Supabase auth successful, fetching user profile...');
 
-      // Use service role key to bypass RLS policies during login
+      // Fetch user profile with role information using service role to bypass RLS
       const { data: userData, error: userError } = await supabase
-        .rpc('get_user_with_role', { user_id: authData.user.id });
+        .from('users')
+        .select(`
+          *,
+          role:roles(*)
+        `)
+        .eq('id', authData.user.id)
+        .eq('is_active', true)
+        .single();
 
       if (userError || !userData) {
         console.error('AuthService: User profile not found:', userError);
@@ -55,16 +62,16 @@ export class AuthService {
         id: userData.id,
         email: userData.email,
         name: userData.name,
-        roleId: userData.role_id, 
+        roleId: userData.role_id,
         role: {
-          id: userData.role_id,
-          name: userData.role_name,
-          description: userData.role_description,
-          level: userData.role_level,
-          isActive: userData.role_is_active,
-          menuAccess: userData.role_menu_access,
-          createdAt: new Date(userData.role_created_at),
-          updatedAt: new Date(userData.role_updated_at)
+          id: userData.role.id,
+          name: userData.role.name,
+          description: userData.role.description,
+          level: userData.role.level,
+          isActive: userData.role.is_active,
+          menuAccess: userData.role.menu_access,
+          createdAt: new Date(userData.role.created_at),
+          updatedAt: new Date(userData.role.updated_at)
         },
         isActive: userData.is_active,
         jurisdiction: userData.jurisdiction,
