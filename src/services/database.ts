@@ -31,22 +31,6 @@ export class AuthService {
 
       console.log('AuthService: Supabase auth successful, fetching user profile...');
 
-      // Use service role client to bypass RLS policies and avoid recursion
-      if (!supabaseAdmin) {
-        console.error('AuthService: Service role client not available');
-        await supabase.auth.signOut();
-        return {
-          success: false,
-          message: 'Service configuration error. Please check your Supabase service role key.'
-        };
-      }
-
-      const { data: userData, error: userError } = await supabaseAdmin
-        .from('users')
-        .select(`
-          *,
-          role:roles(*)
-        `)
       let userData, userError;
       
       // Try RPC function first, fallback to direct query if RPC doesn't exist
@@ -81,28 +65,28 @@ export class AuthService {
       }
 
       const userRecord = userData;
-      const userRecord = userData[0] || userData;
+      const finalUserRecord = Array.isArray(userRecord) ? userRecord[0] : userRecord;
       
       // Handle both RPC function format and direct query format
-      const roleData = userRecord.role || {
-        id: userRecord.role_id,
-        name: userRecord.role_name || 'Unknown',
-        description: userRecord.role_description || '',
-        level: userRecord.role_level || 5,
-        is_active: userRecord.role_is_active !== false,
-        menu_access: userRecord.menu_access || []
+      const roleData = finalUserRecord.role || {
+        id: finalUserRecord.role_id,
+        name: finalUserRecord.role_name || 'Unknown',
+        description: finalUserRecord.role_description || '',
+        level: finalUserRecord.role_level || 5,
+        is_active: finalUserRecord.role_is_active !== false,
+        menu_access: finalUserRecord.menu_access || []
       };
       // Update last login
-      await supabaseAdmin
+      await supabase
         .from('users')
         .update({ last_login: new Date().toISOString() })
-        .eq('id', userRecord.id);
+        .eq('id', finalUserRecord.id);
 
       const user: User = {
-        id: userRecord.id,
-        email: userRecord.email,
-        name: userRecord.name,
-        roleId: userRecord.role_id,
+        id: finalUserRecord.id,
+        email: finalUserRecord.email,
+        name: finalUserRecord.name,
+        roleId: finalUserRecord.role_id,
         role: {
           id: roleData.id,
           name: roleData.name,
@@ -113,16 +97,16 @@ export class AuthService {
           createdAt: new Date(),
           updatedAt: new Date()
         },
-        isActive: userRecord.is_active,
-        jurisdiction: userRecord.jurisdiction,
-        zone: userRecord.zone,
-        region: userRecord.region,
-        district: userRecord.district,
-        employeeId: userRecord.employee_id,
-        phoneNumber: userRecord.phone_number,
-        parentId: userRecord.parent_id,
-        createdAt: new Date(userRecord.created_at),
-        updatedAt: new Date(userRecord.updated_at)
+        isActive: finalUserRecord.is_active,
+        jurisdiction: finalUserRecord.jurisdiction,
+        zone: finalUserRecord.zone,
+        region: finalUserRecord.region,
+        district: finalUserRecord.district,
+        employeeId: finalUserRecord.employee_id,
+        phoneNumber: finalUserRecord.phone_number,
+        parentId: finalUserRecord.parent_id,
+        createdAt: new Date(finalUserRecord.created_at),
+        updatedAt: new Date(finalUserRecord.updated_at)
       };
 
       console.log('AuthService: Login successful for user:', user.name);
@@ -131,7 +115,7 @@ export class AuthService {
         success: true,
         data: {
           user,
-          token: authData.session?.access_token || `demo-token-${userRecord.id}-${Date.now()}`
+          token: authData.session?.access_token || `demo-token-${finalUserRecord.id}-${Date.now()}`
         },
         message: 'Login successful'
       };
