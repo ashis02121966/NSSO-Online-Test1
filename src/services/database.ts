@@ -51,8 +51,8 @@ export class AuthService {
               role:roles(*)
             `)
             .eq('id', authData.user.id)
-            .maybeSingle();
-          userData = directResult.data ? [directResult.data] : null;
+            .limit(1);
+          userData = directResult.data && directResult.data.length > 0 ? directResult.data : null;
           userError = directResult.error;
         } catch (directError) {
           console.log('Direct query failed, user profile not found');
