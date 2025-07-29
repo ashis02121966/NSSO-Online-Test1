@@ -21,7 +21,7 @@ export function RoleBasedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  const userRole = user.role.name;
+  const userRole = user.role.name === 'Administrator' ? 'Admin' : user.role.name;
   const userLevel = user.role.level;
 
   // Check role-based access

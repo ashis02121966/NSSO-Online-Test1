@@ -33,6 +33,7 @@ function DashboardRedirect() {
     
     console.log('Getting dashboard route for user role:', user.role.name);
     switch (user.role.name.toLowerCase()) {
+      case 'administrator':
       case 'admin':
         return '/dashboard';
       case 'zo user':

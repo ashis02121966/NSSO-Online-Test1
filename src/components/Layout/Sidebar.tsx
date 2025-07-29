@@ -110,7 +110,7 @@ export function Sidebar() {
   const getAccessibleMenuItems = (): MenuItem[] => {
     if (!user) return [];
     
-    const userRole = user.role.name;
+    const userRole = user.role.name === 'Administrator' ? 'Admin' : user.role.name;
     const userLevel = user.role.level;
     
     return allMenuItems.filter(item => {
