@@ -162,11 +162,12 @@ export class UserService {
     try {
       console.log('UserService: Fetching users from database');
       
-      if (!supabase) {
+      if (!supabase || !supabaseAdmin) {
         return { success: false, message: 'Database not configured', data: [] };
       }
 
-      const { data, error } = await supabase
+      // Use admin client to bypass RLS and see all users
+      const { data, error } = await supabaseAdmin
         .from('users')
         .select(`
           *,
