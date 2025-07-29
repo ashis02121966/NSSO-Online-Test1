@@ -897,6 +897,10 @@ export class TestService {
 export class DashboardService {
   static async getDashboardData(): Promise<ApiResponse<any>> {
     try {
+      if (!supabase || !supabaseAdmin) {
+        console.error('DashboardService: Supabase clients not configured');
+        return { 
+          success: false, 
           message: 'Database not configured. Please check your Supabase environment variables.',
           data: {
             totalUsers: 0,
@@ -909,7 +913,7 @@ export class DashboardService {
             performanceBySurvey: [],
             monthlyTrends: []
           }
-        return { success: false, message: 'Database not configured' };
+        };
       }
 
       console.log('DashboardService: Supabase clients available, fetching data...');
