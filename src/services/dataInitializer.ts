@@ -150,7 +150,7 @@ export class DataInitializer {
   static async createUsers(supabaseClient: any) {
     console.log('Creating users...');
     
-    console.log('Creating users in Supabase Auth and custom user profiles using admin client...');
+    console.log('Creating users in Supabase Auth and custom user profiles...');
     
     const users = [
       {
@@ -223,17 +223,79 @@ export class DataInitializer {
       }
     ];
 
-    console.log(`Creating ${users.length} users in Supabase Auth and custom users table...`);
+    console.log(`Creating ${users.length} users...`);
+    
+    // First, check if users already exist in auth
+    console.log('Checking for existing users...');
+    const { data: existingUsers, error: listError } = await supabaseClient.auth.admin.listUsers();
+    
+    if (listError) {
+      console.error('Failed to list existing users:', listError);
+      throw new Error(`Failed to check existing users: ${listError.message}`);
+    }
+    
+    const existingEmails = existingUsers.users.map(user => user.email);
+    console.log('Existing users found:', existingEmails);
     
     for (const user of users) {
       try {
-        console.log(`Creating user: ${user.email}`);
+        console.log(`Processing user: ${user.email}`);
+        
+        // Skip if user already exists in auth
+        if (existingEmails.includes(user.email)) {
+          console.log(`User ${user.email} already exists in auth, skipping auth creation`);
+          
+          // Find the existing auth user
+          const existingAuthUser = existingUsers.users.find(u => u.email === user.email);
+          if (!existingAuthUser) {
+            throw new Error(`Could not find existing auth user for ${user.email}`);
+          }
+          
+          // Check if profile exists
+          const { data: existingProfile } = await supabase
+            .from('users')
+            .select('id')
+            .eq('id', existingAuthUser.id)
+            .single();
+          
+          if (existingProfile) {
+            console.log(`Profile for ${user.email} already exists, skipping`);
+            continue;
+          }
+          
+          // Create profile for existing auth user
+          const { error: profileError } = await supabase
+            .from('users')
+            .insert({
+              id: existingAuthUser.id,
+              email: user.email,
+              name: user.name,
+              role_id: user.role_id,
+              is_active: user.is_active,
+              jurisdiction: user.jurisdiction,
+              zone: user.zone,
+              region: user.region,
+              district: user.district,
+              employee_id: user.employee_id,
+              phone_number: user.phone_number,
+              parent_id: user.parent_id
+            });
+          
+          if (profileError) {
+            console.error(`Failed to create profile for existing user ${user.email}:`, profileError);
+            throw new Error(`Profile creation failed for ${user.email}: ${profileError.message}`);
+          }
+          
+          console.log(`Successfully created profile for existing user: ${user.email}`);
+          continue;
+        }
         
         // Create user in Supabase Auth
+        console.log(`Creating new auth user: ${user.email}`);
         const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
           email: user.email,
           password: user.password,
-          email_confirm: true,
+          email_confirm: true, // Skip email verification
           user_metadata: {
             name: user.name
           }
@@ -241,12 +303,27 @@ export class DataInitializer {
         
         if (authError) {
           console.error(`Failed to create auth user ${user.email}:`, authError);
-          throw new Error(`Auth creation failed for ${user.email}: ${authError.message}`);
+          
+          // If user already exists, try to get the existing user
+          if (authError.message.includes('already registered')) {
+            console.log(`User ${user.email} already exists, attempting to find existing user...`);
+            const { data: existingUser, error: getUserError } = await supabaseClient.auth.admin.getUserByEmail(user.email);
+            
+            if (getUserError || !existingUser.user) {
+              throw new Error(`Could not find existing user ${user.email}: ${getUserError?.message}`);
+            }
+            
+            console.log(`Found existing user ${user.email}, using existing auth record`);
+            authData = { user: existingUser.user };
+          } else {
+            throw new Error(`Auth creation failed for ${user.email}: ${authError.message}`);
+          }
         }
         
         console.log(`Created auth user for ${user.email} with ID: ${authData.user.id}`);
         
         // Create user profile in custom users table
+        console.log(`Creating profile for ${user.email}`);
         const { error: profileError } = await supabase
           .from('users')
           .insert({
@@ -265,14 +342,20 @@ export class DataInitializer {
           });
         
         if (profileError) {
-          console.error(`Failed to create user profile ${user.email}:`, profileError);
-          throw new Error(`Profile creation failed for ${user.email}: ${profileError.message}`);
+          // Check if it's a duplicate key error
+          if (profileError.code === '23505') {
+            console.log(`Profile for ${user.email} already exists, skipping profile creation`);
+          } else {
+            console.error(`Failed to create user profile ${user.email}:`, profileError);
+            throw new Error(`Profile creation failed for ${user.email}: ${profileError.message}`);
+          }
         } else {
           console.log(`Successfully created user: ${user.email}`);
         }
       } catch (error) {
         console.error(`Error creating user ${user.email}:`, error);
-        throw error; // Re-throw to stop the initialization process
+        // Don't stop the entire process for individual user failures
+        console.log(`Continuing with next user despite error for ${user.email}`);
       }
     }
 
