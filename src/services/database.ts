@@ -36,7 +36,8 @@ export class AuthService {
       // Try RPC function first, fallback to direct query if RPC doesn't exist
       try {
         const rpcResult = await supabase
-          .rpc('get_user_with_role', { user_id: authData.user.id });
+          .rpc('get_user_with_role', { user_id: authData.user.id })
+          .maybeSingle();
         userData = rpcResult.data;
         userError = rpcResult.error;
       } catch (rpcError) {
