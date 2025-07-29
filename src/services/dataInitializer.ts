@@ -421,7 +421,7 @@ export class DataInitializer {
         
         // Create user profile in custom users table
         console.log(`Creating profile for ${user.email}`);
-        const { error: profileError } = await supabase
+        const { error: profileError } = await supabaseClient
           .from('users')
           .insert({
             id: authData.user.id,
