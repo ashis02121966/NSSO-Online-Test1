@@ -37,7 +37,7 @@ export class AuthService {
       try {
         const rpcResult = await supabase
           .rpc('get_user_with_role', { user_id: authData.user.id })
-          .single();
+          .maybeSingle();
         userData = rpcResult.data;
         userError = rpcResult.error;
       } catch (rpcError) {
