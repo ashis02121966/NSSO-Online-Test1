@@ -16,6 +16,10 @@ export class DataInitializer {
       
       console.log('Checking database connection...');
       
+      // Clean up existing data first
+      console.log('Cleaning up existing data...');
+      await this.cleanupExistingData(supabase, supabaseAdmin);
+      
       // Check if data already exists
       const { data: existingRoles, error: checkError } = await supabase
         .from('roles')
@@ -31,11 +35,6 @@ export class DataInitializer {
         };
       }
       
-      if (existingRoles && existingRoles.length > 0) {
-        console.log('Database already initialized');
-        return { success: true, message: 'Database already contains data. You can login with existing credentials.' };
-      }
-
       console.log('Database is empty, starting initialization...');
       
       // Initialize in order: roles -> users -> surveys -> sections -> questions -> settings
@@ -44,6 +43,9 @@ export class DataInitializer {
       
       await this.createUsers(supabaseAdmin);
       console.log('Users created successfully');
+      
+      // Verify user creation
+      await this.verifyUserCreation(supabaseAdmin);
       
       await this.createSurveys(supabase);
       console.log('Surveys created successfully');
@@ -69,6 +71,66 @@ export class DataInitializer {
     }
   }
 
+  static async cleanupExistingData(supabaseClient: any, supabaseAdminClient: any) {
+    try {
+      console.log('Cleaning up existing data...');
+      
+      // Delete in reverse order of dependencies
+      await supabaseClient.from('system_settings').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseClient.from('question_options').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseClient.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseClient.from('survey_sections').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseClient.from('surveys').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseClient.from('users').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabaseClient.from('roles').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      // Clean up auth users
+      const { data: authUsers } = await supabaseAdminClient.auth.admin.listUsers();
+      if (authUsers && authUsers.users) {
+        for (const user of authUsers.users) {
+          if (user.email && user.email.includes('@esigma.com')) {
+            console.log(`Deleting auth user: ${user.email}`);
+            await supabaseAdminClient.auth.admin.deleteUser(user.id);
+          }
+        }
+      }
+      
+      console.log('Cleanup completed');
+    } catch (error) {
+      console.log('Cleanup error (this is expected if tables are empty):', error);
+    }
+  }
+
+  static async verifyUserCreation(supabaseAdminClient: any) {
+    console.log('Verifying user creation...');
+    
+    const testEmails = ['admin@esigma.com', 'enumerator@esigma.com'];
+    
+    for (const email of testEmails) {
+      try {
+        // Test authentication
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password: 'password123'
+        });
+        
+        if (error) {
+          console.error(`Verification failed for ${email}:`, error);
+          throw new Error(`User ${email} cannot authenticate: ${error.message}`);
+        }
+        
+        console.log(`✓ User ${email} can authenticate successfully`);
+        
+        // Sign out after verification
+        await supabase.auth.signOut();
+      } catch (error) {
+        console.error(`Verification error for ${email}:`, error);
+        throw error;
+      }
+    }
+    
+    console.log('All users verified successfully');
+  }
   static async createRoles(supabaseClient: any) {
     console.log('Creating roles...');
     
@@ -211,7 +273,7 @@ export class DataInitializer {
         email: 'enumerator@esigma.com',
         password: 'password123',
         name: 'Field Enumerator',
-        role_id: '550e8400-e29b-41d4-a716-446655440005',
+        role_id: '550e8400-e29b-41d4-a716-446655440006',
         is_active: true,
         jurisdiction: 'Block A, Central Delhi',
         zone: 'North Zone',
@@ -225,70 +287,9 @@ export class DataInitializer {
 
     console.log(`Creating ${users.length} users...`);
     
-    // First, check if users already exist in auth
-    console.log('Checking for existing users...');
-    const { data: existingUsers, error: listError } = await supabaseClient.auth.admin.listUsers();
-    
-    if (listError) {
-      console.error('Failed to list existing users:', listError);
-      throw new Error(`Failed to check existing users: ${listError.message}`);
-    }
-    
-    const existingEmails = existingUsers.users.map(user => user.email);
-    console.log('Existing users found:', existingEmails);
-    
     for (const user of users) {
       try {
         console.log(`Processing user: ${user.email}`);
-        
-        // Skip if user already exists in auth
-        if (existingEmails.includes(user.email)) {
-          console.log(`User ${user.email} already exists in auth, skipping auth creation`);
-          
-          // Find the existing auth user
-          const existingAuthUser = existingUsers.users.find(u => u.email === user.email);
-          if (!existingAuthUser) {
-            throw new Error(`Could not find existing auth user for ${user.email}`);
-          }
-          
-          // Check if profile exists
-          const { data: existingProfile } = await supabase
-            .from('users')
-            .select('id')
-            .eq('id', existingAuthUser.id)
-            .single();
-          
-          if (existingProfile) {
-            console.log(`Profile for ${user.email} already exists, skipping`);
-            continue;
-          }
-          
-          // Create profile for existing auth user
-          const { error: profileError } = await supabase
-            .from('users')
-            .insert({
-              id: existingAuthUser.id,
-              email: user.email,
-              name: user.name,
-              role_id: user.role_id,
-              is_active: user.is_active,
-              jurisdiction: user.jurisdiction,
-              zone: user.zone,
-              region: user.region,
-              district: user.district,
-              employee_id: user.employee_id,
-              phone_number: user.phone_number,
-              parent_id: user.parent_id
-            });
-          
-          if (profileError) {
-            console.error(`Failed to create profile for existing user ${user.email}:`, profileError);
-            throw new Error(`Profile creation failed for ${user.email}: ${profileError.message}`);
-          }
-          
-          console.log(`Successfully created profile for existing user: ${user.email}`);
-          continue;
-        }
         
         // Create user in Supabase Auth
         console.log(`Creating new auth user: ${user.email}`);
@@ -303,21 +304,7 @@ export class DataInitializer {
         
         if (authError) {
           console.error(`Failed to create auth user ${user.email}:`, authError);
-          
-          // If user already exists, try to get the existing user
-          if (authError.message.includes('already registered')) {
-            console.log(`User ${user.email} already exists, attempting to find existing user...`);
-            const { data: existingUser, error: getUserError } = await supabaseClient.auth.admin.getUserByEmail(user.email);
-            
-            if (getUserError || !existingUser.user) {
-              throw new Error(`Could not find existing user ${user.email}: ${getUserError?.message}`);
-            }
-            
-            console.log(`Found existing user ${user.email}, using existing auth record`);
-            authData = { user: existingUser.user };
-          } else {
-            throw new Error(`Auth creation failed for ${user.email}: ${authError.message}`);
-          }
+          throw new Error(`Auth creation failed for ${user.email}: ${authError.message}`);
         }
         
         console.log(`Created auth user for ${user.email} with ID: ${authData.user.id}`);
@@ -342,20 +329,14 @@ export class DataInitializer {
           });
         
         if (profileError) {
-          // Check if it's a duplicate key error
-          if (profileError.code === '23505') {
-            console.log(`Profile for ${user.email} already exists, skipping profile creation`);
-          } else {
-            console.error(`Failed to create user profile ${user.email}:`, profileError);
-            throw new Error(`Profile creation failed for ${user.email}: ${profileError.message}`);
-          }
-        } else {
-          console.log(`Successfully created user: ${user.email}`);
+          console.error(`Failed to create user profile ${user.email}:`, profileError);
+          throw new Error(`Profile creation failed for ${user.email}: ${profileError.message}`);
         }
+        
+        console.log(`Successfully created user: ${user.email}`);
       } catch (error) {
         console.error(`Error creating user ${user.email}:`, error);
-        // Don't stop the entire process for individual user failures
-        console.log(`Continuing with next user despite error for ${user.email}`);
+        throw error; // Stop initialization on user creation failure
       }
     }
 
