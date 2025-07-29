@@ -93,20 +93,27 @@ export function Login() {
           )}
 
           {/* Database Initialization Section */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h4 className="text-sm font-medium text-yellow-900 mb-2">⚠️ Authentication Issue</h4>
+            <p className="text-xs text-yellow-800 mb-3">
+              If you're getting "Invalid email or password" errors, you need to initialize the database first.
+            </p>
             <h4 className="text-sm font-medium text-blue-900 mb-2">Database Setup</h4>
             <p className="text-xs text-blue-800 mb-3">
-              If this is your first time, initialize the database with sample data including users, surveys, and settings.
+              Click the button below to create all necessary tables and demo user accounts.
             </p>
             <Button
               onClick={handleInitializeDatabase}
               disabled={isInitializing}
-              variant="secondary"
+              variant="primary"
               size="sm"
               className="w-full"
             >
               {isInitializing ? 'Initializing Database...' : 'Initialize Database'}
             </Button>
+            <p className="text-xs text-yellow-700 mt-2">
+              <strong>Important:</strong> You must have valid Supabase credentials in your .env file for this to work.
+            </p>
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -22,15 +22,23 @@ const isSupabaseConfigured = Boolean(
 console.log('Supabase configuration status:', isSupabaseConfigured);
 
 if (!isSupabaseConfigured) {
-  console.warn('=== SUPABASE CONFIGURATION REQUIRED ===');
+  console.error('=== SUPABASE CONFIGURATION REQUIRED ===');
   console.warn('Please update your .env file with your actual Supabase credentials:');
   console.warn('1. Go to https://supabase.com and create a project');
   console.warn('2. Get your Project URL and anon key from Settings > API');
   console.warn('3. Update .env file with your actual values');
   console.warn('4. Restart the development server');
+  console.warn('5. Click "Initialize Database" on the login page');
   console.warn('Current values:');
   console.warn('  VITE_SUPABASE_URL:', supabaseUrl || 'Not set');
   console.warn('  VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set but may be placeholder' : 'Not set');
+  
+  // Show alert in browser
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      alert('⚠️ Supabase Configuration Required\n\nPlease:\n1. Set up your Supabase project\n2. Update .env file with your credentials\n3. Restart the dev server\n4. Initialize the database');
+    }, 2000);
+  }
 }
 
 // Create Supabase client (with fallback for demo mode)

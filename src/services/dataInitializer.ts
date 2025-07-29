@@ -134,7 +134,9 @@ export class DataInitializer {
   static async createUsers(supabaseClient: any) {
     console.log('Creating users...');
     
-    const passwordHash = await bcrypt.hash('password123', 10);
+    // Use a stronger salt rounds for better security
+    const passwordHash = await bcrypt.hash('password123', 12);
+    console.log('Generated password hash for demo users:', passwordHash.substring(0, 20) + '...');
     
     const users = [
       {
@@ -256,11 +258,15 @@ export class DataInitializer {
       }
     ];
 
+    console.log('Attempting to insert', users.length, 'users...');
     const { error } = await supabaseClient
       .from('users')
       .insert(users);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error creating users:', error);
+      throw error;
+    }
     console.log('Users created successfully');
   }
 
