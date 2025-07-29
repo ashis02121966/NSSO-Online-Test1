@@ -41,17 +41,23 @@ export class AuthService {
         userError = rpcResult.error;
       } catch (rpcError) {
         console.log('RPC function not available, using direct query');
-        // Fallback to direct query
-        const directResult = await supabase
-          .from('users')
-          .select(`
-            *,
-            role:roles(*)
-          `)
-          .eq('id', authData.user.id)
-          .maybeSingle();
-        userData = directResult.data ? [directResult.data] : null;
-        userError = directResult.error;
+        // Fallback to direct query with proper error handling
+        try {
+          const directResult = await supabase
+            .from('users')
+            .select(`
+              *,
+              role:roles(*)
+            `)
+            .eq('id', authData.user.id)
+            .maybeSingle();
+          userData = directResult.data ? [directResult.data] : null;
+          userError = directResult.error;
+        } catch (directError) {
+          console.log('Direct query failed, user profile not found');
+          userData = null;
+          userError = { message: 'User profile not found' };
+        }
       }
 
       if (userError || !userData || userData.length === 0) {
