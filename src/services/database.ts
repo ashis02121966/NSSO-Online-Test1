@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabase';
 import { User, Role, Survey, Section, Question, TestSession, TestResult, Certificate, SystemSettings, ApiResponse } from '../types';
 
 // Authentication Service
