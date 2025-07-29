@@ -896,33 +896,188 @@ export class TestService {
 export class DashboardService {
   static async getDashboardData(): Promise<ApiResponse<any>> {
     try {
-      if (!supabase) {
+      if (!supabase || !supabaseAdmin) {
         return { success: false, message: 'Database not configured' };
       }
 
       // Get basic counts
-      const { count: usersCount } = await supabase
+      const { count: usersCount } = await supabaseAdmin
         .from('users')
         .select('*', { count: 'exact', head: true });
 
-      const { count: surveysCount } = await supabase
+      const { count: surveysCount } = await supabaseAdmin
         .from('surveys')
         .select('*', { count: 'exact', head: true });
 
-      const { count: attemptsCount } = await supabase
+      const { count: attemptsCount } = await supabaseAdmin
         .from('test_sessions')
         .select('*', { count: 'exact', head: true });
+
+      // Get test results for calculations
+      const { data: testResults, error: resultsError } = await supabaseAdmin
+        .from('test_results')
+        .select('*');
+
+      if (resultsError) {
+        console.error('Dashboard: Error fetching test results:', resultsError);
+      }
+
+      // Calculate average score and pass rate
+      let averageScore = 0;
+      let passRate = 0;
+      
+      if (testResults && testResults.length > 0) {
+        const totalScore = testResults.reduce((sum, result) => sum + (result.score || 0), 0);
+        averageScore = totalScore / testResults.length;
+        
+        const passedTests = testResults.filter(result => result.is_passed).length;
+        passRate = (passedTests / testResults.length) * 100;
+      }
+
+      // Get performance by role
+      const { data: rolePerformance, error: roleError } = await supabaseAdmin
+        .from('test_results')
+        .select(`
+          *,
+          user:users(
+            role:roles(name)
+          )
+        `);
+
+      if (roleError) {
+        console.error('Dashboard: Error fetching role performance:', roleError);
+      }
+
+      const performanceByRole = rolePerformance ? rolePerformance.reduce((acc: any[], result: any) => {
+        const roleName = result.user?.role?.name || 'Unknown';
+        const existing = acc.find(item => item.role === roleName);
+        
+        if (existing) {
+          existing.totalTests++;
+          existing.totalScore += result.score || 0;
+          if (result.is_passed) existing.passedTests++;
+        } else {
+          acc.push({
+            role: roleName,
+            totalTests: 1,
+            totalScore: result.score || 0,
+            passedTests: result.is_passed ? 1 : 0,
+            averageScore: result.score || 0,
+            passRate: result.is_passed ? 100 : 0
+          });
+        }
+        
+        return acc;
+      }, []).map((item: any) => ({
+        ...item,
+        averageScore: item.totalScore / item.totalTests,
+        passRate: (item.passedTests / item.totalTests) * 100
+      })) : [];
+
+      // Get performance by survey
+      const { data: surveyPerformance, error: surveyError } = await supabaseAdmin
+        .from('test_results')
+        .select(`
+          *,
+          survey:surveys(title)
+        `);
+
+      if (surveyError) {
+        console.error('Dashboard: Error fetching survey performance:', surveyError);
+      }
+
+      const performanceBySurvey = surveyPerformance ? surveyPerformance.reduce((acc: any[], result: any) => {
+        const surveyTitle = result.survey?.title || 'Unknown Survey';
+        const existing = acc.find(item => item.survey === surveyTitle);
+        
+        if (existing) {
+          existing.totalAttempts++;
+          existing.totalScore += result.score || 0;
+          if (result.is_passed) existing.passedAttempts++;
+        } else {
+          acc.push({
+            survey: surveyTitle,
+            totalAttempts: 1,
+            totalScore: result.score || 0,
+            passedAttempts: result.is_passed ? 1 : 0,
+            averageScore: result.score || 0,
+            passRate: result.is_passed ? 100 : 0
+          });
+        }
+        
+        return acc;
+      }, []).map((item: any) => ({
+        ...item,
+        averageScore: item.totalScore / item.totalAttempts,
+        passRate: (item.passedAttempts / item.totalAttempts) * 100
+      })) : [];
+
+      // Get recent activity
+      const { data: recentActivity, error: activityError } = await supabaseAdmin
+        .from('activity_logs')
+        .select(`
+          *,
+          user:users(name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (activityError) {
+        console.error('Dashboard: Error fetching recent activity:', activityError);
+      }
+
+      const formattedActivity = recentActivity ? recentActivity.map((activity: any) => ({
+        id: activity.id,
+        action: activity.action,
+        description: activity.description,
+        userName: activity.user?.name || 'Unknown User',
+        timestamp: new Date(activity.created_at)
+      })) : [];
+
+      // Get monthly trends (last 6 months)
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const { data: monthlyData, error: monthlyError } = await supabaseAdmin
+        .from('test_results')
+        .select('completed_at, is_passed')
+        .gte('completed_at', sixMonthsAgo.toISOString());
+
+      if (monthlyError) {
+        console.error('Dashboard: Error fetching monthly trends:', monthlyError);
+      }
+
+      const monthlyTrends = monthlyData ? monthlyData.reduce((acc: any[], result: any) => {
+        const month = new Date(result.completed_at).toLocaleString('default', { month: 'short', year: 'numeric' });
+        const existing = acc.find(item => item.month === month);
+        
+        if (existing) {
+          existing.totalTests++;
+          if (result.is_passed) existing.passedTests++;
+        } else {
+          acc.push({
+            month,
+            totalTests: 1,
+            passedTests: result.is_passed ? 1 : 0
+          });
+        }
+        
+        return acc;
+      }, []).map((item: any) => ({
+        ...item,
+        passRate: (item.passedTests / item.totalTests) * 100
+      })) : [];
 
       const dashboardData = {
         totalUsers: usersCount || 0,
         totalSurveys: surveysCount || 0,
         totalAttempts: attemptsCount || 0,
-        averageScore: 75.5,
-        passRate: 82.3,
-        recentActivity: [],
-        performanceByRole: [],
-        performanceBySurvey: [],
-        monthlyTrends: []
+        averageScore: Math.round(averageScore * 10) / 10,
+        passRate: Math.round(passRate * 10) / 10,
+        recentActivity: formattedActivity,
+        performanceByRole,
+        performanceBySurvey,
+        monthlyTrends
       };
 
       return { success: true, data: dashboardData, message: 'Dashboard data fetched successfully' };
