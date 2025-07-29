@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import bcrypt from 'bcryptjs';
 
 export class DataInitializer {
   static async initializeDatabase() {
@@ -134,9 +133,9 @@ export class DataInitializer {
   static async createUsers(supabaseClient: any) {
     console.log('Creating users...');
     
-    // Use a stronger salt rounds for better security
-    const passwordHash = await bcrypt.hash('password123', 12);
-    console.log('Generated password hash for demo users:', passwordHash.substring(0, 20) + '...');
+    // Use pre-computed bcrypt hash for 'password123' to ensure consistency
+    const passwordHash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VcSforHgK';
+    console.log('Using pre-computed password hash for demo users');
     
     const users = [
       {
