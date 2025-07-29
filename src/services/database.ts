@@ -47,21 +47,51 @@ export class AuthService {
           *,
           role:roles(*)
         `)
-        .eq('id', authData.user.id)
-        .single();
+      let userData, userError;
+      
+      // Try RPC function first, fallback to direct query if RPC doesn't exist
+      try {
+        const rpcResult = await supabase
+          .rpc('get_user_with_role', { user_id: authData.user.id });
+        userData = rpcResult.data;
+        userError = rpcResult.error;
+      } catch (rpcError) {
+        console.log('RPC function not available, using direct query');
+        // Fallback to direct query
+        const directResult = await supabase
+          .from('users')
+          .select(`
+            *,
+            role:roles(*)
+          `)
+          .eq('id', authData.user.id)
+          .maybeSingle();
+        userData = directResult.data ? [directResult.data] : null;
+        userError = directResult.error;
+      }
 
       if (userError || !userData || userData.length === 0) {
-        console.error('AuthService: User profile not found:', userError);
+        console.error('AuthService: User profile not found. This usually means the database needs to be initialized.', userError);
         // Sign out from Supabase auth since profile lookup failed
         await supabase.auth.signOut();
         return {
           success: false,
-          message: 'User profile not found. Please check your user account exists in the database.'
+          message: 'User profile not found in database. Please click "Initialize Database" to create the required user accounts and tables.'
         };
       }
 
       const userRecord = userData;
-
+      const userRecord = userData[0] || userData;
+      
+      // Handle both RPC function format and direct query format
+      const roleData = userRecord.role || {
+        id: userRecord.role_id,
+        name: userRecord.role_name || 'Unknown',
+        description: userRecord.role_description || '',
+        level: userRecord.role_level || 5,
+        is_active: userRecord.role_is_active !== false,
+        menu_access: userRecord.menu_access || []
+      };
       // Update last login
       await supabaseAdmin
         .from('users')
@@ -74,12 +104,12 @@ export class AuthService {
         name: userRecord.name,
         roleId: userRecord.role_id,
         role: {
-          id: userRecord.role_id,
-          name: userRecord.role.name,
-          description: userRecord.role.description,
-          level: userRecord.role.level,
-          isActive: userRecord.role.is_active,
-          menuAccess: userRecord.role.menu_access,
+          id: roleData.id,
+          name: roleData.name,
+          description: roleData.description,
+          level: roleData.level,
+          isActive: roleData.is_active,
+          menuAccess: roleData.menu_access,
           createdAt: new Date(),
           updatedAt: new Date()
         },
