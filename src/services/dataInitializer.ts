@@ -133,15 +133,13 @@ export class DataInitializer {
   static async createUsers(supabaseClient: any) {
     console.log('Creating users...');
     
-    // Use pre-computed bcrypt hash for 'password123' to ensure consistency
-    const passwordHash = '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/VcSforHgK';
-    console.log('Using pre-computed password hash for demo users');
+    console.log('Creating Supabase Auth users and custom user profiles...');
     
     const users = [
       {
         id: '550e8400-e29b-41d4-a716-446655440010',
         email: 'admin@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'System Administrator',
         role_id: '550e8400-e29b-41d4-a716-446655440001',
         is_active: true,
@@ -155,7 +153,7 @@ export class DataInitializer {
       {
         id: '550e8400-e29b-41d4-a716-446655440011',
         email: 'cpg@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'CPG Officer',
         role_id: '550e8400-e29b-41d4-a716-446655440002',
         is_active: true,
@@ -169,7 +167,7 @@ export class DataInitializer {
       {
         id: '550e8400-e29b-41d4-a716-446655440012',
         email: 'zo@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'Zonal Officer',
         role_id: '550e8400-e29b-41d4-a716-446655440003',
         is_active: true,
@@ -183,7 +181,7 @@ export class DataInitializer {
       {
         id: '550e8400-e29b-41d4-a716-446655440013',
         email: 'ro@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'Regional Officer',
         role_id: '550e8400-e29b-41d4-a716-446655440004',
         is_active: true,
@@ -198,7 +196,7 @@ export class DataInitializer {
       {
         id: '550e8400-e29b-41d4-a716-446655440014',
         email: 'supervisor@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'Field Supervisor',
         role_id: '550e8400-e29b-41d4-a716-446655440005',
         is_active: true,
@@ -213,7 +211,7 @@ export class DataInitializer {
       {
         id: '550e8400-e29b-41d4-a716-446655440015',
         email: 'enumerator@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'Field Enumerator',
         role_id: '550e8400-e29b-41d4-a716-446655440006',
         is_active: true,
@@ -228,7 +226,7 @@ export class DataInitializer {
       {
         id: '550e8400-e29b-41d4-a716-446655440016',
         email: 'enumerator2@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'Field Enumerator 2',
         role_id: '550e8400-e29b-41d4-a716-446655440006',
         is_active: true,
@@ -243,7 +241,7 @@ export class DataInitializer {
       {
         id: '550e8400-e29b-41d4-a716-446655440017',
         email: 'enumerator3@esigma.com',
-        password_hash: passwordHash,
+        password: 'password123',
         name: 'Field Enumerator 3',
         role_id: '550e8400-e29b-41d4-a716-446655440006',
         is_active: true,
@@ -257,15 +255,52 @@ export class DataInitializer {
       }
     ];
 
-    console.log('Attempting to insert', users.length, 'users...');
-    const { error } = await supabaseClient
-      .from('users')
-      .insert(users);
-
-    if (error) {
-      console.error('Error creating users:', error);
-      throw error;
+    console.log('Creating', users.length, 'users in Supabase Auth and custom users table...');
+    
+    for (const user of users) {
+      try {
+        // Create user in Supabase Auth
+        const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
+          email: user.email,
+          password: user.password,
+          user_metadata: {
+            name: user.name
+          }
+        });
+        
+        if (authError) {
+          console.error(`Failed to create auth user ${user.email}:`, authError);
+          continue;
+        }
+        
+        // Create user profile in custom users table
+        const { error: profileError } = await supabaseClient
+          .from('users')
+          .insert({
+            id: authData.user.id,
+            email: user.email,
+            name: user.name,
+            role_id: user.role_id,
+            is_active: user.is_active,
+            jurisdiction: user.jurisdiction,
+            zone: user.zone,
+            region: user.region,
+            district: user.district,
+            employee_id: user.employee_id,
+            phone_number: user.phone_number,
+            parent_id: user.parent_id
+          });
+        
+        if (profileError) {
+          console.error(`Failed to create user profile ${user.email}:`, profileError);
+        } else {
+          console.log(`Successfully created user: ${user.email}`);
+        }
+      } catch (error) {
+        console.error(`Error creating user ${user.email}:`, error);
+      }
     }
+
     console.log('Users created successfully');
   }
 

@@ -188,13 +188,26 @@ export class UserService {
         return { success: false, message: 'Database not configured' };
       }
 
-      const passwordHash = await bcrypt.hash('password123', 12);
+      // Create user in Supabase Auth first
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: userData.email,
+        password: 'password123',
+        user_metadata: {
+          name: userData.name
+        }
+      });
+      
+      if (authError) {
+        console.error('UserService: Error creating auth user:', authError);
+        return { success: false, message: authError.message };
+      }
 
+      // Create user profile in custom users table
       const { data, error } = await supabase
         .from('users')
         .insert({
+          id: authData.user.id,
           email: userData.email,
-          password_hash: passwordHash,
           name: userData.name,
           role_id: userData.roleId,
           jurisdiction: userData.jurisdiction,
