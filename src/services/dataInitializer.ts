@@ -66,9 +66,9 @@ export class DataInitializer {
       console.log('Users created successfully');
       
       // Verify user creation
-      await this.verifyUserCreation(supabaseAdmin);
+      const adminUserId = await this.verifyUserCreation(supabaseAdmin);
       
-      await this.createSurveys(supabase);
+      await this.createSurveys(supabase, adminUserId);
       console.log('Surveys created successfully');
       
       await this.createSurveySections(supabase);
@@ -159,6 +159,7 @@ export class DataInitializer {
     console.log('Verifying user creation...');
     
     const testEmails = ['admin@esigma.com', 'enumerator@esigma.com'];
+    let adminUserId = null;
     
     for (const email of testEmails) {
       try {
@@ -175,6 +176,11 @@ export class DataInitializer {
         
         console.log(`✓ User ${email} can authenticate successfully`);
         
+        // Capture admin user ID for survey creation
+        if (email === 'admin@esigma.com') {
+          adminUserId = data.user.id;
+        }
+        
         // Sign out after verification
         await supabase.auth.signOut();
       } catch (error) {
@@ -184,6 +190,7 @@ export class DataInitializer {
     }
     
     console.log('All users verified successfully');
+    return adminUserId;
   }
   static async createRoles(supabaseClient: any) {
     console.log('Creating roles...');
@@ -401,7 +408,7 @@ export class DataInitializer {
     console.log('Users created successfully');
   }
 
-  static async createSurveys(supabaseClient: any) {
+  static async createSurveys(supabaseClient: any, adminUserId: string) {
     console.log('Creating surveys...');
     
     const surveys = [
@@ -417,7 +424,7 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone', 'South Zone'],
         assigned_regions: ['Delhi Region', 'Mumbai Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440010'
+        created_by: adminUserId
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440021',
@@ -431,7 +438,7 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone'],
         assigned_regions: ['Delhi Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440010'
+        created_by: adminUserId
       },
       {
         id: '550e8400-e29b-41d4-a716-446655440022',
@@ -445,7 +452,7 @@ export class DataInitializer {
         is_active: true,
         assigned_zones: ['North Zone', 'South Zone', 'East Zone'],
         assigned_regions: ['Delhi Region', 'Mumbai Region', 'Kolkata Region'],
-        created_by: '550e8400-e29b-41d4-a716-446655440010'
+        created_by: adminUserId
       }
     ];
 
