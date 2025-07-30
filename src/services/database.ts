@@ -9,10 +9,10 @@ export class AuthService {
       console.log('AuthService: Attempting login for:', email);
       
       if (!supabase) {
-        console.error('AuthService: Supabase not configured');
+        console.warn('AuthService: Supabase not configured - running in demo mode');
         return {
           success: false,
-          message: 'Database not configured. Please check your Supabase setup and initialize the database.'
+          message: 'Database not configured. Please set up your Supabase credentials in the .env file and restart the development server. Then click "Initialize Database" on the login page.'
         };
       }
 
@@ -898,10 +898,10 @@ export class DashboardService {
   static async getDashboardData(): Promise<ApiResponse<any>> {
     try {
       if (!supabase || !supabaseAdmin) {
-        console.error('DashboardService: Supabase clients not configured');
+        console.warn('DashboardService: Supabase clients not configured - returning empty dashboard data');
         return { 
           success: false, 
-          message: 'Database not configured. Please check your Supabase environment variables.',
+          message: 'Database not configured. Please set up your Supabase credentials in the .env file, restart the development server, and initialize the database.',
           data: {
             totalUsers: 0,
             totalSurveys: 0,

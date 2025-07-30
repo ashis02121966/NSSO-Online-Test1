@@ -28,7 +28,7 @@ const isSupabaseConfigured = Boolean(
 console.log('Supabase configuration status:', isSupabaseConfigured);
 
 if (!isSupabaseConfigured) {
-  console.error('=== SUPABASE CONFIGURATION REQUIRED ===');
+  console.warn('=== SUPABASE CONFIGURATION REQUIRED ===');
   console.warn('Please update your .env file with your actual Supabase credentials:');
   console.warn('1. Go to https://supabase.com and create a project');
   console.warn('2. Get your Project URL, anon key, and service role key from Settings > API');
@@ -39,13 +39,6 @@ if (!isSupabaseConfigured) {
   console.warn('  VITE_SUPABASE_URL:', supabaseUrl || 'Not set');
   console.warn('  VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set but may be placeholder' : 'Not set');
   console.warn('  VITE_SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceRoleKey ? 'Set but may be placeholder' : 'Not set');
-  
-  // Show alert in browser
-  if (typeof window !== 'undefined') {
-    setTimeout(() => {
-      alert('⚠️ Supabase Configuration Required\n\nPlease:\n1. Set up your Supabase project\n2. Update .env file with URL, anon key, and service role key\n3. Restart the dev server\n4. Initialize the database');
-    }, 2000);
-  }
 }
 
 // Create Supabase client (with fallback for demo mode)

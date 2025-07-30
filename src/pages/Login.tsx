@@ -102,13 +102,20 @@ export function Login() {
 
           {/* Database Initialization Section */}
           <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h4 className="text-sm font-medium text-yellow-900 mb-2">⚠️ Authentication Issue</h4>
+            <h4 className="text-sm font-medium text-yellow-900 mb-2">⚠️ Supabase Configuration Required</h4>
             <p className="text-xs text-yellow-800 mb-3">
-              If you're getting "Invalid email or password" errors, you need to initialize the database first.
+              To use this application, you need to configure Supabase first. Follow these steps:
             </p>
+            <ol className="text-xs text-yellow-800 mb-3 list-decimal list-inside space-y-1">
+              <li>Create a Supabase project at <a href="https://supabase.com" target="_blank" className="underline">supabase.com</a></li>
+              <li>Get your Project URL, anon key, and service role key from Settings → API</li>
+              <li>Update the .env file with your actual Supabase credentials</li>
+              <li>Restart the development server</li>
+              <li>Click "Initialize Database" below to create tables and demo data</li>
+            </ol>
             <h4 className="text-sm font-medium text-blue-900 mb-2">Database Setup</h4>
             <p className="text-xs text-blue-800 mb-3">
-              Click the button below to create all necessary tables and demo user accounts.
+              After configuring Supabase, click the button below to create all necessary tables and demo user accounts.
             </p>
             <Button
               onClick={handleInitializeDatabase}
@@ -120,7 +127,7 @@ export function Login() {
               {isInitializing ? 'Initializing Database...' : 'Initialize Database'}
             </Button>
             <p className="text-xs text-yellow-700 mt-2">
-              <strong>Important:</strong> You must have valid Supabase credentials in your .env file for this to work.
+              <strong>Important:</strong> This will only work after you've properly configured your Supabase credentials in the .env file.
             </p>
           </div>
           
