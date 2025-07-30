@@ -97,6 +97,26 @@ export class DataInitializer {
       
       console.log('Database is empty, starting initialization...');
       
+      // Run the comprehensive schema migration first
+      console.log('Running comprehensive schema migration...');
+      try {
+        // Read and execute the migration file
+        const migrationResponse = await fetch('/supabase/migrations/create_comprehensive_schema.sql');
+        if (migrationResponse.ok) {
+          const migrationSQL = await migrationResponse.text();
+          const { error: migrationError } = await supabaseAdmin.rpc('exec_sql', { sql: migrationSQL });
+          
+          if (migrationError) {
+            console.error('Migration execution failed:', migrationError);
+            // Continue with manual creation if migration fails
+          } else {
+            console.log('Schema migration executed successfully');
+          }
+        }
+      } catch (error) {
+        console.log('Could not run migration file, proceeding with manual creation...');
+      }
+      
       // Initialize in order: roles -> users -> surveys -> sections -> questions -> settings
       await this.createRoles(supabaseAdmin);
       console.log('Roles created successfully');
@@ -141,6 +161,31 @@ export class DataInitializer {
   static async cleanupExistingData(supabaseClient: any, supabaseAdminClient: any) {
     try {
       console.log('Cleaning up existing data...');
+      
+      // Drop all existing policies first to avoid conflicts
+      console.log('Dropping existing policies...');
+      try {
+        const { error: policyError } = await supabaseAdminClient.rpc('exec_sql', {
+          sql: `
+            DO $$ 
+            DECLARE
+                r RECORD;
+            BEGIN
+                FOR r IN (SELECT schemaname, tablename, policyname FROM pg_policies WHERE schemaname = 'public') LOOP
+                    EXECUTE format('DROP POLICY IF EXISTS %I ON %I.%I', r.policyname, r.schemaname, r.tablename);
+                END LOOP;
+            END $$;
+          `
+        });
+        
+        if (policyError) {
+          console.log('Could not drop policies via RPC, continuing with data cleanup...');
+        } else {
+          console.log('Existing policies dropped successfully');
+        }
+      } catch (error) {
+        console.log('Policy cleanup failed, continuing with data cleanup...');
+      }
       
       // Delete in correct order of foreign key dependencies using admin client
       console.log('Deleting test_answers...');
