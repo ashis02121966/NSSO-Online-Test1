@@ -311,9 +311,16 @@ export function Questions() {
   const handleDeleteQuestion = async (questionId: string) => {
     if (window.confirm('Are you sure you want to delete this question?')) {
       try {
-        setQuestions(questions.filter(q => q.id !== questionId));
+        const response = await questionApi.deleteQuestion(questionId);
+        if (response.success) {
+          setQuestions(questions.filter(q => q.id !== questionId));
+          alert('Question deleted successfully!');
+        } else {
+          alert(`Failed to delete question: ${response.message}`);
+        }
       } catch (error) {
         console.error('Failed to delete question:', error);
+        alert('Failed to delete question. Please try again.');
       }
     }
   };

@@ -158,6 +158,11 @@ export const questionApi = {
     return await QuestionService.createQuestion(questionData);
   },
 
+  async deleteQuestion(questionId: string): Promise<ApiResponse<void>> {
+    console.log('questionApi: Deleting question:', questionId);
+    return await QuestionService.deleteQuestion(questionId);
+  },
+
   async uploadQuestions(surveyId: string, file: File): Promise<ApiResponse<FileUploadResult>> {
     try {
       console.log('questionApi: Uploading questions from file:', file.name);

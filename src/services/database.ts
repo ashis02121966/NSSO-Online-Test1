@@ -841,6 +841,39 @@ export class QuestionService {
     }
   }
 
+  static async deleteQuestion(questionId: string): Promise<ApiResponse<void>> {
+    try {
+      if (!supabase) {
+        return { success: false, message: 'Database not configured' };
+      }
+
+      // Delete question options first (due to foreign key constraint)
+      const { error: optionsError } = await supabase
+        .from('question_options')
+        .delete()
+        .eq('question_id', questionId);
+
+      if (optionsError) {
+        return { success: false, message: optionsError.message };
+      }
+
+      // Delete the question
+      const { error: questionError } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', questionId);
+
+      if (questionError) {
+        return { success: false, message: questionError.message };
+      }
+
+      return { success: true, message: 'Question deleted successfully' };
+    } catch (error) {
+      console.error('QuestionService: Error deleting question:', error);
+      return { success: false, message: 'Failed to delete question' };
+    }
+  }
+
   static async uploadQuestions(csvContent: string): Promise<ApiResponse<any>> {
     // Basic CSV parsing implementation
     return {
