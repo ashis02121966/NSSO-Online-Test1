@@ -36,7 +36,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (supabase) {
           const { data: { session }, error } = await supabase.auth.getSession();
           
-          if (session && !error) {
+          if (error) {
+            // Clear any stale tokens by signing out
+            await supabase.auth.signOut();
+            setUser(null);
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            setIsLoading(false);
+            return;
+          }
+          
+          if (session) {
             // We have a valid Supabase session, fetch user details from database
             const { data: userData, error: userError } = await supabase
               .from('users')
@@ -66,6 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               return;
             } else {
               // User data fetch failed, clear authentication state
+              await supabase.auth.signOut();
               setUser(null);
               localStorage.removeItem('authToken');
               localStorage.removeItem('userData');
@@ -74,6 +85,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
           } else {
             // No valid Supabase session, clear authentication state
+            await supabase.auth.signOut();
             setUser(null);
             localStorage.removeItem('authToken');
             localStorage.removeItem('userData');
@@ -91,6 +103,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
+        
+        // Clear any stale tokens by signing out
+        if (supabase) {
+          await supabase.auth.signOut();
+        }
         
         // Clear authentication state on error
         setUser(null);
