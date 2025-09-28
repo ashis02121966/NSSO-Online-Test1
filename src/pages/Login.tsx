@@ -100,37 +100,6 @@ export function Login() {
             </div>
           )}
 
-          {/* Database Initialization Section */}
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <h4 className="text-sm font-medium text-yellow-900 mb-2">⚠️ Supabase Configuration Required</h4>
-            <p className="text-xs text-yellow-800 mb-3">
-              To use this application, you need to configure Supabase first. Follow these steps:
-            </p>
-            <ol className="text-xs text-yellow-800 mb-3 list-decimal list-inside space-y-1">
-              <li>Create a Supabase project at <a href="https://supabase.com" target="_blank" className="underline">supabase.com</a></li>
-              <li>Get your Project URL, anon key, and service role key from Settings → API</li>
-              <li>Update the .env file with your actual Supabase credentials</li>
-              <li>Restart the development server</li>
-              <li>Click "Initialize Database" below to create tables and demo data</li>
-            </ol>
-            <h4 className="text-sm font-medium text-blue-900 mb-2">Database Setup</h4>
-            <p className="text-xs text-blue-800 mb-3">
-              After configuring Supabase, click the button below to create all necessary tables and demo user accounts.
-            </p>
-            <Button
-              onClick={handleInitializeDatabase}
-              disabled={isInitializing}
-              variant="primary"
-              size="sm"
-              className="w-full"
-            >
-              {isInitializing ? 'Initializing Database...' : 'Initialize Database'}
-            </Button>
-            <p className="text-xs text-yellow-700 mt-2">
-              <strong>Important:</strong> This will only work after you've properly configured your Supabase credentials in the .env file.
-            </p>
-          </div>
-          
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email Address"
@@ -160,81 +129,6 @@ export function Login() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-900 mb-3">Demo Accounts - Click to Login:</h4>
-            <div className="mb-4 p-3 bg-blue-100 border border-blue-200 rounded-lg">
-              <h5 className="text-sm font-semibold text-blue-900 mb-2">🔐 Authentication Details</h5>
-              <div className="text-xs text-blue-800 space-y-1">
-                <p><strong>Database:</strong> Supabase PostgreSQL with Row Level Security</p>
-                <p><strong>Password Encryption:</strong> bcrypt with salt rounds</p>
-                <p><strong>Session Management:</strong> JWT tokens with auto-refresh</p>
-                <p><strong>Security:</strong> Account lockout after 5 failed attempts</p>
-              </div>
-            </div>
-            
-            <div className="mb-4 p-3 bg-green-100 border border-green-200 rounded-lg">
-              <h5 className="text-sm font-semibold text-green-900 mb-2">📊 Role-Based Access Control (RBAC)</h5>
-              <div className="text-xs text-green-800 space-y-1">
-                <p><strong>Hierarchy:</strong> Admin → ZO User → RO User → Supervisor → Enumerator</p>
-                <p><strong>Permissions:</strong> Each role has specific menu access and data visibility</p>
-                <p><strong>Data Isolation:</strong> Users only see data relevant to their jurisdiction</p>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              {demoCredentials.map((cred) => (
-                <button
-                  key={cred.email}
-                  onClick={() => handleDemoLogin(cred.email)}
-                  className="w-full flex items-center space-x-3 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all text-left"
-                >
-                  <div className={`p-1.5 rounded-lg ${cred.color}`}>
-                    <cred.icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-gray-900">{cred.role}</p>
-                    <p className="text-xs text-gray-600">{cred.email}</p>
-                    <p className="text-xs text-gray-500">Level {
-                      cred.role === 'Admin' ? '1' :
-                      cred.role === 'CPG User' ? '2' :
-                      cred.role === 'ZO User' ? '3' :
-                      cred.role === 'RO User' ? '4' :
-                      cred.role === 'Supervisor' ? '5' : '6'
-                    } • {
-                      cred.role === 'Admin' ? 'Full System Access' :
-                      cred.role === 'CPG User' ? 'Central Planning' :
-                      cred.role === 'ZO User' ? 'Zone Management' :
-                      cred.role === 'RO User' ? 'Regional Management' :
-                      cred.role === 'Supervisor' ? 'Team Management' : 'Test Taking (Lowest Level)'
-                    }</p>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    Click to login
-                  </div>
-                </button>
-              ))}
-            </div>
-            
-            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h5 className="text-sm font-semibold text-yellow-900 mb-2">🔑 Login Credentials</h5>
-              <div className="text-xs text-yellow-800 space-y-1">
-                <p><strong>Password for all accounts:</strong> <span className="font-mono bg-yellow-100 px-1 rounded">password123</span></p>
-                <p><strong>Employee IDs:</strong> ADM001, CPG001, ZO001, RO001, SUP001, ENU001-003</p>
-                <p><strong>Phone Numbers:</strong> +91-9876543210 to +91-9876543217</p>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-              <h5 className="text-sm font-semibold text-purple-900 mb-2">🏢 Organizational Structure</h5>
-              <div className="text-xs text-purple-800 space-y-1">
-                <p><strong>Hierarchy:</strong> Administrator → CPG User → ZO User → RO User → Supervisor → Enumerator</p>
-                <p><strong>Zone:</strong> North Zone (ZO, RO, Supervisor, Enumerators)</p>
-                <p><strong>Region:</strong> Delhi Region (RO, Supervisor, Enumerator)</p>
-                <p><strong>District:</strong> Central Delhi (Supervisor, Enumerators)</p>
-                <p><strong>Team Structure:</strong> 1 Supervisor manages 3 Enumerators</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
