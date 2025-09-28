@@ -6,7 +6,7 @@ import { Input } from '../components/UI/Input';
 import { Modal } from '../components/UI/Modal';
 import { surveyApi, questionApi } from '../services/api';
 import { Survey, Section, Question } from '../types';
-import { Plus, Search, Edit, Trash2, Download, Upload, Eye, FileText, Book, Target, Clock, CheckCircle, X } from 'lucide-react';
+import { Plus, Search, CreditCard as Edit, Trash2, Download, Upload, Eye, FileText, Book, Target, Clock, CheckCircle, X } from 'lucide-react';
 import { formatDate } from '../utils';
 
 export function Questions() {
